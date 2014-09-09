@@ -30,5 +30,28 @@ User.where({
         $like: "%\""
     }
 }).orderBy({ userId: -1 }).find(function(err, users) {
-    console.log(users);
+    //console.log(users);
+});
+
+var user = User.build({
+    user_id : 12345,
+    username: "blahblah",
+    password: "e10adc3949ba59abbe56e057f20f883e",
+    email   : "abc@def.ghi",
+    urlname : "dsfakj",
+    created_at: parseInt(Date.now() / 1000),
+    avatar  : "\"http://img1.imgtn.bdimg.com/it/u=4036754899,2357663782&fm=21&gp=0.jpg\"",
+    roles   : null,
+    rating  : 8191
+});
+user.save(function(err, user, sql) {
+    //console.log(err);
+    //console.log(user);
+    console.log(sql);
+
+    user.userId = 12346;
+    user.save(function(err, user, sql) {
+        console.log(sql);
+        console.log(err);
+    });
 });
