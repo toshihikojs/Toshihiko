@@ -7,7 +7,7 @@
 var Toshihiko = require("../lib/toshihiko");
 var Type = require("../lib/fieldType");
 var toshihiko = new Toshihiko("huaban", "root", "", {
-    showSql     : true
+    //showSql     : true
 });
 
 var User = toshihiko.define("users", [
@@ -44,14 +44,19 @@ var user = User.build({
     roles   : null,
     rating  : 8191
 });
-user.save(function(err, user, sql) {
-    //console.log(err);
-    //console.log(user);
-    console.log(sql);
 
+user.save(function(err, user, sql) {
+    console.log(sql);
     user.userId = 12346;
     user.save(function(err, user, sql) {
         console.log(sql);
         console.log(err);
+
+        user.delete(function(err, rowsEffected, sql) {
+            console.log(err);
+            console.log(sql);
+            console.log(rowsEffected);
+            console.log(user);
+        });
     });
 });
