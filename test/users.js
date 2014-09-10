@@ -11,7 +11,19 @@ var toshihiko = new Toshihiko("huaban", "root", "", {
 });
 
 var User = toshihiko.define("users", [
-    { name: "user_id", alias: "userId", type: Type.Integer, primaryKey: true },
+    {
+        name: "user_id",
+        alias: "userId",
+        type: Type.Integer,
+        primaryKey: true,
+        validators: [
+            function(v) {
+                if(v > 100) {
+                    return "user_id can't greater than 100.";
+                }
+            }
+        ]
+    },
     { name: "username", type: Type.String },
     { name: "password", type: Type.String },
     { name: "email", type: Type.String },
@@ -46,11 +58,15 @@ var user = User.build({
 });
 
 user.save(function(err, user, sql) {
+    console.log(err);
     console.log(sql);
+    if(err) return;
+
     user.userId = 12346;
     user.save(function(err, user, sql) {
         console.log(sql);
         console.log(err);
+        if(err) return;
 
         user.delete(function(err, rowsEffected, sql) {
             console.log(err);
