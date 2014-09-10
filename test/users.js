@@ -45,6 +45,16 @@ User.where({
     //console.log(users);
 });
 
+User.where({
+    userId  : {
+        $gt : 1
+    },
+    avatar  : {
+        $like: "%\""
+    }
+}).update({ userId: 123, avatar: "{{avatar + 1}}" }, function(){});
+return;
+
 var user = User.build({
     user_id : 12345,
     username: "blahblah",
