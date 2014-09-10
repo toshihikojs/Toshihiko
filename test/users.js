@@ -57,6 +57,10 @@ var user = User.build({
     rating  : 8191
 });
 
+User.execute("SELECT * FROM `users`", function(err, rows) {
+    console.log(rows);
+});
+
 user.save(function(err, user, sql) {
     console.log(err);
     console.log(sql);
