@@ -18,9 +18,12 @@ var Pin = toshihiko.define("pins", [
     { name: "board_id", type: Type.Integer },
     { name: "file_id", type: Type.Integer },
     { name: "raw_text", type: Type.String },
-    { name: "file", type: Type.String },
+    { name: "file", type: Type.Json },
     { name: "source", type: Type.String },
     { name: "link", type: Type.String }
 ]);
 
-Pin.find(function(err, result) {});
+Pin.find(function(err, result) {
+    console.log(result);
+    console.log(err);
+});
