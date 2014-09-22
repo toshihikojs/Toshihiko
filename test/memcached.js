@@ -12,4 +12,15 @@ var toshihiko = new Toshihiko("huaban", "root", "", {
     memcached   : new Memcached("127.0.0.1:11211")
 });
 
-toshihiko.options.memcached.getData("huaban", "boards", [ { user_id: 123, password: "dslfkjasdlfkj" }, 234 ]);
+var Pin = toshihiko.define("pins", [
+    { name: "pin_id", type: Type.Integer, primaryKey: true },
+    { name: "user_id", type: Type.Integer },
+    { name: "board_id", type: Type.Integer },
+    { name: "file_id", type: Type.Integer },
+    { name: "raw_text", type: Type.String },
+    { name: "file", type: Type.String },
+    { name: "source", type: Type.String },
+    { name: "link", type: Type.String }
+]);
+
+Pin.find(function(err, result) {});
