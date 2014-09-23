@@ -7,6 +7,7 @@
 var Toshihiko = require("../lib/toshihiko");
 var Type = require("../lib/fieldType");
 var Memcached = require("../lib/memcached");
+var randomer = require("chinese-random-skill");
 var toshihiko = new Toshihiko("huaban", "root", "", {
     showSql     : true,
     memcached   : new Memcached("127.0.0.1:11211")
@@ -23,7 +24,12 @@ var Pin = toshihiko.define("pins", [
     { name: "link", type: Type.String }
 ]);
 
-Pin.find(function(err, result) {
-    console.log(result);
-    console.log(err);
+Pin.where({ pin_id: 235 }).findOne(function(err, pin) {
+    pin.raw_text = randomer.generate();
+    pin.save(function(err, pin) {
+        Pin.find(function(err, result) {
+            console.log(result);
+            console.log(err);
+        });
+    });
 });
