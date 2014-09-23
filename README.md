@@ -81,3 +81,35 @@ Model.where(condition).limit(limit).delete(callback);
 Model.findById(primaryKeysId, callback);
 Model.where(condition).update(data, callback);
 ```
+
+#### where
+
+`condition` is an JSON object with keys:
+
++ A field name
++ `$and`
++ `$or`
+
+For field name, the value can be a certain value. Eg:
+
+```javascript
+{
+    key1: 1
+}
+```
+
+Can be a JSON object with comparison operators `$eq` / `===`, `$neq` / `!==`, `$gt(e)` / `>(=)`, `$lt(e)` / `<(=)`, `$like`.
+
+Eg:
+
+```javascript
+{
+    keys1: {
+        $neq: value
+    }
+}
+```
+
+> `value` can be a certain value or an array with logic `AND`.
+>
+> ```$neq: 5``` or ```$neq: [ 5, 2 ]```.
