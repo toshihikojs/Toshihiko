@@ -251,7 +251,7 @@ foo.where(condition).update(data, function(err, result) {});
 }
 ```
 
-String with `{{...}}` will be parsed as SQL statement. For example, you can let it be `{{CONCAT(`key3`, ".suffix")` or
+String with `{{...}}` will be parsed as SQL statement. For example, you can let it be ```{{CONCAT(`key3`, ".suffix")``` or
 any others statement you want to use.
 
 > **Notice**: `result` is something like:
