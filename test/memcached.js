@@ -28,8 +28,11 @@ Pin.where({ pin_id: 235 }).findOne(function(err, pin) {
     pin.raw_text = randomer.generate();
     pin.save(function(err, pin) {
         Pin.find(function(err, result) {
-            console.log(result);
-            console.log(err);
+            //console.log(result);
+
+            Pin.find(function(err, pins) {
+                console.log(pins);
+            }, true);
         });
     });
 });

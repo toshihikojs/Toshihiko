@@ -52,7 +52,10 @@ User.where({
     avatar  : {
         $like: "%\""
     }
-}).update({ userId: 123, avatar: "{{CONCAT(`avatar`, '1')}}" }, function(){});
+}).update({ userId: 123, avatar: "{{CONCAT(`avatar`, '1')}}" }, function(err, data){
+    console.log(err);
+    console.log(data);
+});
 return;
 
 var user = User.build({
