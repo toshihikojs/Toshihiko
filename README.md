@@ -90,6 +90,10 @@ Model.where(condition).update(data, callback);
 + `$and`
 + `$or`
 
+##### Field Name
+
+###### Value
+
 For field name, the value can be a certain value. Eg:
 
 ```javascript
@@ -98,7 +102,9 @@ For field name, the value can be a certain value. Eg:
 }
 ```
 
-Can be a JSON object with comparison operators `$eq` / `===`, `$neq` / `!==`, `$gt(e)` / `>(=)`, `$lt(e)` / `<(=)`, `$like`.
+##### Operators
+
+The value can be a JSON object with comparison operators `$eq` / `===`, `$neq` / `!==`, `$gt(e)` / `>(=)`, `$lt(e)` / `<(=)`, `$like`.
 
 Eg:
 
@@ -113,3 +119,20 @@ Eg:
 > `value` can be a certain value or an array with logic `AND`.
 >
 > Eg. `$neq: 5` or `$neq: [ 5, 2 ]`.
+
+##### Logic
+
+You can use logic symbols as well:
+
+```javascript
+{
+    keys1: {
+        $or: {
+            $eq: 1,
+            $neq: 2
+        }
+    }
+}
+```
+
+> **Notice**: you can define `logic` and `operators` with many many levels.
