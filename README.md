@@ -275,3 +275,23 @@ or any others statement you want to use.
 ```javascript
 foo.where(condition).delete(function(err, result) { /** ... */ });
 ```
+
+### Yukari Object
+
+Yukari object is the data entity object.
+
+`rows` in `Model.find(function(err, rows) {})` is an array with Yukari objects unless you use `withJson` parameter.
+
+Also, you can get a new Yukari object by calling `Model.build()`.
+
+#### Model.build()
+
+You can pass a JSON object to this function to generate a new Yukari object:
+
+```javascript
+Model.build({
+    key1    : 1,
+    key2    : 2,
+    key3    : "3"
+});
+```
