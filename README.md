@@ -70,3 +70,14 @@ Model.sayHello = function() {
     });
 };
 ```
+
+### Query & Update
+
+Toshihiko uses chain operations. Eg:
+
+```javascript
+Model.where(condition).limit(limit).orderBy(order).find(callback);
+Model.where(condition).limit(limit).delete(callback);
+Model.findById(primaryKeysId, callback);
+Model.where(condition).update(data, callback);
+```
