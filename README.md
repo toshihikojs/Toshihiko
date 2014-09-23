@@ -284,6 +284,8 @@ Yukari object is the data entity object.
 
 Also, you can get a new Yukari object by calling `Model.build()`.
 
+We assume all Yukari(s) below are created from `Model.find()` except `Model.build()`.
+
 #### Model.build()
 
 You can pass a JSON object to this function to generate a new Yukari object:
@@ -295,3 +297,88 @@ Model.build({
     key3    : "3"
 });
 ```
+
+#### Yukari::toJSON()
+
+Transform Yukari object to a simple original JSON object:
+
+```javascript
+var json = yukari.toJSON();
+console.log(json);
+```
+
+#### Yukari::insert()
+
+If your Yukari object is created from `Model.build()`, you should use this function to insert data to database.
+
+```javascript
+var yukari = Model.build({ ... });
+yukari.insert(function(err, yukari) {
+    //...
+});
+```
+
+#### Yukari::update()
+
+Change this Yukari data to database.
+
+```javascript
+yukari.update(function(err, yukari) {
+    //...
+});
+```
+
+> **Notice**: `"{{..}}"` operation is not supported here.
+
+#### Yukari::save()
+
+If it's a new Yukari object, it will call `insert`. Otherwise, it will call `update`.
+
+```javascript
+yukari.save(function(err, yukari) {
+    //...
+});
+```
+
+#### Yukari::delete()
+
+Delete this record from database.
+
+```javascript
+yukari.delete(function(err, affectedRows) {});
+```
+
+### Custom Field Type
+
+There're 4 kind of types in Toshihiko as default.
+
++ Type.Float
++ Type.Integer
++ Type.Json
++ Type.String
+
+You can code a custom field type by yourself.
+
+Here's the template:
+
+```javascript
+var Type = {};
+Type.name = "type";
+Type.needQuotes = false;    ///< Is this type need quotes in SQL statement?
+Type.restore = function(v) {
+    // v is a parsed value,
+    // you should transform
+    // it to the type that
+    // SQL can recognize
+    return v;
+};
+Type.parse = function(v) {
+    // v is a original value,
+    // you should parse it
+    // into your own type
+    return v;
+};
+Type.defaultValue = 0.1;    ///< Default value
+```
+
+You can refers to [lib/fieldType/json.js](lib/fieldType/json.js) to get more information.
