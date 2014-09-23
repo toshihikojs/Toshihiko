@@ -15,8 +15,8 @@ $ npm install toshihiko
 You should create a `Toshihiko` object to connect to MySQL:
 
 ```javascript
-var Toshihiko = require("toshihiko").Toshihiko;
-var toshihiko = new Toshihiko(database, username, password, options);
+var T = require("toshihiko");
+var toshihiko = new T.Toshihiko(database, username, password, options);
 ```
 
 ***Options*** can include these things:
@@ -26,6 +26,19 @@ var toshihiko = new Toshihiko(database, username, password, options);
 + `memcached`: if you want to memcached support, let it be an `Memcached` object which will be mentioned below. Defaults
   to undefined.
 + etc... (All options in module [mysql](https://www.npmjs.org/package/mysql#pool-options) will be OK)
+
+#### Memcached
+
+If you want to have memcached supported, you should create a `Memcached` object and then put it into options:
+
+```javascript
+var Memcached = T.Memcached;
+var toshihiko = new T.Toshihiko(database, username, password, {
+    memcached   : new Memcached(servers, options);
+});
+```
+
+> **Notice:** the `servers` and `options` parameters can be referenced at https://www.npmjs.org/package/memcached#setting-up-the-client.
 
 ### Define a Model
 
