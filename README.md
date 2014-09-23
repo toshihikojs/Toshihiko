@@ -102,7 +102,7 @@ For field name, the value can be a certain value. Eg:
 }
 ```
 
-##### Operators
+###### Operators
 
 The value can be a JSON object with comparison operators `$eq` / `===`, `$neq` / `!==`, `$gt(e)` / `>(=)`, `$lt(e)` / `<(=)`, `$like`.
 
@@ -120,7 +120,7 @@ Eg:
 >
 > Eg. `$neq: 5` or `$neq: [ 5, 2 ]`.
 
-##### Logic
+###### Logic
 
 You can use logic symbols as well:
 
@@ -136,3 +136,25 @@ You can use logic symbols as well:
 ```
 
 > **Notice**: you can define `logic` and `operators` with many many levels.
+
+##### `$and` And `$or`
+
+You can use these two logic with many many levels.
+
+```javascript
+{
+    $or: {
+        $or: { $or: ... },
+    }
+}
+```
+
+And the last level can be like that:
+
+```javascript
+{
+    $and: {
+        KEY: { REFER TO ABOVE `Field Name` }
+    }
+}
+```
