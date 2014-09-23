@@ -241,6 +241,19 @@ foo.findById(1, callback);
 foo.where(condition).update(data, function(err, result) {});
 ```
 
+`data` is an object that includes your changed data. Eg:
+
+```javascript
+{
+    key1: 12,
+    key2: "123",
+    key3: "{{key3 + 1}}"
+}
+```
+
+String with `{{...}}` will be parsed as SQL statement. For example, you can let it be `{{CONCAT(\`key3\`, ".suffix")` or
+any others statement you want to use.
+
 > **Notice**: `result` is something like:
 >
 > ```javascript
