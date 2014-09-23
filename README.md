@@ -158,3 +158,17 @@ And the last level can be like that:
     }
 }
 ```
+
+#### limit
+
+For examples:
+
+```javascript
+foo.limit("1");         ///< skip 1
+foo.limit("0,30");      ///< skip 0, limit 30
+foo.limit([ 0, 30 ]);   ///< skip 0, limit 30
+foo.limit([ 1 ]);       ///< skip 1
+foo.limit({ skip: 0, limit: 1 });   ///< skip 0, limit 1
+foo.limit({ skip: 1 }); ///< skip 1
+foo.limit({ limit: 1 });///< limit 1
+```
