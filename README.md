@@ -112,4 +112,4 @@ Eg:
 
 > `value` can be a certain value or an array with logic `AND`.
 >
-> ```$neq: 5``` or ```$neq: [ 5, 2 ]```.
+> Eg. `$neq: 5` or `$neq: [ 5, 2 ]`.
