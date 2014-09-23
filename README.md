@@ -193,6 +193,9 @@ foo.where(condition).find(function(err, rows) {
 }, withJson);
 ```
 
+> **Notice**: the parameter `withJson` is an optional parameter. If it's true, elements in `rows` are JSON objects. Otherwise,
+> they are all `Yukari` objects.
+
 #### findOne
 
 It's similar with `find`, but it will just find only one record.
@@ -200,5 +203,34 @@ It's similar with `find`, but it will just find only one record.
 ```javascript
 foo.where(condition).findOne(function(err, row) {
     //...
-});
+}, withJson);
+```
+
+> **Notice**: `withJson` is the same as above.
+
+#### findById
+
+```javascript
+foo.findById(primaryKeysId, function(err, bar) {
+}, withJson);
+```
+
+> `primaryKeysId` can be a string or an object.
+>
+> When there're several primary keys in one table, this value may be like:
+>
+> ```javascript
+> {
+>     key1: 1,
+>     key2: 2,
+> }
+> ```
+>
+> If there's only one primary key, you can just pass a string, number or some other base type value.
+
+For examples:
+
+```javascript
+foo.findById({ key1: 1, key2: 2 }, callback);
+foo.findById(1, callback);
 ```
