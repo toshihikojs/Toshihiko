@@ -57,7 +57,7 @@ var Model = toshihiko.define(tableName, [
             // blahblah...
         }
     ] }
-]);
+], options);
 ```
 
 You can add extra model functions by yourself:
@@ -70,6 +70,9 @@ Model.sayHello = function() {
     });
 };
 ```
+
+> `options` is optional. You can specify `Memcached` here if you haven't defined it in `Toshihiko`. Otherwise, you can let
+> it be `null` when you don't want to use `Memcached` in this `Model` but you had specify it in `Toshihiko`.
 
 ### Query & Update
 
