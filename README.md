@@ -1,6 +1,7 @@
 # Toshihiko
 
-A simple ORM for node.js in Huaban.
+A simple ORM for node.js in Huaban. For performance, this ORM does not provide operations like `in`, `group by`, `join`
+and so on.
 
 ## Installation
 
@@ -382,3 +383,9 @@ Type.defaultValue = 0.1;    ///< Default value
 ```
 
 You can refers to [lib/fieldType/json.js](lib/fieldType/json.js) to get more information.
+
+## Contribute
+
+You're welcome to pull requests!
+
+「雖然我覺得不怎麼可能有人會關注我」
