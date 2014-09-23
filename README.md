@@ -234,3 +234,22 @@ For examples:
 foo.findById({ key1: 1, key2: 2 }, callback);
 foo.findById(1, callback);
 ```
+
+#### update
+
+```javascript
+foo.where(condition).update(data, function(err, result) {});
+```
+
+> **Notice**: `result` is something like:
+>
+> ```javascript
+> { fieldCount: 0,
+>   affectedRows: 1,
+>   insertId: 0,
+>   serverStatus: 2,
+>   warningCount: 0,
+>   message: '(Rows matched: 1  Changed: 1  Warnings: 0',
+>   protocol41: true,
+>   changedRows: 1 }
+> ```
