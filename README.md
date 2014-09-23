@@ -172,3 +172,13 @@ foo.limit({ skip: 0, limit: 1 });   ///< skip 0, limit 1
 foo.limit({ skip: 1 }); ///< skip 1
 foo.limit({ limit: 1 });///< limit 1
 ```
+
+#### orderBy
+
+For examples:
+
+```javascript
+foo.orderBy("key1 asc");
+foo.orderBy([ "key1 asc", "key2 desc" ]);
+foo.orderBy({ key1: "asc", key2: "desc", key3: 1, key4: -1 });
+```
