@@ -266,3 +266,9 @@ or any others statement you want to use.
 >   protocol41: true,
 >   changedRows: 1 }
 > ```
+
+#### delete
+
+```javascript
+foo.where(condition).delete(function(err, result) { /** ... */ });
+```
