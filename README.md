@@ -182,3 +182,23 @@ foo.orderBy("key1 asc");
 foo.orderBy([ "key1 asc", "key2 desc" ]);
 foo.orderBy({ key1: "asc", key2: "desc", key3: 1, key4: -1 });
 ```
+
+#### find
+
+With the conditions, limit and orders to find all records:
+
+```javascript
+foo.where(condition).find(function(err, rows) {
+    //...
+}, withJson);
+```
+
+#### findOne
+
+It's similar with `find`, but it will just find only one record.
+
+```javascript
+foo.where(condition).findOne(function(err, row) {
+    //...
+});
+```
