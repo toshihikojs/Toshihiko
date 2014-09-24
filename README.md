@@ -187,6 +187,14 @@ foo.orderBy([ "key1 asc", "key2 desc" ]);
 foo.orderBy({ key1: "asc", key2: "desc", key3: 1, key4: -1 });
 ```
 
+#### count
+
+Count the records with a certain condition:
+
+```javascript
+foo.where(condition).count(function(err, count) {});
+```
+
 #### find
 
 With the conditions, limit and orders to find all records:
