@@ -34,6 +34,12 @@ var User = toshihiko.define("users", [
     { name: "rating", type: Type.Integer }
 ]);
 
+User.count(function(err, count) {
+    console.log(count);
+});
+
+return;
+
 User.where({
     userId  : {
         $gt : 1
