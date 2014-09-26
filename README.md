@@ -47,7 +47,7 @@ Define a model schema:
 
 ```javascript
 var Model = toshihiko.define(tableName, [
-    { name: "key1", alias: "keyOne", primaryKey: true, type: Toshihiko.Type.Integer },
+    { name: "key1", column: "key_one", primaryKey: true, type: Toshihiko.Type.Integer },
     { name: "key2", type: Toshihiko.Type.String, defaultValue: "Ha~" },
     { name: "key3", type: Toshihiko.Type.Json, defaultValue: [] },
     { name: "key4", validators: [
@@ -283,6 +283,33 @@ or any others statement you want to use.
 
 ```javascript
 foo.where(condition).delete(function(err, result) { /** ... */ });
+```
+
+#### ┏ (゜ω゜)=☞ Promise-Liked
+
+For `find`, `findOne`, `findById`, `update` and `delete`, you can use it without callback function.
+
+Whether you used callback function or not, these function will return a `ResultPromisor` object. You can use it like:
+
+##### ResultPromisor::success
+
+```javascript
+var Q = foo.find();
+Q.success(function(result) { /** ... */ });
+```
+
+##### ResultPromisor::error
+
+```javascript
+var Q = foo.find();
+Q.error(function(err) { /** ... */ });
+```
+
+##### ResultPromisor::finished
+
+```javascript
+var Q = foo.find();
+Q.finished(function(err, result) { /** ... */ });
 ```
 
 ### Yukari Object
