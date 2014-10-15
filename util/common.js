@@ -23,7 +23,7 @@ exports.orderStringToObject = function(order) {
         _order = _order.trim().split(" ").compact();
         if(_order.length !== 2) return undefined;
 
-        _order[1] = _order.toUpperCase();
+        _order[1] = _order[1].toUpperCase();
         if(_order[1] !== "ASC" || _order[1] !== "DESC") return undefined;
 
         var res = {};
