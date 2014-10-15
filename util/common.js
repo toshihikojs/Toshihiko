@@ -27,7 +27,7 @@ exports.orderStringToObject = function(order) {
         if(_order[1] !== "ASC" && _order[1] !== "DESC") return undefined;
 
         var res = {};
-        res[_order[0]] = res[_order[1]];
+        res[_order[0]] = res_order[1];
         return res;
     }).compact();
 
@@ -36,6 +36,7 @@ exports.orderStringToObject = function(order) {
     // { a: "ASC", b: "DESC" }
     var result = array.reduce(function(ans, obj) {
         Object.merge(ans, obj);
+        return obj;
     }, {});
 
     return result;
