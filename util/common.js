@@ -24,10 +24,11 @@ exports.orderStringToObject = function(order) {
         if(_order.length !== 2) return undefined;
 
         _order[1] = _order[1].toUpperCase();
-        if(_order[1] !== "ASC" || _order[1] !== "DESC") return undefined;
+        if(_order[1] !== "ASC" && _order[1] !== "DESC") return undefined;
 
         var res = {};
         res[_order[0]] = res[_order[1]];
+        return res;
     }).compact();
 
     // [ { a: "ASC" }, { b: "DESC" } ]
