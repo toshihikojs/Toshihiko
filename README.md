@@ -1,5 +1,7 @@
 # Toshihiko
 
+[![Toshihiko](http://img.shields.io/npm/v/toshihiko.svg)](https://www.npmjs.org/package/toshihiko) [![Toshihiko](http://img.shields.io/npm/dm/toshihiko.svg)](https://www.npmjs.org/package/toshihiko)
+
 A simple ORM for node.js in Huaban. For performance, this ORM does not provide operations like `in`, `group by`, `join`
 and so on.
 
