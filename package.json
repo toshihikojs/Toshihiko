@@ -1,6 +1,6 @@
 {
   "name": "toshihiko",
-  "version": "0.1.0-prepub-12",
+  "version": "0.1.0-prepub-13",
   "description": "A simple ORM for node.js in Huaban.",
   "main": "index.js",
   "directories": {
@@ -38,3 +38,4 @@
   },
   "homepage": "https://github.com/XadillaX/Toshihiko"
 }
+

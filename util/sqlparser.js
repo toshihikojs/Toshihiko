@@ -130,3 +130,4 @@ exports.sqlNameToColumn = function(sql, map) {
 
     return final;
 };
+

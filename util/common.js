@@ -41,3 +41,4 @@ exports.orderStringToObject = function(order) {
 
     return result;
 };
+

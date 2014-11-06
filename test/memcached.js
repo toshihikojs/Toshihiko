@@ -10,7 +10,7 @@ var Memcached = require("../lib/memcached");
 var randomer = require("chinese-random-skill");
 var toshihiko = new Toshihiko("huaban", "root", "", {
     showSql     : true,
-    memcached   : new Memcached("127.0.0.1:11211")
+    memcached   : new Memcached("127.0.0.1:11211", { prefix: "xxoo_" })
 });
 
 var Pin = toshihiko.define("pins", [
@@ -36,3 +36,4 @@ Pin.where({ pin_id: 235 }).findOne(function(err, pin) {
         });
     });
 });
+

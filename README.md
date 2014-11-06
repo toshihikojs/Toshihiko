@@ -42,6 +42,14 @@ var toshihiko = new T.Toshihiko(database, username, password, {
 ```
 
 > **Notice:** the `servers` and `options` parameters can be referenced at https://www.npmjs.org/package/memcached#setting-up-the-client.
+>
+> And what's more, you can give a `prefix` in `options` to let your memcached for this Toshihiko has a certain prefix.
+>
+> Eg.
+>
+> ```javascript
+> new Memcached(servers, { prefix: "tshk_", ... });
+> ```
 
 ### Define a Model
 
