@@ -23,7 +23,7 @@ var Pin = toshihiko.define("pins", [
     { name: "link", type: Type.String }
 ]);
 
-var Q = Pin.where({ pin_id: { $gt: 100 } }).find(function(err, result) {
+var Q = Pin.where({ pin_id: { $gt: 10 } }).find(function(err, result) {
     // ...
     console.log("blahblah...");
 });
