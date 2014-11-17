@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "algorithmjs": "~0.0.2",
-    "memcached": "git+https://github.com/XadillaX/node-memcached.git#843ff04",
+    "memcached": "git+https://github.com/XadillaX/node-memcached.git#d96bae6",
     "async": "~0.9.0",
     "mysql": "~2.5.0",
     "sugar": "~1.4.1",
