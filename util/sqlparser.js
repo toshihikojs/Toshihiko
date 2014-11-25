@@ -125,8 +125,9 @@ exports.sqlNameToColumn = function(sql, map) {
     }
 
     if(current) {
-        final += processFragment(fragment, map);
+        final += processFragment(current, map);
     }
 
     return final;
 };
+

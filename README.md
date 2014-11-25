@@ -1,5 +1,7 @@
 # Toshihiko
 
+[![Toshihiko](http://img.shields.io/npm/v/toshihiko.svg)](https://www.npmjs.org/package/toshihiko) [![Toshihiko](http://img.shields.io/npm/dm/toshihiko.svg)](https://www.npmjs.org/package/toshihiko)
+
 A simple ORM for node.js in Huaban. For performance, this ORM does not provide operations like `in`, `group by`, `join`
 and so on.
 
@@ -40,6 +42,58 @@ var toshihiko = new T.Toshihiko(database, username, password, {
 ```
 
 > **Notice:** the `servers` and `options` parameters can be referenced at https://www.npmjs.org/package/memcached#setting-up-the-client.
+>
+> And what's more, you can give a `prefix` in `options` to let your memcached for this Toshihiko has a certain prefix.
+>
+> Eg.
+>
+> ```javascript
+> new Memcached(servers, { prefix: "tshk_", ... });
+> ```
+>
+
+##### Customize Key Generate Function
+
+A new feature for memcached is that you can custom your memcached key generate function now!
+
+You may pass the function at the very beginning:
+
+```javascript
+new Memcached(servers, { custormizeKey: function(db, table, keys) { return ...; } });
+```
+
+Another way is you can pass throw the function below:
+
+```javascript
+memcached.setCustomizeKeyFunc(function(db, table, keys) { return ...; });
+```
+
+You should pay attention to `db`, `table` and `keys` which stand for database name, table name, primary keys with their value.
+
+> `keys` maybe a single value (when `typeof keys !== "object"`); it maybe an object contains key-value pairs `key name -> value`.
+>
+> Eg.
+>
+> ```json
+> { userId: 12, boardId: 12 }
+> ```
+
+So here's an example customize function:
+
+```javascript
+function(db, table, keys) {
+    var base = this.prefix + db + "_" + table;
+    if(typeof keys !== "object") return base + ":" + keys;
+
+    for(var key in keys) {
+        base += ":";
+        base += key;
+        base += keys[key];
+    }
+
+    return base;
+}
+```
 
 ### Define a Model
 

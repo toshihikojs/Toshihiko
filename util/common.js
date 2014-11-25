@@ -23,11 +23,12 @@ exports.orderStringToObject = function(order) {
         _order = _order.trim().split(" ").compact();
         if(_order.length !== 2) return undefined;
 
-        _order[1] = _order.toUpperCase();
-        if(_order[1] !== "ASC" || _order[1] !== "DESC") return undefined;
+        _order[1] = _order[1].toUpperCase();
+        if(_order[1] !== "ASC" && _order[1] !== "DESC") return undefined;
 
         var res = {};
-        res[_order[0]] = res[_order[1]];
+        res[_order[0]] = _order[1];
+        return res;
     }).compact();
 
     // [ { a: "ASC" }, { b: "DESC" } ]
@@ -35,7 +36,9 @@ exports.orderStringToObject = function(order) {
     // { a: "ASC", b: "DESC" }
     var result = array.reduce(function(ans, obj) {
         Object.merge(ans, obj);
+        return ans;
     }, {});
 
     return result;
 };
+
