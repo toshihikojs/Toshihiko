@@ -479,6 +479,6 @@ You're welcome to pull requests!
 
 Thanks to:
 
-+ @luicfer
++ [@luicfer](https://github.com/luicfer)
 
 「雖然我覺得不怎麼可能有人會關注我」
