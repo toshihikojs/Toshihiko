@@ -477,4 +477,8 @@ You can refers to [lib/fieldType/json.js](lib/fieldType/json.js) to get more inf
 
 You're welcome to pull requests!
 
+Thanks to:
+
++ @luicfer
+
 「雖然我覺得不怎麼可能有人會關注我」
