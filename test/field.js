@@ -1,5 +1,5 @@
 var field = require("../lib/fieldType");
-var should = require('should');
+require("should");
 describe("Field",function () {
     describe("float type", function () {
         var float = field.Float;
@@ -25,18 +25,18 @@ describe("Field",function () {
         });
         describe("#equal", function () {
             it("should return true", function () {
-                (float.equal("123.1",123.1)).should.be.true;
-                (float.equal(123.1,123.1)).should.be.true;
-                (float.equal(0,0)).should.be.true;
-                (float.equal("-1",-1)).should.be.true;
-                (float.equal(-1.1,-1.1)).should.be.true;
+                (float.equal("123.1", 123.1)).should.be.true;
+                (float.equal(123.1, 123.1)).should.be.true;
+                (float.equal(0, 0)).should.be.true;
+                (float.equal("-1", -1)).should.be.true;
+                (float.equal(-1.1, -1.1)).should.be.true;
             });
             it("should return false", function () {
-                (float.equal("123.1",123.11)).should.not.be.true;
-                (float.equal(123.1,123.11)).should.not.be.true;
-                (float.equal(0,0.111)).should.not.be.true;
-                (float.equal("-1",-1.1)).should.not.be.true;
-                (float.equal(-1.1,-1.11)).should.not.be.true;
+                (float.equal("123.1", 123.11)).should.not.be.true;
+                (float.equal(123.1, 123.11)).should.not.be.true;
+                (float.equal(0, 0.111)).should.not.be.true;
+                (float.equal("-1", -1.1)).should.not.be.true;
+                (float.equal(-1.1, -1.11)).should.not.be.true;
             });
         });
     });
@@ -75,18 +75,18 @@ describe("Field",function () {
         });
         describe("#equal", function () {
             it("should return true", function () {
-                (Integer.equal("123.1",123)).should.be.true;
-                (Integer.equal(123.1,123)).should.be.true;
-                (Integer.equal(0,0)).should.be.true;
-                (Integer.equal("-1",-1)).should.be.true;
-                (Integer.equal(-1.1,-1)).should.be.true;
+                (Integer.equal("123.1", 123)).should.be.true;
+                (Integer.equal(123.1, 123)).should.be.true;
+                (Integer.equal(0, 0)).should.be.true;
+                (Integer.equal("-1", -1)).should.be.true;
+                (Integer.equal(-1.1, -1)).should.be.true;
             });
             it("should return false", function () {
-                (Integer.equal("124.1",123.1)).should.not.be.true;
-                (Integer.equal(124.1,123.1)).should.not.be.true;
-                (Integer.equal(3,0.111)).should.not.be.true;
-                (Integer.equal("-2",-1.1)).should.not.be.true;
-                (Integer.equal(-2.1,-1)).should.not.be.true;
+                (Integer.equal("124.1", 123.1)).should.not.be.true;
+                (Integer.equal(124.1, 123.1)).should.not.be.true;
+                (Integer.equal(3, 0.111)).should.not.be.true;
+                (Integer.equal("-2", -1.1)).should.not.be.true;
+                (Integer.equal(-2.1, -1)).should.not.be.true;
             });
         });
     });
