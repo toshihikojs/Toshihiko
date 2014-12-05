@@ -1,6 +1,6 @@
 {
   "name": "toshihiko",
-  "version": "0.1.0-prepub-25-test2",
+  "version": "0.1.0-prepub-26-test2",
   "description": "A simple ORM for node.js in Huaban.",
   "main": "index.js",
   "directories": {
@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "algorithmjs": "~0.0.2",
-    "memcached": "git+https://github.com/XadillaX/node-memcached.git#d96bae6",
+    "memcached": "git+https://github.com/XadillaX/node-memcached.git#7b69b58",
     "async": "~0.9.0",
     "mysql": "~2.5.0",
     "sugar": "~1.4.1",
@@ -33,10 +33,11 @@
     "MySQL",
     "Memcached"
   ],
-  "author": "XadillaX",
+  "author": [ "XadillaX", "lucifer4he" ],
   "license": "GPLv2",
   "bugs": {
     "url": "https://github.com/XadillaX/Toshihiko/issues"
   },
   "homepage": "https://github.com/XadillaX/Toshihiko"
 }
+
