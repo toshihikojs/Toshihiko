@@ -1,6 +1,6 @@
 {
   "name": "toshihiko",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "A simple ORM for node.js in Huaban.",
   "main": "index.js",
   "directories": {
@@ -8,11 +8,11 @@
   },
   "dependencies": {
     "algorithmjs": "~0.0.2",
-    "memcached": "git+https://github.com/XadillaX/node-memcached.git#3f8aa67",
+    "memcached": "git+https://github.com/XadillaX/node-memcached.git#ad50232",
     "async": "~0.9.0",
-    "mysql": "~2.5.0",
+    "mysql": "~2.5.4",
     "sugar": "~1.4.1",
-    "scarlet-task": "~0.1.0"
+    "scarlet-task": "~0.1.0-comment"
   },
   "devDependencies": {
       "chinese-random-skill": "~0.0.3-rdm",
