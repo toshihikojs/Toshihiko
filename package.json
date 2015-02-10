@@ -22,7 +22,7 @@
       "should": "~4.3.0"
   },
   "scripts": {
-    "test": "node test/memcached.js"
+    "test": "mocha"
   },
   "repository": {
     "type": "git",
