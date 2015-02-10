@@ -1,6 +1,5 @@
 language: node_js
 node_js:
-  - "0.8"
   - "0.10"
   - "0.11"
   - "0.12"
@@ -8,3 +7,4 @@ node_js:
   - "iojs-v1.1.0"
 service:
   - mysql
+after_script: NODE_ENV=test istanbul cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -R spec && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage 
