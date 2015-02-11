@@ -36,7 +36,7 @@ describe("model", function () {
     describe("insert", function () {
         it("insert 100 row", function (done) {
             var arr = [];
-            var i = 100;
+            var i = 50;
             while(i--) arr.push(i);
             async.parallel(arr.map(function (it) {
                 return function (cb) {
@@ -69,7 +69,7 @@ describe("model", function () {
         it("count", function (done) {
             Model.count(function(err, count) {
                 should(err).not.be.ok;
-                count.should.eql(100);
+                count.should.eql(50);
                 done();
             });
         });
@@ -81,7 +81,7 @@ describe("model", function () {
             },true)
         });
         it("find", function (done) {
-            Model.where({key1:{$gt:98}}).find(function (err,data) {
+            Model.where({key1:{$gt:48}}).find(function (err,data) {
                 should(err).not.be.ok;
                 data.length.should.eql(2);
                 data.forEach(function (it) {
@@ -95,7 +95,7 @@ describe("model", function () {
                 should(err).not.be.ok;
                 data.should.be.Array;
                 data.forEach(function (it,i) {
-                    if(i!== 100 - 1) it.should.hasOwnProperty("key1").above(data[i+1].key1);
+                    if(i!== 50 - 1) it.should.hasOwnProperty("key1").above(data[i+1].key1);
                 });
                 done();
             },true);
