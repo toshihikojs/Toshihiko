@@ -8,11 +8,12 @@
   },
   "dependencies": {
     "algorithmjs": "~0.0.2",
-    "memcached": "git+https://github.com/XadillaX/node-memcached.git#ad50232",
     "async": "~0.9.0",
+    "fbbk-json": "0.0.6",
+    "memcached": "git+https://github.com/XadillaX/node-memcached.git#ad50232",
     "mysql": "~2.5.4",
-    "sugar": "~1.4.1",
-    "scarlet-task": "~0.1.0-comment"
+    "scarlet-task": "~0.1.0-comment",
+    "sugar": "~1.4.1"
   },
   "devDependencies": {
     "chinese-random-skill": "~0.0.3-rdm",
