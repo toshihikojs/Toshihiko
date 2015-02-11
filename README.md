@@ -113,7 +113,8 @@ var Model = toshihiko.define(tableName, [
         function(v) {
             // blahblah...
         }
-    ] }
+    ] },
+    { name: "key5", type: Toshihiko.Type.String, allowNull: true }
 ], options);
 ```
 
