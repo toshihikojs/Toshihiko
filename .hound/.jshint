@@ -18,7 +18,7 @@
     "nonbsp"         : true,        // This option warns about "non-breaking whitespace" characters. These characters can be entered with option-space on Mac computers and have a potential of breaking non-UTF8 web pages.
     "nonew"          : true,        // true: Prohibit use of constructors for side-effects (without assignment)
     "plusplus"       : false,       // true: Prohibit use of `++` & `--`
-    "quotmark"       : "true",      // Quotation mark consistency:
+    "quotmark"       : "double",    // Quotation mark consistency:
                                     // false    - do nothing (default)
                                     // true     - ensure whatever is used is consistent
                                     // "single" - require single quotes
