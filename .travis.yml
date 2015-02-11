@@ -6,6 +6,8 @@ node_js:
   - "iojs-v1.0.3"
   - "iojs-v1.1.0"
 service:
-  - mysql -e 'create database myapp_test;'
+  - mysql
   - memcached
+before_script:
+  - mysql -e 'create database myapp_test;'
 after_script: istanbul cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -R spec && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage 
