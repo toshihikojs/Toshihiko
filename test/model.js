@@ -34,7 +34,7 @@ describe("model", function () {
         toshihiko.execute("DROP TABLE `test`;", done);
     });
     describe("insert", function () {
-        it("insert 100 row", function (done) {
+        it("insert 50 row", function (done) {
             var arr = [];
             var i = 50;
             while(i--) arr.push(i);
