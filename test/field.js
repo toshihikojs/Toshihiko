@@ -157,6 +157,7 @@ describe("Field",function () {
             });
             it("return false", function () {
                 json.equal({a:"1"},{a:1}).should.be.false;
+                json.equal("{xxx",{a:1}).should.be.false;
             });
         });
     });
