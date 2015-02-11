@@ -1,6 +1,6 @@
 # Toshihiko
 
-[![Toshihiko](http://img.shields.io/npm/v/toshihiko.svg)](https://www.npmjs.org/package/toshihiko) [![Toshihiko](http://img.shields.io/npm/dm/toshihiko.svg)](https://www.npmjs.org/package/toshihiko) [![Build Status](https://travis-ci.org/XadillaX/Toshihiko.svg?branch=develop)](https://travis-ci.org/XadillaX/Toshihiko) [![Coverage Status](https://coveralls.io/repos/XadillaX/Toshihiko/badge.svg?branch=develop)](https://coveralls.io/r/XadillaX/Toshihiko?branch=develop)
+[![Toshihiko](http://img.shields.io/npm/v/toshihiko.svg)](https://www.npmjs.org/package/toshihiko) [![Toshihiko](http://img.shields.io/npm/dm/toshihiko.svg)](https://www.npmjs.org/package/toshihiko) [![Build Status](https://travis-ci.org/XadillaX/Toshihiko.svg?branch=develop)](https://travis-ci.org/XadillaX/Toshihiko) [![Coverage Status](https://img.shields.io/coveralls/XadillaX/Toshihiko/develop.svg)](https://coveralls.io/r/XadillaX/Toshihiko?branch=develop)
 
 A simple ORM for node.js in Huaban with :heart:. For performance, this ORM does not provide operations like `in`, `group by`, `join`
 and so on.
