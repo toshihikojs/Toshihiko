@@ -38,7 +38,7 @@ describe("model", function () {
             var arr = [];
             var i = 50;
             while(i--) arr.push(i);
-            async.parallel(arr.map(function (it) {
+            async.series(arr.map(function (it) {
                 return function (cb) {
                     var yukari = Model.build({
                         key2    : it+0.1,
