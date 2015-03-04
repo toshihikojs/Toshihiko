@@ -1,9 +1,13 @@
 # Toshihiko
 
-[![Toshihiko](http://img.shields.io/npm/v/toshihiko.svg)](https://www.npmjs.org/package/toshihiko) [![Toshihiko](http://img.shields.io/npm/dm/toshihiko.svg)](https://www.npmjs.org/package/toshihiko)
+[![Toshihiko](http://img.shields.io/npm/v/toshihiko.svg)](https://www.npmjs.org/package/toshihiko) [![Toshihiko](http://img.shields.io/npm/dm/toshihiko.svg)](https://www.npmjs.org/package/toshihiko) [![Build Status](https://travis-ci.org/XadillaX/Toshihiko.svg?branch=develop)](https://travis-ci.org/XadillaX/Toshihiko) [![Coverage Status](https://img.shields.io/coveralls/XadillaX/Toshihiko/develop.svg)](https://coveralls.io/r/XadillaX/Toshihiko?branch=develop) [![Code Quality](https://img.shields.io/codacy/7c707792fa4f4f0ba8937dfb5d394bc3.svg?style=flat)](https://www.codacy.com/public/i_2/Toshihiko/dashboard) [![License](https://img.shields.io/npm/l/toshihiko.svg?style=flat)](https://www.npmjs.org/package/toshihiko)
 
-A simple ORM for node.js in Huaban. For performance, this ORM does not provide operations like `in`, `group by`, `join`
+[![Join the chat at https://gitter.im/XadillaX/Toshihiko](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/XadillaX/Toshihiko?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
+A simple ORM for node.js in Huaban with :heart:. For performance, this ORM does not provide operations like `in`, `group by`, `join`
 and so on.
+
+[![Toshihiko](https://nodei.co/npm/toshihiko.png?downloads=true&downloadRank=true)](https://www.npmjs.org/package/toshihiko) [![Toshihiko](https://nodei.co/npm-dl/toshihiko.png?months=6&height=3)](https://nodei.co/npm-dl/toshihiko.png?months=6&height=3)
 
 ## Installation
 
@@ -111,7 +115,8 @@ var Model = toshihiko.define(tableName, [
         function(v) {
             // blahblah...
         }
-    ] }
+    ] },
+    { name: "key5", type: Toshihiko.Type.String, allowNull: true }
 ], options);
 ```
 
@@ -476,5 +481,9 @@ You can refers to [lib/fieldType/json.js](lib/fieldType/json.js) to get more inf
 ## Contribute
 
 You're welcome to pull requests!
+
+Thanks to:
+
++ [@luicfer](https://github.com/luicfer)
 
 「雖然我覺得不怎麼可能有人會關注我」

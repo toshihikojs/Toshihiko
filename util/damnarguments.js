@@ -11,6 +11,7 @@
  * @param callback
  * @param [async]
  */
+/* istanbul ignore next */
 exports.call = function(args, callback, async) {
     if(args.length === 0) {
         if(async) {

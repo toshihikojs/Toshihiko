@@ -1,26 +1,31 @@
 {
   "name": "toshihiko",
-  "version": "0.1.0-prepub-14",
+  "version": "0.1.10",
   "description": "A simple ORM for node.js in Huaban.",
   "main": "index.js",
   "directories": {
     "test": "test"
   },
   "dependencies": {
-    "algorithmjs": "~0.0.2",
-    "memcached": "git+https://github.com/XadillaX/node-memcached.git#90caa38",
+    "algorithmjs": "~0.0.3",
     "async": "~0.9.0",
-    "mysql": "~2.5.0",
-    "sugar": "~1.4.1",
-    "scarlet-task": "~0.1.0"
+    "fbbk-json": "0.0.6",
+    "memcached": "git+https://github.com/XadillaX/node-memcached.git#ad50232",
+    "mysql": "~2.5.4",
+    "scarlet-task": "~0.1.0-comment",
+    "sugar": "~1.4.1"
   },
   "devDependencies": {
-      "chinese-random-skill": "~0.0.3-rdm",
-      "cliparoo": "~1.0.0",
-      "moment": "~2.8.3"
+    "chinese-random-skill": "~0.0.3-rdm",
+    "cliparoo": "~1.0.0",
+    "coveralls": "^2.11.2",
+    "istanbul": "^0.3.5",
+    "mocha": "~2.0.1",
+    "moment": "~2.8.3",
+    "should": "~4.3.0"
   },
   "scripts": {
-    "test": "node test/memcached.js"
+    "test": "NODE_ENV=test mocha"
   },
   "repository": {
     "type": "git",
@@ -31,11 +36,13 @@
     "MySQL",
     "Memcached"
   ],
-  "author": "XadillaX",
+  "author": [
+    "XadillaX",
+    "lucifer4he"
+  ],
   "license": "GPLv2",
   "bugs": {
     "url": "https://github.com/XadillaX/Toshihiko/issues"
   },
   "homepage": "https://github.com/XadillaX/Toshihiko"
 }
-
