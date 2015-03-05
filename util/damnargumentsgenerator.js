@@ -12,7 +12,10 @@
     function genCall(count) {
         var text = "callback(";
         for(var i = 0; i < count; i++) {
-            if(i !== 0) text += ", ";
+            if(i !== 0) {
+                text += ", ";
+            }
+
             text += "args[" + i + "]";
         }
         text += ");";
