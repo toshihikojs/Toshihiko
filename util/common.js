@@ -26,7 +26,9 @@ exports.orderStringToObject = function(order) {
         }
 
         _order[1] = _order[1].toUpperCase();
-        if(_order[1] !== "ASC" && _order[1] !== "DESC") return undefined;
+        if(_order[1] !== "ASC" && _order[1] !== "DESC") {
+            return undefined;
+        }
 
         var res = {};
         res[_order[0]] = _order[1];

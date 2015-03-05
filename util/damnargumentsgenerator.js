@@ -20,8 +20,12 @@
     }
     
     for(var i = 0; i <= 100; i++) {
-        if(i !== 0) text += " else ";
-        else text += "    ";
+        if(i !== 0) {
+            text += " else ";
+        } else {
+            text += "    ";
+        }
+
         text += "if(args.length === " + i + ") {\n";
         text += "        if(async) {\n";
         text += "            process.nextTick(function(){\n";
