@@ -34,9 +34,9 @@ describe("model", function () {
         toshihiko.execute("DROP TABLE `test`;", done);
     });
     describe("insert", function () {
-        it("insert 50 row", function (done) {
+        it("insert 10 row", function (done) {
             var arr = [];
-            var i = 50;
+            var i = 10;
             while(i--) arr.push(i);
             async.series(arr.map(function (it) {
                 return function (cb) {
@@ -60,16 +60,16 @@ describe("model", function () {
     });
     describe("query", function () {
         it("limit", function (done) {
-            Model.limit("0,30").find(function (err,data) {
+            Model.limit("0,5").find(function (err,data) {
                 should(err).not.be.ok;
-                data.length.should.eql(30);
+                data.length.should.eql(5);
                 done();
             },true);
         });
         it("count", function (done) {
             Model.count(function(err, count) {
                 should(err).not.be.ok;
-                count.should.eql(50);
+                count.should.eql(10);
                 done();
             });
         });
@@ -81,7 +81,7 @@ describe("model", function () {
             },true)
         });
         it("find", function (done) {
-            Model.where({key1:{$gt:48}}).find(function (err,data) {
+            Model.where({key1:{$gt:8}}).find(function (err,data) {
                 should(err).not.be.ok;
                 data.length.should.eql(2);
                 data.forEach(function (it) {
@@ -95,7 +95,7 @@ describe("model", function () {
                 should(err).not.be.ok;
                 data.should.be.Array;
                 data.forEach(function (it,i) {
-                    if(i!== 50 - 1) it.should.hasOwnProperty("key1").above(data[i+1].key1);
+                    if(i!== 10 - 1) it.should.hasOwnProperty("key1").above(data[i+1].key1);
                 });
                 done();
             },true);
