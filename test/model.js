@@ -23,7 +23,7 @@ describe("model", function () {
             { name: "key1", column: "id", primaryKey: true, type: T.Type.Integer },
             { name: "key2", type: T.Type.Float, defaultValue: 0.44, validators: [
                 function(v) {
-                    if(v > 100) return "`key4` can't be greater than 100";
+                    if(v > 100) return "`key2` can't be greater than 100";
                 }]
             },
             { name: "key3", type: T.Type.Json, defaultValue: {} },
@@ -38,7 +38,7 @@ describe("model", function () {
             var arr = [];
             var i = 10;
             while(i--) arr.push(i);
-            async.series(arr.map(function (it) {
+            async.parallel(arr.map(function (it) {
                 return function (cb) {
                     var yukari = Model.build({
                         key2    : it+0.1,
@@ -108,4 +108,26 @@ describe("model", function () {
             });
         });
     });
+    describe("update", function () {
+        it("update", function (done) {
+            var n_data = {
+                key2    : 1,
+                key3    : {"it":1},
+                key4    : "new data"
+            };
+            Model.where({key1:1}).update(n_data,function (err,data) {
+                should(err).not.be.ok;
+                done()
+            },true)
+        });
+    });
+    describe("delete", function () {
+        it("delete", function (done) {
+            Model.where({key1:1}).delete(function (err,data) {
+                should(err).not.be.ok;
+                done()
+            },true)
+        });
+    });
+
 });
