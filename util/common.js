@@ -21,7 +21,9 @@ exports.orderArrayToObject = function(order) {
 exports.orderStringToObject = function(order) {
     var array = order.split(",").compact().map(function(_order) {
         _order = _order.trim().split(" ").compact();
-        if(_order.length !== 2) return undefined;
+        if(_order.length !== 2) {
+            return undefined;
+        }
 
         _order[1] = _order[1].toUpperCase();
         if(_order[1] !== "ASC" && _order[1] !== "DESC") return undefined;

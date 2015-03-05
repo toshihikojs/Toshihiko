@@ -41,7 +41,10 @@
     console.log("\nGenerated.");
     
     clipboard(text, function(err) {
-        if(err) return console.log(err);
+        if(err) {
+            return console.log(err);
+        }
+
         console.log("Use your clipboard to paste code.");
     });
 })();
