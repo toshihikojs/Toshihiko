@@ -25,7 +25,7 @@
     "should": "~4.3.0"
   },
   "scripts": {
-    "test": "NODE_ENV=test mocha"
+    "test": "NODE_ENV=test mocha -t 30000"
   },
   "repository": {
     "type": "git",
@@ -38,7 +38,7 @@
   ],
   "author": [
     "XadillaX",
-    "lucifer4he"
+    "luicfer"
   ],
   "license": "GPLv2",
   "bugs": {
