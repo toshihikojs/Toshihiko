@@ -46,3 +46,18 @@ exports.orderStringToObject = function(order) {
     return result;
 };
 
+var STRIP_COMMENTS = /((\/\/.*$)|(\/\*[\s\S]*?\*\/))/mg;
+var ARGUMENT_NAMES = /([^\s,]+)/g;
+
+/**
+ * get param names for a function
+ * @param {Function} func the function which will be parsed
+ * @return {Array} the param names
+ */
+exports.getParamNames = function(func) {
+  var fnStr = func.toString().replace(STRIP_COMMENTS, "");
+  var result = fnStr.slice(fnStr.indexOf("(") + 1, fnStr.indexOf(")")).match(ARGUMENT_NAMES);
+  if(result === null) result = [];
+  return result;
+};
+
