@@ -30,8 +30,7 @@ var toshihiko = new T.Toshihiko(database, username, password, options);
 
 + `host`: hostname or IP of MySQL. Defaults to `localhost`.
 + `port`: port of MySQL. Defaults to `3306`.
-+ `memcached`: if you want to memcached support, let it be an `Memcached` object which will be mentioned below. Defaults
-  to undefined.
++ `cache`: if you want to cache support, let it be an cache layer object or cache layer configuration which will be mentioned below. Defaults to undefined.
 + etc... (All options in module [mysql](https://www.npmjs.org/package/mysql#pool-options) will be OK)
 
 #### Cache
