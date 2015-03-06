@@ -12,7 +12,10 @@
     function genCall(count) {
         var text = "callback(";
         for(var i = 0; i < count; i++) {
-            if(i !== 0) text += ", ";
+            if(i !== 0) {
+                text += ", ";
+            }
+
             text += "args[" + i + "]";
         }
         text += ");";
@@ -20,8 +23,12 @@
     }
     
     for(var i = 0; i <= 100; i++) {
-        if(i !== 0) text += " else ";
-        else text += "    ";
+        if(i !== 0) {
+            text += " else ";
+        } else {
+            text += "    ";
+        }
+
         text += "if(args.length === " + i + ") {\n";
         text += "        if(async) {\n";
         text += "            process.nextTick(function(){\n";
@@ -41,7 +48,10 @@
     console.log("\nGenerated.");
     
     clipboard(text, function(err) {
-        if(err) return console.log(err);
+        if(err) {
+            return console.log(err);
+        }
+
         console.log("Use your clipboard to paste code.");
     });
 })();

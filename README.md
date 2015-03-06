@@ -30,73 +30,43 @@ var toshihiko = new T.Toshihiko(database, username, password, options);
 
 + `host`: hostname or IP of MySQL. Defaults to `localhost`.
 + `port`: port of MySQL. Defaults to `3306`.
-+ `memcached`: if you want to memcached support, let it be an `Memcached` object which will be mentioned below. Defaults
-  to undefined.
++ `cache`: if you want to cache support, let it be an cache layer object or cache layer configuration which will be mentioned below. Defaults to undefined.
 + etc... (All options in module [mysql](https://www.npmjs.org/package/mysql#pool-options) will be OK)
 
-#### Memcached
+#### Cache
 
-If you want to have memcached supported, you should create a `Memcached` object and then put it into options:
+Toshihiko now is using new cache layer! You can choose your cache layer by your self!
+
+Pass an object to `cache` of options like:
 
 ```javascript
-var Memcached = T.Memcached;
 var toshihiko = new T.Toshihiko(database, username, password, {
-    memcached   : new Memcached(servers, options);
+    cache: YOUR_CACHE_LAYER
 });
 ```
 
-> **Notice:** the `servers` and `options` parameters can be referenced at https://www.npmjs.org/package/memcached#setting-up-the-client.
->
-> And what's more, you can give a `prefix` in `options` to let your memcached for this Toshihiko has a certain prefix.
->
-> Eg.
->
-> ```javascript
-> new Memcached(servers, { prefix: "tshk_", ... });
-> ```
->
+The `YOUR_CACHE_LAYER` may be an instance of Toshihiko cache layer object like [toshihiko-memcacehd](https://github.com/XadillaX/Toshihiko-Memcached) (you can implement a cache layer by yourself).
 
-##### Customize Key Generate Function
+What's more, `YOUR_CACHE_LAYER` may be a configuration object which should include `name` or `path`.
 
-A new feature for memcached is that you can custom your memcached key generate function now!
-
-You may pass the function at the very beginning:
+For an example,
 
 ```javascript
-new Memcached(servers, { custormizeKey: function(db, table, keys) { return ...; } });
-```
-
-Another way is you can pass throw the function below:
-
-```javascript
-memcached.setCustomizeKeyFunc(function(db, table, keys) { return ...; });
-```
-
-You should pay attention to `db`, `table` and `keys` which stand for database name, table name, primary keys with their value.
-
-> `keys` maybe a single value (when `typeof keys !== "object"`); it maybe an object contains key-value pairs `key name -> value`.
->
-> Eg.
->
-> ```json
-> { userId: 12, boardId: 12 }
-> ```
-
-So here's an example customize function:
-
-```javascript
-function(db, table, keys) {
-    var base = this.prefix + db + "_" + table;
-    if(typeof keys !== "object") return base + ":" + keys;
-
-    for(var key in keys) {
-        base += ":";
-        base += key;
-        base += keys[key];
+var toshihiko = new T.Toshihiko(database, username, password, {
+    cache: {
+        name: "memcached",
+        servers: "...",
+        options: {}
     }
+});
+```
 
-    return base;
-}
+will search for package `toshihiko-memcached` and pass `servers`, `options` to create a `toshihiko-memcached` object. By default, Toshihiko support memcached as cache layer by using package [toshihiko-memcacehd](https://github.com/XadillaX/Toshihiko-Memcached).
+
+You can get the cache object in Toshihiko by getting the variable:
+
+```javascript
+var cache = toshihiko.cache;
 ```
 
 ### Define a Model
