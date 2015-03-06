@@ -1,11 +1,12 @@
 var should = require("should");
 var T = require("../");
 var async = require("async");
-var Memcached = T.Memcached;
 var toshihiko = new T.Toshihiko("myapp_test", "root", "", {
-    memcached: new Memcached(
-        [ "localhost:11211", "localhost:11213", "localhost:11212" ],
-        { prefix: "siyuezhazha_" })
+    cache : {
+        name: "memcached",
+        servers: [ "localhost:11211", "localhost:11212", "localhost:11213" ],
+        options: { prefix: "siyuezhazha_" }
+    }
 });
 
 var Model = null;
@@ -18,7 +19,6 @@ describe("model", function () {
             "`key4` varchar(200) NOT NULL DEFAULT ''," +
             "PRIMARY KEY (`id`)" +
             ") ENGINE=InnoDB DEFAULT CHARSET=utf8;";
-
         toshihiko.execute(sql, done);
     });
 
@@ -112,7 +112,7 @@ describe("model", function () {
                 data.should.be.Array;
                 data.forEach(function(it, i) {
                     if(i !== 10 - 1) it.should.hasOwnProperty("key1").above(data[i + 1].key1);
-                    it.$fromMemcached.should.be.true;
+                    it.$fromCache.should.be.true;
                 });
                 done();
             });
