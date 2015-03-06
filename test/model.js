@@ -125,6 +125,15 @@ describe("model", function () {
                 done();
             });
         });
+
+        it("inject", function(done) {
+            Model.where({ key1: "1) union select 1, user(), 3#" }).find(function(err, rows, sql) {
+                rows.length.should.be.eql(1);
+                rows[0].key1.should.be.eql(1);
+                sql.endsWith("(`id` = 1)").should.be.true;
+                done();
+            });
+        });
     });
 
     describe("update", function() {
