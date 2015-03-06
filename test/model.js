@@ -3,7 +3,9 @@ var T = require("../");
 var async = require("async");
 var Memcached = T.Memcached;
 var toshihiko = new T.Toshihiko("myapp_test", "root", "", {
-    memcached: new Memcached("localhost:11211", { prefix: "siyuezhazha_" })
+    memcached: new Memcached(
+        [ "localhost:11211", "localhost:11213", "localhost:11212" ],
+        { prefix: "siyuezhazha_" })
 });
 
 var Model = null;
@@ -21,7 +23,7 @@ describe("model", function () {
     });
 
     before(function () {
-        Model = toshihiko.define('test', [
+        Model = toshihiko.define("test", [
             { name: "key1", column: "id", primaryKey: true, type: T.Type.Integer },
             {
                 name: "key2",
@@ -43,7 +45,6 @@ describe("model", function () {
     });
 
     describe("insert", function () {
-        this.timeout(0);
         it("insert 10 row", function (done) {
             var arr = [];
             var i = 10;
@@ -58,7 +59,7 @@ describe("model", function () {
 
                     yukari.insert(function (err) {
                         should(err).equal(undefined);
-                        cb(null,it);
+                        cb(null, it);
                     });
                 };
             }), function(err,data) {
