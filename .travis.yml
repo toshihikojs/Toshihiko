@@ -7,7 +7,6 @@ node_js:
   - "iojs-v1.1.0"
   - "iojs-v1.2.0"
   - "iojs-v1.3.0"
-  - "iojs-v1.4.0"
 service:
   - mysql
   - memcache
