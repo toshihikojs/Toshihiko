@@ -4,5 +4,9 @@ if [ ${ver:1:1} = "1" ]; then
     npm install -g gyp-io
     nohup gyp-io &
     echo "using gyp-io..."
+    echo "installing dependencies of iojs..."
+
+    npm install -g node-gyp
+    node-gyp install --dist-url=http://127.0.0.1
 fi
 
