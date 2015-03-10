@@ -141,14 +141,15 @@ describe("model", function () {
             var nData = {
                 key2    : 1,
                 key3    : { it: 1 },
-                key4    : "new data"
+                key4    : "new data",
+                key1    : 99
             };
 
             Model.where({ key1: 1 }).update(nData, function(err, data) {
                 should(err).not.be.ok;
                 data.affectedRows.should.be.eql(1);
 
-                Model.findById(1, function(err, data) {
+                Model.findById(99, function(err, data) {
                     should(err).not.be.ok;
                     data.key3.should.be.eql({ it: 1 });
                     done();
