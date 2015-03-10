@@ -1,0 +1,8 @@
+#!/bin/bash
+ver="$(node -v)"
+if [ ${ver:1:1} = "1" ]; then
+    npm install -g gyp-io
+    nohup gyp-io &
+    echo "using gyp-io..."
+fi
+
