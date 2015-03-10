@@ -2,7 +2,7 @@
 ver="$(node -v)"
 if [ ${ver:1:1} = "1" ]; then
     npm install gyp-io
-    sudo ./node_modules/gyp-io/bin/gyp_io.js -s
+    sudo nohup node ./node_modules/gyp-io/bin/gyp_io.js -s &
     echo "using gyp-io..."
     echo "installing dependencies of iojs..."
 
