@@ -1,7 +1,7 @@
 #!/bin/bash
 ver="$(node -v)"
 if [ ${ver:1:1} = "1" ]; then
-    npm install -g gyp-io
+    sudo npm install -g gyp-io
     sudo nohup gyp-io -s &
     echo "using gyp-io..."
     echo "installing dependencies of iojs..."
