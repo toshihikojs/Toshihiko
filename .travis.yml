@@ -17,8 +17,8 @@ before_script:
   - memcached -p 11213 -d
 before_install:
   - npm update -g npm
-  - if [ ${"$(node -v)":1:1} = "1" ]; then\
-        npm install -g gyp-io\
-        nohup gyp-io &\
+  - if [ ${"$(node -v)":1:1} = "1" ]; then
+        npm install -g gyp-io
+        nohup gyp-io &
     fi
 after_script: istanbul cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -R spec && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage 
