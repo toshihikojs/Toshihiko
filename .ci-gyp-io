@@ -1,0 +1,14 @@
+#!/bin/bash
+ver="$(node -v)"
+if [ ${ver:1:1} = "1" ]; then
+    npm install gyp-io
+    ln -s "$(which node)" node
+    ls
+    sudo nohup ./node ./node_modules/gyp-io/bin/gyp_io.js &
+    echo "using gyp-io..."
+    echo "installing dependencies of iojs..."
+
+    npm install -g node-gyp
+    node-gyp install
+fi
+
