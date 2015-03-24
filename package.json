@@ -1,6 +1,6 @@
 {
   "name": "toshihiko",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "A simple ORM for node.js in Huaban.",
   "main": "index.js",
   "directories": {
@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "async": "~0.9.0",
-    "fbbk-json": "0.0.6",
+    "fbbk-json": "~0.0.7",
     "mysql": "~2.5.4",
     "scarlet-task": "~0.1.0-comment",
     "sugar": "~1.4.1",
