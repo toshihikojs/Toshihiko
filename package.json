@@ -1,27 +1,27 @@
 {
   "name": "toshihiko",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "A simple ORM for node.js in Huaban.",
   "main": "index.js",
   "directories": {
     "test": "test"
   },
   "dependencies": {
-    "async": "~0.9.0",
-    "fbbk-json": "~0.0.7",
-    "mysql": "~2.5.4",
-    "scarlet-task": "~0.1.0-comment",
-    "sugar": "~1.4.1",
-    "toshihiko-memcached": "~0.0.1"
+    "async": "^0.9.0",
+    "fbbk-json": "^0.0.7",
+    "mysql": "^2.6.1",
+    "scarlet-task": "^0.1.0-comment",
+    "sugar": "^1.4.1",
+    "toshihiko-memcached": "^0.0.1"
   },
   "devDependencies": {
-    "chinese-random-skill": "~0.0.3-rdm",
-    "cliparoo": "~1.0.0",
+    "chinese-random-skill": "^0.0.3-rdm",
+    "cliparoo": "^1.0.0",
     "coveralls": "^2.11.2",
     "istanbul": "^0.3.5",
-    "mocha": "~2.0.1",
-    "moment": "~2.8.3",
-    "should": "~4.3.0"
+    "mocha": "^2.0.1",
+    "moment": "^2.8.3",
+    "should": "^4.3.0"
   },
   "scripts": {
     "test": "NODE_ENV=test mocha -t 30000"
@@ -39,7 +39,7 @@
     "XadillaX",
     "luicfer"
   ],
-  "license": "GPLv2",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/XadillaX/Toshihiko/issues"
   },
