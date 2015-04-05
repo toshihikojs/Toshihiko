@@ -22,6 +22,7 @@ describe("issues", function () {
             "`key2` float NOT NULL," +
             "`key3` varchar(200) NOT NULL DEFAULT ''," +
             "`key4` varchar(200) NOT NULL DEFAULT ''," +
+            "`index` int(11) NOT NULL DEFAULT 1," +
             "PRIMARY KEY (`id`)" +
             ") ENGINE=InnoDB DEFAULT CHARSET=utf8;";
         toshihiko.execute(sql, done);
@@ -41,7 +42,8 @@ describe("issues", function () {
                 ]
             },
             { name: "key3", type: T.Type.Json, defaultValue: {} },
-            { name: "key4", type: T.Type.String, defaultValue:"Ha!"}
+            { name: "key4", type: T.Type.String, defaultValue:"Ha!"},
+            { name: "key5", column: "index", type: T.Type.Integer }
         ]);
     });
 
@@ -50,11 +52,12 @@ describe("issues", function () {
     });
 
     describe("transform", function () {
-        it("should fix #17, 转义是导致存储对象错误", function (done) {
+        it("should fix #17, 转义是导致存储对象错误", function(done) {
             Model.build({
                 key2: 1.0,
                 key3: "<?xml />",
-                key4: "###"
+                key4: "###",
+                key5: 1
             }).save(function(err, res) {
                 (err instanceof Error).should.be.eql(false);
                 res.key3 = "<?html />";
@@ -64,6 +67,15 @@ describe("issues", function () {
 
                     done();
                 });
+            });
+        });
+
+        it("should fix #18, 列名为关键字时 `order by` 的 SQL 生成错误", function(done) {
+            Model.orderBy({ key5: 1 }).find(function(err, res) {
+                (err instanceof Error).should.be.eql(false);
+                res.length.should.be.eql(1);
+                res[0].key5.should.be.eql(1);
+                done();
             });
         });
     });
