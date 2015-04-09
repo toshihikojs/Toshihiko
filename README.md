@@ -451,7 +451,7 @@ You can refers to [lib/fieldType/json.js](lib/fieldType/json.js) to get more inf
 
 ## Contribute
 
-You're welcome to pull requests!
+You're welcome to make pull requests!
 
 Thanks to:
 
