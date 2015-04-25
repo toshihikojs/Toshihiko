@@ -77,7 +77,7 @@ describe("yukari", function () {
         }).catch(done);
     });
     it("#save",function (done){
-        yukari.key2 = 3;
+        yukari.key2 = 4;
         yukari.save().$promise().then(function (data) {
             data.should.eql(yukari);
             done();
