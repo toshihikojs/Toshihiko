@@ -51,7 +51,8 @@ describe("yukari", function () {
     beforeEach(function (done) {
         Model.findOne().$promise().then(function (data) {
             yukari = data;
-        }).catch(done).finally(done);
+            done();
+        }).catch(done);
     });
 
     after(function(done) {
@@ -65,24 +66,28 @@ describe("yukari", function () {
         });
         yukari.insert().$promise().then(function (data) {
             data.should.eql(yukari);
-        }).catch(done).finally(done);
+            done();
+        }).catch(done);
     });
     it("#update",function (done){
         yukari.key2 = 3;
         yukari.update().$promise().then(function (data) {
             data.should.eql(yukari);
+            done();
         }).catch(done).finally(done);
     });
     it("#save",function (done){
         yukari.key2 = 3;
         yukari.save().$promise().then(function (data) {
             data.should.eql(yukari);
-        }).catch(done).finally(done);
+            done();
+        }).catch(done);
     });
     it("#delete",function (done){
         yukari.delete().$promise().then(function (data) {
             data.should.eql(1);
-        }).catch(done).finally(done);
+            done();
+        }).catch(done);
     });
 });
 
