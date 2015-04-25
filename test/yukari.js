@@ -23,7 +23,7 @@ describe("yukari", function () {
         toshihiko.execute(sql, done);
     });
 
-    before(function () {
+    before(function (done) {
         Model = toshihiko.define("test", [
             { name: "key1", column: "id", primaryKey: true, type: T.Type.Integer },
             {
