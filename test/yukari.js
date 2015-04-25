@@ -48,7 +48,7 @@ describe("yukari", function () {
         yukari.insert().$promise().catch(done).finally(done);
     });
 
-    beforeEach(function () {
+    beforeEach(function (done) {
         Model.findOne().$promise().then(function (data) {
             yukari = data;
         }).catch(done).finally(done);
