@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "async": "^0.9.0",
+    "bluebird": "^2.9.24",
     "fbbk-json": "^0.0.7",
     "mysql": "^2.6.1",
     "scarlet-task": "^0.1.0-comment",
@@ -45,4 +46,3 @@
   },
   "homepage": "https://github.com/XadillaX/Toshihiko"
 }
-
