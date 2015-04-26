@@ -342,6 +342,14 @@ var Q = foo.find();
 Q.finished(function(err, result) { /** ... */ });
 ```
 
+##### True Promise Object
+
+You may use `$promise` to get a `BlueBird` promise object after querying.
+
+```javascript
+foo.find().$promise.then(callback).catch(callback);
+```
+
 ### Yukari Object
 
 Yukari object is the data entity object.
