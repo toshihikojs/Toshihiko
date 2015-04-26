@@ -1,6 +1,5 @@
-var should = require("should");
+require("should");
 var T = require("../");
-var async = require("async");
 var toshihiko = new T.Toshihiko("myapp_test", "root", "", {
     cache : {
         name: "memcached",
@@ -45,11 +44,11 @@ describe("yukari", function () {
             key3    : { "2": 2.1 },
             key4    : "哈哈"
         });
-        yukari.insert().$promise().catch(done).finally(done);
+        yukari.insert().$promise.catch(done).finally(done);
     });
 
     beforeEach(function (done) {
-        Model.findOne().$promise().then(function (data) {
+        Model.findOne().$promise.then(function (data) {
             yukari = data;
             done();
         }).catch(done);
@@ -64,27 +63,27 @@ describe("yukari", function () {
             key3    : { "2": 2 },
             key4    : "哈哈"
         });
-        yukari.insert().$promise().then(function (data) {
+        yukari.insert().$promise.then(function (data) {
             data.should.eql(yukari);
             done();
         }).catch(done);
     });
     it("#update",function (done){
         yukari.key2 = 3;
-        yukari.update().$promise().then(function (data) {
+        yukari.update().$promise.then(function (data) {
             data.should.eql(yukari);
             done();
         }).catch(done);
     });
     it("#save",function (done){
         yukari.key2 = 4;
-        yukari.save().$promise().then(function (data) {
+        yukari.save().$promise.then(function (data) {
             data.should.eql(yukari);
             done();
         }).catch(done);
     });
     it("#delete",function (done){
-        yukari.delete().$promise().then(function (data) {
+        yukari.delete().$promise.then(function (data) {
             data.should.eql(1);
             done();
         }).catch(done);
