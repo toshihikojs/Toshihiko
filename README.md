@@ -5,7 +5,7 @@
 
 [![Join the chat at https://gitter.im/XadillaX/Toshihiko](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/XadillaX/Toshihiko?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-A simple ORM for node.js in Huaban, Dasouche and Sohu with :heart:. For performance, this ORM does not provide operations like `in`, `group by`, `join`
+A simple ORM for node.js in [Huaban](http://huaban.com/), Dasouche and Sohu with :heart:. For performance, this ORM does not provide operations like `in`, `group by`, `join`
 and so on.
 
 [![Toshihiko](https://nodei.co/npm/toshihiko.png?downloads=true&downloadRank=true)](https://www.npmjs.org/package/toshihiko) [![Toshihiko](https://nodei.co/npm-dl/toshihiko.png?months=6&height=3)](https://nodei.co/npm-dl/toshihiko.png?months=6&height=3)
