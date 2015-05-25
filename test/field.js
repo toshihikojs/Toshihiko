@@ -135,6 +135,13 @@ describe("Field",function () {
                 String.equal('123','1234').should.be.false;
             });
         });
+
+        describe("#zero", function() {
+            it("should be \"0\"", function() {
+                String.restore(0).should.be.eql("0");
+                String.parse(0).should.be.eql("0");
+            });
+        });
     });
     describe("Json type", function () {
         var json  = field.Json;
