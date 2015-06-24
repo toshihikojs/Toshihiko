@@ -1,6 +1,11 @@
 # Toshihiko
 
-[![Toshihiko](http://img.shields.io/npm/v/toshihiko.svg)](https://www.npmjs.org/package/toshihiko) [![Toshihiko](http://img.shields.io/npm/dm/toshihiko.svg)](https://www.npmjs.org/package/toshihiko) [![Build Status](https://travis-ci.org/XadillaX/Toshihiko.svg?branch=develop)](https://travis-ci.org/XadillaX/Toshihiko) [![Coverage Status](https://img.shields.io/coveralls/XadillaX/Toshihiko/develop.svg)](https://coveralls.io/r/XadillaX/Toshihiko?branch=develop) [![Code Quality](https://img.shields.io/codacy/7c707792fa4f4f0ba8937dfb5d394bc3.svg?style=flat)](https://www.codacy.com/public/i_2/Toshihiko/dashboard) [![License](https://img.shields.io/npm/l/toshihiko.svg?style=flat)](https://www.npmjs.org/package/toshihiko)
+[![Toshihiko](http://img.shields.io/npm/v/toshihiko.svg)](https://www.npmjs.org/package/toshihiko)
+[![Toshihiko](http://img.shields.io/npm/dm/toshihiko.svg)](https://www.npmjs.org/package/toshihiko)
+[![Build Status](https://travis-ci.org/XadillaX/Toshihiko.svg?branch=develop)](https://travis-ci.org/XadillaX/Toshihiko)
+[![Coverage Status](https://img.shields.io/coveralls/XadillaX/Toshihiko/develop.svg)](https://coveralls.io/r/XadillaX/Toshihiko?branch=develop)
+[![Code Quality](https://img.shields.io/codacy/7c707792fa4f4f0ba8937dfb5d394bc3.svg?style=flat)](https://www.codacy.com/public/i_2/Toshihiko/dashboard)
+[![License](https://img.shields.io/npm/l/toshihiko.svg?style=flat)](https://www.npmjs.org/package/toshihiko)
 [![Dependency Status](https://david-dm.org/XadillaX/Toshihiko.svg)](https://david-dm.org/XadillaX/Toshihiko)
 
 [![Join the chat at https://gitter.im/XadillaX/Toshihiko](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/XadillaX/Toshihiko?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
