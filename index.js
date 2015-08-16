@@ -7,4 +7,3 @@
 exports.Toshihiko = require("./lib/toshihiko");
 exports.Type = require("./lib/fieldType");
 exports.Memcached = require("toshihiko-memcached");
-
