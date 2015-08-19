@@ -13,7 +13,7 @@
     "mysql": "^2.6.1",
     "scarlet-task": "^0.1.0-comment",
     "sugar": "^1.4.1",
-    "toshihiko-memcached": "^0.0.2"
+    "toshihiko-memcached": "^0.0.3"
   },
   "devDependencies": {
     "chinese-random-skill": "^0.0.3-rdm",
