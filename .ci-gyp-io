@@ -11,4 +11,3 @@ if [ ${ver:1:1} = "1" ]; then
     npm install -g node-gyp
     node-gyp install
 fi
-
