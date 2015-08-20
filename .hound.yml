@@ -1,4 +1,4 @@
-java_script
+javascript:
   enabled: true
-  config_file: ./.hound/.jshint
-  ignore_file: ./.hound/.javascript_ignore
+  config_file: .hound/.jshint.json
+  ignore_file: .hound/.javascript_ignore
