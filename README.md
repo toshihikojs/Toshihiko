@@ -107,8 +107,8 @@ Model.sayHello = function() {
 };
 ```
 
-> `options` is optional. You can specify `Memcached` here if you haven't defined it in `Toshihiko`. Otherwise, you can let
-> it be `null` when you don't want to use `Memcached` in this `Model` but you had specify it in `Toshihiko`.
+> `options` is optional. You can specify `cache` here if you haven't defined it in `Toshihiko`. Otherwise, you can let
+> it be `null` when you don't want to use `cache` in this `Model` but you had specify it in `Toshihiko`.
 
 ### Query & Update
 
