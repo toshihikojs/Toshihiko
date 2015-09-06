@@ -1,6 +1,6 @@
 {
   "name": "toshihiko",
-  "version": "0.4.0-unstable",
+  "version": "0.4.1",
   "description": "A simple ORM for node.js in Huaban.",
   "main": "index.js",
   "directories": {
