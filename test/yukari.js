@@ -89,4 +89,3 @@ describe("yukari", function () {
         }).catch(done);
     });
 });
-
