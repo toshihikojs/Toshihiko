@@ -129,6 +129,8 @@ Model.where(condition).update(data, callback);
 + `$and`
 + `$or`
 
+**or `condition` can be an array that includes object mentioned above.** (New feature since v0.4.1)
+
 ##### Field Name
 
 ###### Value
