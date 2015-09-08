@@ -1,5 +1,6 @@
 var field = require("../lib/fieldType");
 require("should");
+
 describe("Field",function () {
     describe("float type", function () {
         var float = field.Float;
@@ -169,4 +170,3 @@ describe("Field",function () {
         });
     });
 });
-
