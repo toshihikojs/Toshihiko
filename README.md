@@ -11,8 +11,7 @@
 [![Join the chat at https://gitter.im/XadillaX/Toshihiko](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/XadillaX/Toshihiko?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Star at GitHub](https://img.shields.io/github/stars/XadillaX/toshihiko.svg?style=social&label=Star)](https://github.com/xadillax/toshihiko)
 
-A simple ORM for node.js in [Huaban](http://huaban.com/), [Dasouche](http://www.souche.com/) and Sohu with :heart:. For performance, this ORM does not provide operations like `in`, `group by`, `join`
-and so on.
+A simple ORM for node.js in [Huaban](http://huaban.com/), [Dasouche](http://www.souche.com/) and Sohu with :heart:. For performance, this ORM does not provide operations like ~~`in`~~, `group by`, `join` and so on. (for some reason, we have to support `in` operation)
 
 ## Installation
 
@@ -144,14 +143,15 @@ For field name, the value can be a certain value. Eg:
 
 ###### Operators
 
-The value can be a JSON object with comparison operators `$eq` / `===`, `$neq` / `!==`, `$gt(e)` / `>(=)`, `$lt(e)` / `<(=)`, `$like`.
+The value can be a JSON object with comparison operators `$eq` / `===`, `$neq` / `!==`, `$gt(e)` / `>(=)`, `$lt(e)` / `<(=)`, `$like`, `$in`.
 
 Eg:
 
 ```javascript
 {
     keys1: {
-        $neq: value
+        $neq: value,
+        $in: [ value ]
     }
 }
 ```
