@@ -31,6 +31,21 @@ describe("query object", function () {
     });
 
     describe("generate sql", function() {
+        it("should generate a query include IN and LIKE", function() {
+            var sql = Model.where({
+                key4: {
+                    $or: {
+                        $in: [ "1", "2", "3" ],
+                        $like: "%132%"
+                    }
+                }
+            }).makeSQL("find");
+
+            var answer = "SELECT `id`, `key2`, `key3`, `key4` FROM `test` WHERE (((`key4` IN (\"1\", \"2\", \"3\") OR `key4` LIKE \"%132%\")))";
+
+            answer.should.be.eql(sql);
+        });
+
         it("should generate a query from the order of the array", function() {
             var sql = Model.where([
                 { key2: { $gt: 0.1 } },
@@ -58,6 +73,5 @@ describe("query object", function () {
 
             answer.should.be.eql(sql);
         });
-
     });
 });
