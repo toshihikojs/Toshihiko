@@ -38,10 +38,11 @@ describe("query object", function () {
                         $in: [ "1", "2", "3" ],
                         $like: "%132%"
                     }
-                }
+                },
+                key1: { $in: [ 1, 2, 3 ] }
             }).makeSQL("find");
 
-            var answer = "SELECT `id`, `key2`, `key3`, `key4` FROM `test` WHERE (((`key4` IN (\"1\", \"2\", \"3\") OR `key4` LIKE \"%132%\")))";
+            var answer = "SELECT `id`, `key2`, `key3`, `key4` FROM `test` WHERE (((`key4` IN (\"1\", \"2\", \"3\") OR `key4` LIKE \"%132%\")) AND (`id` IN (1, 2, 3)))";
 
             answer.should.be.eql(sql);
         });
