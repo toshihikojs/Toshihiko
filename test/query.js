@@ -24,13 +24,31 @@ describe("query object", function () {
                 ]
             },
             { name: "key3", type: T.Type.Json, defaultValue: {} },
-            { name: "key4", type: T.Type.String, defaultValue:"Ha!"}
+            { name: "key4", type: T.Type.String, defaultValue:"Ha!", allowNull: true }
         ]);
 
         done();
     });
 
     describe("generate sql", function() {
+        it("should generate a query that support NULL", function() {
+            var sql = Model.where({
+                key1: {
+                    $or: {
+                        $eq: null,
+                        $neq: null
+                    }
+                },
+                key2: null,
+                key4: {
+                    $neq: null
+                }
+            }).makeSQL("find");
+
+            var answer = "SELECT `id`, `key2`, `key3`, `key4` FROM `test` WHERE (((`id` IS NULL OR `id` IS NOT NULL)) AND `key2` IS NULL AND (`key4` IS NOT NULL))";
+            answer.should.be.eql(sql);
+        });
+
         it("should generate a query include IN and LIKE", function() {
             var sql = Model.where({
                 key4: {
