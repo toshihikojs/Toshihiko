@@ -88,4 +88,18 @@ describe("yukari", function () {
             done();
         }).catch(done);
     });
+   
+    it("#toJSON", function() {
+        var SecondModel = toshihiko.define("x", [
+            { name: "date", type: T.Type.Datetime }
+        ]);
+
+        var youkari = SecondModel.build({
+            date: new Date("2015-09-16T17:10:45.754+08:00")
+        });
+
+        youkari.toJSON().should.be.eql({
+            date: "2015-09-16T17:10:45.754+08:00"
+        });
+    });
 });
