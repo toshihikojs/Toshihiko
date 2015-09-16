@@ -1,6 +1,6 @@
 {
   "name": "toshihiko",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "A simple ORM for node.js in Huaban.",
   "main": "index.js",
   "directories": {
@@ -14,7 +14,7 @@
     "mysql2": "^0.15.8",
     "scarlet-task": "^0.1.0-comment",
     "sugar": "^1.4.1",
-    "toshihiko-memcached": "^0.0.3"
+    "toshihiko-memcached": "^0.0.4"
   },
   "devDependencies": {
     "chinese-random-skill": "^0.0.3-rdm",
