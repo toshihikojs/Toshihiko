@@ -99,7 +99,7 @@ describe("yukari", function () {
         });
 
         youkari.toJSON().should.be.eql({
-            date: "2015-09-16T17:10:45.754+08:00"
+            date: new Date("2015-09-16T17:10:45.754+08:00").format("{yyyy}-{MM}-{dd}T{HH}:{mm}:{ss}.{fff}{isotz}")
         });
     });
 });
