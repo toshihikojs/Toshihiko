@@ -1,7 +1,7 @@
 {
   "name": "toshihiko",
-  "version": "0.5.2",
-  "description": "A simple ORM for node.js in Huaban.",
+  "version": "0.5.3",
+  "description": "A simple ORM for node.js in Souche.",
   "main": "index.js",
   "directories": {
     "test": "test"
@@ -37,8 +37,9 @@
     "Memcached"
   ],
   "author": [
-    "XadillaX",
-    "luicfer"
+    "XadillaX <i@2333.moe>",
+    "luicfer <lucifer4he@gmail.com>",
+    "lfeng <fengpingan@souche.com>"
   ],
   "license": "MIT",
   "bugs": {
