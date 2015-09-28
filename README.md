@@ -13,7 +13,7 @@
 
 [![NPM](https://nodei.co/npm/toshihiko.png?downloads=true&downloadRank=true)](https://nodei.co/npm/toshihiko/) [![NPM](https://nodei.co/npm-dl/toshihiko.png?months=6&height=3)](https://nodei.co/npm/toshihiko/)
 
-A simple ORM for node.js in [Huaban](http://huaban.com/), [Dasouche](http://www.souche.com/) and Sohu with :heart:. For performance, this ORM does not provide operations like ~~`in`~~, `group by`, `join` and so on. (for some reason, we have to support `in` operation)
+A simple ORM for node.js in [Huaban](http://huaban.com/), [Souche](http://www.souche.com/) and Sohu with :heart:. For performance, this ORM does not provide operations like ~~`in`~~, `group by`, `join` and so on. (for some reason, we have to support `in` operation)
 
 ## Installation
 

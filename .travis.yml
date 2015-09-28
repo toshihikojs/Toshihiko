@@ -3,9 +3,7 @@ node_js:
   - "0.10"
   - "0.11"
   - "0.12"
-  - "iojs-v1.0.3"
-  - "iojs-v2.5.0"
-  - "iojs-v3.0.0"
+  - "4.1"
 service:
   - mysql
   - memcache
