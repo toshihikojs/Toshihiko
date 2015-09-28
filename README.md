@@ -11,6 +11,8 @@
 [![Join the chat at https://gitter.im/XadillaX/Toshihiko](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/XadillaX/Toshihiko?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Star at GitHub](https://img.shields.io/github/stars/XadillaX/toshihiko.svg?style=social&label=Star)](https://github.com/xadillax/toshihiko)
 
+[![NPM](https://nodei.co/npm/toshihiko.png?downloads=true&downloadRank=true)](https://nodei.co/npm/toshihiko/) [![NPM](https://nodei.co/npm-dl/toshihiko.png?months=6&height=3)](https://nodei.co/npm/toshihiko/)
+
 A simple ORM for node.js in [Huaban](http://huaban.com/), [Dasouche](http://www.souche.com/) and Sohu with :heart:. For performance, this ORM does not provide operations like ~~`in`~~, `group by`, `join` and so on. (for some reason, we have to support `in` operation)
 
 ## Installation
