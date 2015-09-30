@@ -93,4 +93,42 @@ describe("query object", function () {
             answer.should.be.eql(sql);
         });
     });
+
+    it("should generate a query without error (feime posts)", function() {
+        var Model = toshihiko.define("posts", [
+            { name: "postId", type: T.Type.Integer, primaryKey: true },
+            { name: "userId", type: T.Type.Integer },
+            { name: "sex", type: T.Type.String, defaultValue: "female" },
+            { name: "area", type: T.Type.String },
+            { name: "smallIndustry", type: T.Type.String },
+            { name: "bigIndustry", type: T.Type.String },
+            { name: "content", type: T.Type.String },
+            { name: "imageId", type: T.Type.Integer, allowNull: true },
+            { name: "status", type: T.Type.Integer },
+            { name: "postedAt", type: T.Type.Integer },
+            { name: "endedAt", type: T.Type.Integer },
+            { name: "extra", type: T.Type.Json },
+            { name: "ups", type: T.Type.Integer },
+            { name: "downs", type: T.Type.Integer },
+            { name: "top", type: T.Type.Integer, defaultValue: 0 },
+            { name: "replies", type: T.Type.Integer, defaultValue: 0 }
+        ]);
+
+        var condition = { "$or": [
+            { status: 32, bigIndustry: "", smallIndustry: "" },
+            { status: 32, bigIndustry: "民航特业", smallIndustry: "" },
+            { status: {
+                $neq: [ 2, 4 ]
+            }, bigIndustry: "民航特业", smallIndustry: "空管" }
+        ]};
+
+        var sql = Model.where(condition).makeSQL("find");
+        var answer = "SELECT `postId`, `userId`, `sex`, `area`, `smallIndustry`, `bigIndustry`, `content`, `imageId`, " +
+            "`status`, `postedAt`, `endedAt`, `extra`, `ups`, `downs`, `top`, `replies` FROM `posts` WHERE (((" +
+            "`status` = 32 AND `bigIndustry` = \"\" AND `smallIndustry` = \"\") OR (`status` = 32 AND `bigIndustry` = " +
+            "\"民航特业\" AND `smallIndustry` = \"\") OR ((`status` != 2 AND `status` != 4) AND `bigIndustry` = " +
+            "\"民航特业\" AND `smallIndustry` = \"空管\")))";
+
+        answer.should.be.eql(sql);
+    });
 });
