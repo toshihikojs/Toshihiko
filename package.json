@@ -1,6 +1,6 @@
 {
   "name": "toshihiko",
-  "version": "0.5.4",
+  "version": "0.5.5",
   "description": "A simple ORM for node.js in Souche.",
   "main": "index.js",
   "directories": {
@@ -9,6 +9,7 @@
   "dependencies": {
     "async": "^1.2.1",
     "bluebird": "^2.9.24",
+    "colors": "^1.1.2",
     "fbbk-json": "^0.0.8",
     "moment": "^2.10.6",
     "mysql2": "^0.15.8",

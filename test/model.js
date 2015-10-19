@@ -90,7 +90,7 @@ describe("model", function () {
         it("findOne", function(done) {
             Model.where({ key1: 1 }).findOne(function(err, data) {
                 should(err).not.be.ok;
-                data.should.have.ownProperty('key1').eql(1);
+                data.should.have.ownProperty("key1").eql(1);
                 done();
             },true);
         });
