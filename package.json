@@ -14,7 +14,6 @@
     "moment": "^2.10.6",
     "mysql2": "^0.15.8",
     "scarlet-task": "^0.1.0-comment",
-    "sugar": "^1.4.1",
     "toshihiko-memcached": "^0.0.4"
   },
   "devDependencies": {
