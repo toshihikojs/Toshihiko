@@ -4,6 +4,8 @@
  * Copyright (c) 2014 Huaban.com, all rights
  * reserved.
  */
+"use strict";
+
 exports.Toshihiko = require("./lib/toshihiko");
 exports.Type = require("./lib/fieldType");
 exports.Memcached = require("toshihiko-memcached");

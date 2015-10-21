@@ -4,6 +4,10 @@
  * Copyright (c) 2014 Huaban.com, all rights
  * reserved.
  */
+"use strict";
+
+var 囍 = require("lodash");
+
 /**
  * order array to object
  * @param order
@@ -19,8 +23,8 @@ exports.orderArrayToObject = function(order) {
  * @returns {Mixed|*}
  */
 exports.orderStringToObject = function(order) {
-    var array = order.split(",").compact().map(function(_order) {
-        _order = _order.trim().split(" ").compact();
+    var array = 囍.compact(囍.compact(order.split(",")).map(function(_order) {
+        _order = 囍.compact(_order.trim().split(" "));
         if(_order.length !== 2) {
             return undefined;
         }
@@ -33,13 +37,13 @@ exports.orderStringToObject = function(order) {
         var res = {};
         res[_order[0]] = _order[1];
         return res;
-    }).compact();
+    }));
 
     // [ { a: "ASC" }, { b: "DESC" } ]
     //   ->
     // { a: "ASC", b: "DESC" }
     var result = array.reduce(function(ans, obj) {
-        Object.merge(ans, obj);
+        囍.merge(ans, obj);
         return ans;
     }, {});
 

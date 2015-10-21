@@ -4,12 +4,14 @@
  * Copyright (c) 2014 Huaban.com, all rights
  * reserved.
  */
+"use strict";
+
 var keywords = require("./sqlkeyword");
 
 function processQuote(sql, startIdx) {
     var start = sql[startIdx];
     for(var i = startIdx + 1; i < sql.length; i++) {
-        if(sql[i] === '\\') {
+        if(sql[i] === "\\") {
             i++;
             continue;
         }
@@ -61,7 +63,7 @@ exports.sqlNameToColumn = function(sql, map) {
     var current = "";
 
     for(var i = 0; i < sql.length; i++) {
-        if(sql[i] === '"' || sql[i] === '\'') {
+        if(sql[i] === "\"" || sql[i] === "'") {
             if(current) {
                 final += processFragment(current, map);
                 current = "";
@@ -72,19 +74,19 @@ exports.sqlNameToColumn = function(sql, map) {
 
             final += wrap;
             i = end;
-        } else if(sql[i] === ',') {
+        } else if(sql[i] === ",") {
             if(current) {
                 final += processFragment(current, map);
                 current = "";
             }
-            final += ',';
-        } else if(sql[i] === ' ') {
+            final += ",";
+        } else if(sql[i] === " ") {
             if(current) {
                 final += processFragment(current, map);
                 current = "";
             }
             final += " ";
-        } else if(sql[i] === '(') {
+        } else if(sql[i] === "(") {
             if(current) {
                 // current + '(',
                 //   eg: xxx(...
@@ -93,15 +95,15 @@ exports.sqlNameToColumn = function(sql, map) {
                 current = "";
             }
 
-            final += '(';
-        } else if(sql[i] === ')') {
+            final += "(";
+        } else if(sql[i] === ")") {
             if(current) {
                 final += processFragment(current, map);
                 current = "";
             }
 
-            final += ')';
-        } else if(sql[i] === '`') {
+            final += ")";
+        } else if(sql[i] === "`") {
             if(current) {
                 final += processFragment(current, map);
                 current = "";
@@ -109,15 +111,15 @@ exports.sqlNameToColumn = function(sql, map) {
 
             // the inner sql is certainly
             // a key or column name!
-            var next = sql.indexOf('`', i + 1);
+            var next = sql.indexOf("`", i + 1);
             if(-1 === next) {
                 var rest = sql.substr(i + 1);
-                final += '`' + processFragment(rest, map, true);
+                final += "`" + processFragment(rest, map, true);
                 break;
             }
 
             var fragment = sql.substring(i + 1, next);
-            final += '`' + processFragment(fragment, map, true) + '`';
+            final += "`" + processFragment(fragment, map, true) + "`";
             i = next;
         } else {
             current += sql[i];

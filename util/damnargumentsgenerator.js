@@ -4,6 +4,8 @@
  * Copyright (c) 2014 Huaban.com, all rights
  * reserved.
  */
+"use strict";
+
 /* istanbul ignore next */
 (function() {
     var clipboard = require("cliparoo");
