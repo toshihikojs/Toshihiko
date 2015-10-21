@@ -7,15 +7,15 @@
     "test": "test"
   },
   "dependencies": {
-    "async": "^1.2.1",
-    "bluebird": "^2.9.24",
+    "async": "^1.4.2",
+    "bluebird": "^2.10.2",
     "colors": "^1.1.2",
     "fbbk-json": "^0.0.8",
+    "lodash": "^3.10.1",
     "moment": "^2.10.6",
     "mysql2": "^0.15.8",
     "scarlet-task": "^0.1.0-comment",
-    "sugar": "^1.4.1",
-    "toshihiko-memcached": "^0.0.4"
+    "toshihiko-memcached": "^0.1.0"
   },
   "devDependencies": {
     "chinese-random-skill": "^0.0.3-rdm",

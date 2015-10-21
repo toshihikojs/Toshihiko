@@ -3,6 +3,8 @@
  * @using http://ideone.com/nPoBMJ
  * @type {string[]}
  */
+"use strict";
+
 module.exports = [
     "ADD",
     "ALL",

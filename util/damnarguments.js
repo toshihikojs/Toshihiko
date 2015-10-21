@@ -4,6 +4,8 @@
  * Copyright (c) 2014 Huaban.com, all rights
  * reserved.
  */
+"use strict";
+
 /**
  * 该死的根据不同参数个数，并且在不修改 callback 上下文（如果有的话）的情况下去调用 callback！
  * TODO: 有更好的解决办法一定要告诉我！
@@ -825,4 +827,3 @@ exports.call = function(args, callback, async) {
         throw(new Error("Arguments number limit exceeded."));
     }
 };
-
