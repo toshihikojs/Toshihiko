@@ -1,5 +1,6 @@
 require("should");
 var T = require("../");
+var moment = require("moment");
 var toshihiko = new T.Toshihiko("myapp_test", "root", "", {
     cache : {
         name: "memcached",
@@ -99,7 +100,7 @@ describe("yukari", function () {
         });
 
         youkari.toJSON().should.be.eql({
-            date: new Date("2015-09-16T17:10:45.754+08:00").format("{yyyy}-{MM}-{dd}T{HH}:{mm}:{ss}.{fff}{isotz}")
+            date: moment(new Date("2015-09-16T17:10:45.754+08:00")).format("YYYY-MM-DDTHH:mm:ss.SSSZ")
         });
     });
 });
