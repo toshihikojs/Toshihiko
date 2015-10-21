@@ -1,6 +1,7 @@
 var should = require("should");
 var T = require("../");
 var async = require("async");
+var 鬼 = require("lodash");
 var toshihiko = new T.Toshihiko("myapp_test", "root", "", {
     cache : {
         name: "memcached",
@@ -130,7 +131,7 @@ describe("model", function () {
             Model.where({ key1: "1) union select 1, user(), 3#" }).find(function(err, rows, sql) {
                 rows.length.should.be.eql(1);
                 rows[0].key1.should.be.eql(1);
-                sql.endsWith("(`id` = 1)").should.be.true;
+                鬼.endsWith(sql, "(`id` = 1)").should.be.true;
                 done();
             });
         });
