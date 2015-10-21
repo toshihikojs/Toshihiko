@@ -20,9 +20,5 @@ addons:
       - gcc-4.8
       - g++-4.8
       - clang
-before_script:
-  - mysql -e 'create database myapp_test;'
-  - memcached -p 11211 -d
-  - memcached -p 11212 -d
-  - memcached -p 11213 -d
-after_script: istanbul cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -R spec && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage 
+before_script: make before-test-travis
+after_script: make test-coveralls
