@@ -1,17 +1,18 @@
 language: node_js
 node_js:
   - "0.10"
-  - "0.11"
   - "0.12"
   - "4.1"
+
 service:
   - mysql
   - memcache
+
 install:
   - export CXX="g++-4.8" CXX="gcc-4.8"
-  - $CXX --version
   - npm install -g istanbul
   - npm install
+
 addons:
   apt:
     sources:
@@ -20,5 +21,9 @@ addons:
       - gcc-4.8
       - g++-4.8
       - clang
+
 before_script: make before-test-travis
+
 after_script: make test-coveralls
+
+sudo: false

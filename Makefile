@@ -19,10 +19,10 @@ before-test-travis: install
   		memcached -p 11213 -d
 
 test-coveralls: install
-	@NODE_ENV=test $(ISTANBUL) cover $(MOCHA) \
-		-t $(TIMEOUT) \
+	NODE_ENV=test $(ISTANBUL) cover $(MOCHA) \
 		--report lcovonly \
 		-- \
+		-t $(TIMEOUT) \
 		-R spec && cat ./coverage/lcov.info | \
 		\
 		$(COVERALLS) && rm -rf ./coverage 
