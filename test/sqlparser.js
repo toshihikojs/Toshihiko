@@ -111,5 +111,16 @@ describe("Some SQL Parser", function() {
             answer.should.be.eql("SELECT a FROM b WHERE calc(`d`) = `e`");
         });
 
+        it("should be SELECT a FROM b WHERE calc(`d`) = (`g`)`e``f`", function() {
+            var sql = "SELECT aa FROM b WHERE calc(`dd`) = (`gg`)`ee``ff`";
+            var answer = parser.sqlNameToColumn(sql, {
+                aa: "a",
+                dd: "d",
+                ee: "e",
+                ff: "f",
+                gg: "g"
+            });
+            answer.should.be.eql("SELECT a FROM b WHERE calc(`d`) = (`g`)`e``f`");
+        });
     });
 });
