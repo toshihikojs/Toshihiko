@@ -130,10 +130,10 @@ describe("Field",function () {
                 String.equal("123",123).should.be.true;
             });
             it("should return false", function () {
-                String.equal('123',null).should.be.false;
-                String.equal('123',undefined).should.be.false;
-                String.equal(NaN,'123').should.be.false;
-                String.equal('123','1234').should.be.false;
+                String.equal("123",null).should.be.false;
+                String.equal("123",undefined).should.be.false;
+                String.equal(NaN,"123").should.be.false;
+                String.equal("123","1234").should.be.false;
             });
         });
 
@@ -147,7 +147,7 @@ describe("Field",function () {
     describe("Json type", function () {
         var json  = field.Json;
         describe("#restore", function () {
-            it('Json to String', function () {
+            it("Json to String", function () {
                 json.restore({a:1}).should.eql("{\"a\":1}");
             });
         });
