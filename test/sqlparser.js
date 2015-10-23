@@ -52,5 +52,35 @@ describe("Some SQL Parser", function() {
             });
             answer.should.be.eql("SELECT `a` AS k FROM b WHERE c = \"d\" AND `d` + `e` = e + `f`");
         });
+
+        it("should be SELECT a FROM b WHERE (`c` = \"b\\\"\" AND `d` = `e`) AND `f`", function() {
+            var sql = "SELECT aa FROM b WHERE (`cc` = \"b\\\"\" AND `dd` = `ee`) AND `ff`";
+            var answer = parser.sqlNameToColumn(sql, {
+                aa: "a",
+                cc: "c",
+                dd: "d",
+                ee: "e",
+                ff: "f"
+            });
+            answer.should.be.eql("SELECT a FROM b WHERE (`c` = \"b\\\"\" AND `d` = `e`) AND `f`");
+        });
+
+        it("should be SELECT a FROM b WHERE `c` = \"b\\\"", function() {
+            var sql = "SELECT aa FROM b WHERE `cc` = \"b\\\"";
+            var answer = parser.sqlNameToColumn(sql, {
+                aa: "a",
+                cc: "c",
+            });
+            answer.should.be.eql("SELECT a FROM b WHERE `c` = \"b\\\"");
+        });
+
+        it("should be SELECT a FROM b WHERE `c", function() {
+            var sql = "SELECT aa FROM b WHERE `cc";
+            var answer = parser.sqlNameToColumn(sql, {
+                aa: "a",
+                cc: "c"
+            });
+            answer.should.be.eql("SELECT a FROM b WHERE `c");
+        });
     });
 });
