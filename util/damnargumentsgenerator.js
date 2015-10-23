@@ -1,7 +1,7 @@
 /**
  * XadillaX created at 2014-09-24 12:33
  *
- * Copyright (c) 2014 Huaban.com, all rights
+ * Copyright (c) 2015 Souche.com, all rights
  * reserved.
  */
 "use strict";
@@ -57,4 +57,3 @@
         console.log("Use your clipboard to paste code.");
     });
 })();
-

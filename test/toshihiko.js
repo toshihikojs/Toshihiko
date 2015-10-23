@@ -1,3 +1,9 @@
+/**
+ * XadillaX created at 2015-09-06 13:56:52 With ♥
+ *
+ * Copyright (c) 2015 Souche.com, all rights
+ * reserved.
+ */
 var should = require("should");
 var Toshihiko = require("../lib/toshihiko");
 var Type = require("../lib/fieldType");

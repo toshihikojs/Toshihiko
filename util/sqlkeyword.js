@@ -1,10 +1,16 @@
 /**
+ * XadillaX created at 2014-09-24 12:33
+ *
+ * Copyright (c) 2015 Souche.com, all rights
+ * reserved.
+ */
+"use strict";
+
+/**
  * @refer http://dev.mysql.com/doc/refman/5.0/en/reserved-words.html
  * @using http://ideone.com/nPoBMJ
  * @type {string[]}
  */
-"use strict";
-
 module.exports = [
     "ADD",
     "ALL",

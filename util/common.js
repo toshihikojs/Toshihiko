@@ -1,7 +1,7 @@
 /**
  * XadillaX created at 2014-09-25 11:26
  *
- * Copyright (c) 2014 Huaban.com, all rights
+ * Copyright (c) 2015 Souche.com, all rights
  * reserved.
  */
 "use strict";

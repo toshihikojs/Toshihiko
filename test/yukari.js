@@ -1,3 +1,9 @@
+/**
+ * XadillaX created at 2015-09-06 13:56:52 With ♥
+ *
+ * Copyright (c) 2015 Souche.com, all rights
+ * reserved.
+ */
 require("should");
 var T = require("../");
 var moment = require("moment");

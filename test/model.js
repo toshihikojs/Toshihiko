@@ -1,3 +1,9 @@
+/**
+ * XadillaX created at 2015-03-24 12:33:42
+ *
+ * Copyright (c) 2015 Souche.com, all rights
+ * reserved
+ */
 var should = require("should");
 var T = require("../");
 var async = require("async");
