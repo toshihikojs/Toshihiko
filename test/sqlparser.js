@@ -75,12 +75,41 @@ describe("Some SQL Parser", function() {
         });
 
         it("should be SELECT a FROM b WHERE `c", function() {
-            var sql = "SELECT aa FROM b WHERE `cc";
+            var sql = "SELECT aa FROM b WHERE `c";
             var answer = parser.sqlNameToColumn(sql, {
                 aa: "a",
                 cc: "c"
             });
             answer.should.be.eql("SELECT a FROM b WHERE `c");
         });
+
+        it("should be SELECT a FROM b WHERE c\"1\"", function() {
+            var sql = "SELECT aa FROM b WHERE cc\"1\"";
+            var answer = parser.sqlNameToColumn(sql, {
+                aa: "a",
+                cc: "c"
+            });
+            answer.should.be.eql("SELECT a FROM b WHERE c\"1\"");
+        });
+
+        it("should be SELECT a, d FROM b WHERE `c`", function() {
+            var sql = "SELECT aa, dd FROM b WHERE `c`";
+            var answer = parser.sqlNameToColumn(sql, {
+                aa: "a",
+                dd: "d"
+            });
+            answer.should.be.eql("SELECT a, d FROM b WHERE `c`");
+        });
+
+        it("should be SELECT a FROM b WHERE calc(`d`) = `e`", function() {
+            var sql = "SELECT aa FROM b WHERE calc(`dd`) = `ee`";
+            var answer = parser.sqlNameToColumn(sql, {
+                aa: "a",
+                dd: "d",
+                ee: "e"
+            });
+            answer.should.be.eql("SELECT a FROM b WHERE calc(`d`) = `e`");
+        });
+
     });
 });
