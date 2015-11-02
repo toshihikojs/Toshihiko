@@ -48,6 +48,63 @@ describe("Field",function () {
             });
         });
     });
+
+    describe("Boolean type", function () {
+        var _Boolean = field.Boolean;
+        describe("#restore", function () {
+            it("arg Integer", function () {
+                (_Boolean.restore(1)).should.equal(1);
+                (_Boolean.restore(-1)).should.equal(1);
+            });
+            it("arg Float", function () {
+                (_Boolean.restore(1.1)).should.equal(1);
+                (_Boolean.restore(-1.1)).should.equal(1);
+            });
+            it("arg string", function () {
+                (_Boolean.restore("1.441")).should.equal(1);
+                (_Boolean.restore("-1.1")).should.equal(1);
+                (_Boolean.restore("-1")).should.equal(1);
+                (_Boolean.restore("1")).should.equal(1);
+            });
+            it("arg boolean", function() {
+                (_Boolean.restore(true)).should.equal(1);
+                (_Boolean.restore(false)).should.equal(0);
+            });
+        });
+        describe("#parse", function () {
+            it("arg Integer", function () {
+                (_Boolean.parse(1)).should.equal(true);
+                (_Boolean.parse(-1)).should.equal(true);
+                (_Boolean.parse(0)).should.equal(false);
+            });
+            it("arg Float", function () {
+                (_Boolean.parse(1.1)).should.equal(true);
+                (_Boolean.parse(-1.1)).should.equal(true);
+            });
+            it("arg string", function () {
+                (_Boolean.parse("1.441")).should.equal(true);
+                (_Boolean.parse("-1.1")).should.equal(true);
+                (_Boolean.parse("-1")).should.equal(true);
+            });
+        });
+        describe("#equal", function () {
+            it("should return true", function () {
+                (_Boolean.equal("123.1", 123)).should.be.true;
+                (_Boolean.equal(123.1, 123)).should.be.true;
+                (_Boolean.equal(0, 0)).should.be.true;
+                (_Boolean.equal("-1", -1)).should.be.true;
+                (_Boolean.equal(-1.1, -1)).should.be.true;
+            });
+            it("should return false", function () {
+                (_Boolean.equal("124.1", false)).should.not.be.true;
+                (_Boolean.equal(124.1, "")).should.not.be.true;
+                (_Boolean.equal(3, 0)).should.not.be.true;
+                (_Boolean.equal(true, false)).should.not.be.true;
+                (_Boolean.equal(true, 0)).should.not.be.true;
+            });
+        });
+    });
+
     describe("Integer type", function () {
         var Integer = field.Integer;
         describe("#restore", function () {
