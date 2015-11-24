@@ -130,6 +130,14 @@ describe("model", function () {
                 should(err).not.be.ok;
                 data.should.hasOwnProperty("key1").eql(3);
                 done();
+            },true);
+        });
+
+        it("findById return null", function(done) {
+            Model.findById(100, function(err, data) {
+                should(err).not.be.ok;
+                should.not.exist(data);
+                done();
             });
         });
 
