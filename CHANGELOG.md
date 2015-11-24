@@ -1,10 +1,21 @@
 # Toshihiko ChangeLog
 
+## 2015-11-24, Version 0.6.2, @Luicfer
+
+### Notable Changes
+
+  + Find in memcached first when `findById`. - see [#29](https://github.com/XadillaX/Toshihiko/pull/29)
+
+### Commits
+  + [[50b4a6e2c0](https://github.com/XadillaX/Toshihiko/commit/50b4a6e2c0)] - Optimize performance of `findById`.
+  + [[b04d36b173](https://github.com/XadillaX/Toshihiko/commit/b04d36b173)] - Add a new test case.
+  + [[b855545c1b](https://github.com/XadillaX/Toshihiko/commit/b855545c1b)] - Add precommit hook for git repo.
+
 ## 2015-11-2, Version 0.6.1, @XadillaX
 
 ### Notable Changes
 
-+ Add **Boolean** field type support. - see [#27](https://github.com/XadillaX/Toshihiko/pull/27)
+  + Add **0** field type support. - see [#27](https://github.com/XadillaX/Toshihiko/pull/27)
 
 ### Commits
   + [[fca5f18744](https://github.com/XadillaX/Toshihiko/commit/fca5f18744)] - Add **Boolean** field type support and test cases.
