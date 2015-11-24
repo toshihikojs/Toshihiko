@@ -22,11 +22,15 @@
     "cliparoo": "^1.0.0",
     "coveralls": "^2.11.2",
     "istanbul": "^0.3.5",
+    "jsxhint": "^0.15.1",
     "mocha": "^2.0.1",
+    "precommit-hook": "^3.0.0",
     "should": "^4.3.0"
   },
   "scripts": {
-    "test": "make test"
+    "test": "make test",
+    "lint": "./node_modules/.bin/jsxhint .",
+    "validate": "npm ls"
   },
   "repository": {
     "type": "git",
@@ -46,5 +50,10 @@
   "bugs": {
     "url": "https://github.com/XadillaX/Toshihiko/issues"
   },
-  "homepage": "https://github.com/XadillaX/Toshihiko"
+  "homepage": "https://github.com/XadillaX/Toshihiko",
+  "pre-commit": [
+    "lint",
+    "validate",
+    "test"
+  ]
 }
