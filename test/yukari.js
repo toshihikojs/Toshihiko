@@ -4,7 +4,7 @@
  * Copyright (c) 2015 Souche.com, all rights
  * reserved.
  */
-require("should");
+var should = require("should");
 var T = require("../");
 var moment = require("moment");
 var toshihiko = new T.Toshihiko("myapp_test", "root", "", {
@@ -81,6 +81,13 @@ describe("yukari", function () {
             data.should.eql(yukari);
             done();
         }).catch(done);
+    });
+    it("#update without change", function(done) {
+        yukari.update(function(err, data) {
+            should.ifError(err);
+            data.should.be.eql(yukari);
+            done();
+        });
     });
     it("#save",function (done){
         yukari.key2 = 4;
