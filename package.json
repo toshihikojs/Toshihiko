@@ -7,8 +7,8 @@
     "test": "test"
   },
   "dependencies": {
-    "async": "^1.4.2",
-    "bluebird": "^2.10.2",
+    "async": "^1.5.0",
+    "bluebird": "^3.0.6",
     "colors": "^1.1.2",
     "fbbk-json": "^0.0.8",
     "lodash": "^3.10.1",
