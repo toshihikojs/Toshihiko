@@ -1,5 +1,16 @@
 # Toshihiko ChangeLog
 
+## 2015-12-15, Version 0.6.3, @XadillaX
+
+### Notable Changes
+
+  + Cancel error when `update` in `Yukari` without change. - see [#9d222d5367](https://github.com/XadillaX/Toshihiko/commit/9d222d53677970375feb13e861cfc80bee265998)
+
+### Commits
+  + [[9d222d5367](https://github.com/XadillaX/Toshihiko/commit/9d222d5367)] - Cancel error when `update` in `Yukari` without change.
+  + [[466a4a59a4](https://github.com/XadillaX/Toshihiko/commit/466a4a59a4)] - Update dependencies.
+  + [[268f6b1418](https://github.com/XadillaX/Toshihiko/commit/268f6b1418)] - Update devDependencies.
+
 ## 2015-11-24, Version 0.6.2, @Luicfer
 
 ### Notable Changes
