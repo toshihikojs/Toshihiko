@@ -30,3 +30,4 @@ node_modules
 coverage
 *.out
 
+*-es6.js
