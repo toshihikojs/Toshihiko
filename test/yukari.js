@@ -5,8 +5,10 @@
  * reserved.
  */
 var should = require("should");
-var T = require("../");
 var moment = require("moment");
+
+var T = require("../");
+
 var toshihiko = new T.Toshihiko("myapp_test", "root", "", {
     cache : {
         name: "memcached",

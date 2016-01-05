@@ -4,8 +4,9 @@
  * Copyright (c) 2015 Souche.com, all rights
  * reserved
  */
-var field = require("../lib/fieldType");
 require("should");
+
+var field = require("../lib/field_type");
 
 describe("Field",function () {
     describe("float type", function () {

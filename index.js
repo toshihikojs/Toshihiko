@@ -7,5 +7,4 @@
 "use strict";
 
 exports.Toshihiko = require("./lib/toshihiko");
-exports.Type = require("./lib/fieldType");
-exports.Memcached = require("toshihiko-memcached");
+exports.Type = require("./lib/field_type");

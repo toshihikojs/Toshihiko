@@ -6,7 +6,7 @@
  */
 "use strict";
 
-var keywords = require("./sqlkeyword");
+var keywords = require("./sql_keyword");
 
 function processQuote(sql, startIdx) {
     var start = sql[startIdx];
