@@ -87,6 +87,12 @@ describe("issues", function () {
             var sql = Model.where({ key1: { $neq: [ 0, null ] } }).makeSQL("find");
             sql.should.be.eql("SELECT `id`, `key2`, `key3`, `key4`, `index` FROM `test` WHERE ((`id` != 0 AND `id` IS NOT NULL))");
 
+            sql = Model.where({ key1: null }).makeSQL("find");
+            sql.should.be.eql("SELECT `id`, `key2`, `key3`, `key4`, `index` FROM `test` WHERE (`id` IS NULL)");
+
+            sql = Model.where({ key1: { $neq: null } }).makeSQL("find");
+            sql.should.be.eql("SELECT `id`, `key2`, `key3`, `key4`, `index` FROM `test` WHERE ((`id` IS NOT NULL))");
+
             done();
         });
     });
