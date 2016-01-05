@@ -1,5 +1,18 @@
 # Toshihiko ChangeLog
 
+## 2016-01-05, Version 0.6.4, @XadillaX
+
+### Notable Changes
+
+  + Rename all `*.js` source files into underscore filenames. eg. `fieldType` to `field_type`. - see [#31](https://github.com/XadillaX/Toshihiko/pull/31)
+  + Fix a bug that generated an invalid SQL while use `Array` in `$neq`. - see [#32](http://github.com/XadillaX/Toshihiko/pull32)
+
+### Commits
+  + [[df37bd062e](https://github.com/XadillaX/Toshihiko/commit/df37bd062e)] - Make the code more friendly with scope.
+  + [[c088f3f7eb](https://github.com/XadillaX/Toshihiko/commit/c088f3f7eb)] - Rename filenames to underscore ones.
+  + [[3b319f71c2](https://github.com/XadillaX/Toshihiko/commit/3b319f71c2)] - Change the require order in source files. (System > Denpendencies > Local)
+  + [[eda60efc38](https://github.com/XadillaX/Toshihiko/commit/eda60efc38)] - Fix a bug that generated an invalid SQL while use `Array` in `$neq`.
+
 ## 2015-12-15, Version 0.6.3, @XadillaX
 
 ### Notable Changes
