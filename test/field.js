@@ -4,7 +4,7 @@
  * Copyright (c) 2015 Souche.com, all rights
  * reserved
  */
-var field = require("../lib/fieldType");
+var field = require("../lib/field_type");
 require("should");
 
 describe("Field",function () {

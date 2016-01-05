@@ -14,8 +14,7 @@
     "lodash": "^3.10.1",
     "moment": "^2.10.6",
     "mysql2": "^0.15.8",
-    "scarlet-task": "^0.1.0-comment",
-    "toshihiko-memcached": "^0.1.0"
+    "scarlet-task": "^0.1.0-comment"
   },
   "devDependencies": {
     "chinese-random-skill": "^0.0.3-rdm",
@@ -25,7 +24,8 @@
     "jsxhint": "^0.15.1",
     "mocha": "^2.3.4",
     "precommit-hook": "^3.0.0",
-    "should": "^8.0.1"
+    "should": "^8.0.1",
+    "toshihiko-memcached": "^0.1.0"
   },
   "scripts": {
     "test": "make test",

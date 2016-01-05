@@ -6,7 +6,7 @@
  */
 var should = require("should");
 var Toshihiko = require("../lib/toshihiko");
-var Type = require("../lib/fieldType");
+var Type = require("../lib/field_type");
 var toshihiko = new Toshihiko("test", "root", "");
 
 describe("toshihiko", function() {
