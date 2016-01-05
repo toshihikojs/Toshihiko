@@ -1,6 +1,6 @@
 {
   "name": "toshihiko",
-  "version": "0.6.3",
+  "version": "0.6.4",
   "description": "A simple ORM for node.js in Souche.",
   "main": "index.js",
   "directories": {
@@ -39,7 +39,7 @@
   "keywords": [
     "ORM",
     "MySQL",
-    "Memcached"
+    "Cache"
   ],
   "author": [
     "XadillaX <i@2333.moe>",
