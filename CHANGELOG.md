@@ -5,7 +5,7 @@
 ### Notable Changes
 
   + Rename all `*.js` source files into underscore filenames. eg. `fieldType` to `field_type`. - see [#31](https://github.com/XadillaX/Toshihiko/pull/31)
-  + Fix a bug that generated an invalid SQL while use `Array` in `$neq`. - see [#32](http://github.com/XadillaX/Toshihiko/pull32)
+  + Fix a bug that generated an invalid SQL while use `Array` in `$neq`. - see [#32](http://github.com/XadillaX/Toshihiko/pull/32)
 
 ### Commits
   + [[df37bd062e](https://github.com/XadillaX/Toshihiko/commit/df37bd062e)] - Make the code more friendly with scope.
