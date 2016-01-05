@@ -4,10 +4,12 @@
  * Copyright (c) 2015 Souche.com, all rights
  * reserved
  */
-var should = require("should");
-var T = require("../");
 var async = require("async");
+var should = require("should");
 var 鬼 = require("lodash");
+
+var T = require("../");
+
 var toshihiko = new T.Toshihiko("myapp_test", "root", "", {
     cache : {
         name: "memcached",

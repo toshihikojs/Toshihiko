@@ -5,7 +5,9 @@
  * reserved.
  */
 require("should");
+
 var T = require("../");
+
 var toshihiko = new T.Toshihiko("test", "root", "", {});
 
 var Model = null;

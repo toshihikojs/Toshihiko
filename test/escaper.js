@@ -5,6 +5,7 @@
  * reserved.
  */
 require("should");
+
 var escaper = require("../lib/escaper");
 
 describe("Escaper", function() {

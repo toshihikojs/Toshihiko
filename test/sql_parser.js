@@ -5,6 +5,7 @@
  * reserved.
  */
 require("should");
+
 var parser = require("../util/sql_parser");
 
 describe("Some SQL Parser", function() {
