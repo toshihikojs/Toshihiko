@@ -81,4 +81,19 @@ describe("issues", function () {
             });
         });
     });
+
+    describe("generate", function() {
+        it("should fix #32, 逻辑运算 AND 或者 OR 的时候有 NULL 时发生的 Bug", function(done) {
+            var sql = Model.where({ key1: { $neq: [ 0, null ] } }).makeSQL("find");
+            sql.should.be.eql("SELECT `id`, `key2`, `key3`, `key4`, `index` FROM `test` WHERE ((`id` != 0 AND `id` IS NOT NULL))");
+
+            sql = Model.where({ key1: null }).makeSQL("find");
+            sql.should.be.eql("SELECT `id`, `key2`, `key3`, `key4`, `index` FROM `test` WHERE (`id` IS NULL)");
+
+            sql = Model.where({ key1: { $neq: null } }).makeSQL("find");
+            sql.should.be.eql("SELECT `id`, `key2`, `key3`, `key4`, `index` FROM `test` WHERE ((`id` IS NOT NULL))");
+
+            done();
+        });
+    });
 });
