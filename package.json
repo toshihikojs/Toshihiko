@@ -20,6 +20,7 @@
   "devDependencies": {
     "chinese-random-skill": "^0.0.3-rdm",
     "cliparoo": "^1.1.1",
+    "conventional-changelog": "^0.5.3",
     "coveralls": "^2.11.6",
     "cz-conventional-changelog": "^1.1.5",
     "ghooks": "^1.0.3",
@@ -33,7 +34,8 @@
     "test": "make test",
     "lint": "./node_modules/.bin/jsxhint .",
     "validate": "npm ls",
-    "commit-msg": "./node_modules/.bin/validate-commit-msg"
+    "commit-msg": "./node_modules/.bin/validate-commit-msg",
+    "changelog": "./node_modules/.bin/conventional-changelog -p angular -i CHANGELOG.md -w"
   },
   "repository": {
     "type": "git",

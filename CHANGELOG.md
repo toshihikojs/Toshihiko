@@ -1,4 +1,11 @@
-# Toshihiko ChangeLog
+## [0.7.0](https://github.com/XadillaX/Toshihiko/compare/0.6.4...v0.7.0) (2016-01-07)
+
+### Features
+
+* add commit message validation to git precommit hook ([8e178f2](https://github.com/XadillaX/Toshihiko/commit/8e178f2))
+* re-add toshihiko-memcached as the default cache layout ([a84f93c](https://github.com/XadillaX/Toshihiko/commit/a84f93c))
+* update package.json to v0.7.0 ([b57f469](https://github.com/XadillaX/Toshihiko/commit/b57f469))
+* use ghooks instead of precommit-hooks ([0c3ebd4](https://github.com/XadillaX/Toshihiko/commit/0c3ebd4))
 
 ## 2016-01-05, Version 0.6.4, @XadillaX
 
