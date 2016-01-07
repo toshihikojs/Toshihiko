@@ -22,10 +22,10 @@
     "cliparoo": "^1.1.1",
     "coveralls": "^2.11.6",
     "cz-conventional-changelog": "^1.1.5",
+    "ghooks": "^1.0.3",
     "istanbul": "^1.0.0-alpha.2",
     "jsxhint": "^0.15.1",
     "mocha": "^2.3.4",
-    "precommit-hook": "^3.0.0",
     "should": "^8.0.1",
     "validate-commit-msg": "^1.0.0"
   },
@@ -54,15 +54,14 @@
     "url": "https://github.com/XadillaX/Toshihiko/issues"
   },
   "homepage": "https://github.com/XadillaX/Toshihiko",
-  "pre-commit": [
-    "commit-msg",
-    "lint",
-    "validate",
-    "test"
-  ],
   "config": {
     "commitizen": {
       "path": "./node_modules/cz-conventional-changelog"
+    },
+    "ghooks": {
+      "pre-commit": "npm run lint && npm run validate",
+      "commit-msg": "npm run commit-msg",
+      "pre-push": "npm test"
     }
   }
 }
