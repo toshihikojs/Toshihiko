@@ -84,10 +84,18 @@ describe("yukari", function () {
             done();
         }).catch(done);
     });
-    it("#update without change", function(done) {
+    it("#update without change", function (done) {
         yukari.update(function(err, data) {
             should.ifError(err);
             data.should.be.eql(yukari);
+            done();
+        });
+    });
+    it("update by jsonData", function (done) {
+        yukari.updateByJson({key2: 5}, function(err, data) {
+            should.ifError(err);
+            data.should.be.eql(yukari);
+            yukari.key2.should.be.eql(5);
             done();
         });
     });
