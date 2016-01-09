@@ -412,6 +412,21 @@ yukari.update(function(err, yukari) {
 
 > **Notice**: `"{{..}}"` operation is not supported here.
 
+#### Yukari::updateByJson()
+
+You can pass through a JSON object to update yukari object.
+
+```javascript
+var object = { id: 1, key: 2 };
+yukari.updateByJson(object, function(err, yukari) {
+    // this is the same as:
+    //
+    //   yukari.id = 1;
+    //   yukari.key = 2;
+    //   yukari.update(function() {});
+});
+```
+
 #### Yukari::save()
 
 If it's a new Yukari object, it will call `insert`. Otherwise, it will call `update`.
