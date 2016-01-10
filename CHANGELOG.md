@@ -1,3 +1,11 @@
+<a name="0.7.1"></a>
+## [0.7.1](https://github.com/XadillaX/Toshihiko/compare/v0.7.0...v0.7.1) (2016-01-09)
+
+### Features
+
+* add `updateByJson` method in Yukari ([d7fa632...1c19aa6](https://github.com/XadillaX/Toshihiko/compare/d7fa632...1c19aa6))
+* add test cases for `updateByJson` ([c0f2a29](https://github.com/XadillaX/Toshihiko/commit/c0f2a291661f4c89227ac5f63e20bff1eaef9e0a))
+
 ## [0.7.0](https://github.com/XadillaX/Toshihiko/compare/0.6.4...v0.7.0) (2016-01-07)
 
 ### Features
