@@ -82,6 +82,23 @@ describe("issues", function () {
         });
     });
 
+    describe("error", function() {
+        it("should fix #34, Model.count 的时候，在 callback 函数里面 throw Error 会触发两次 callback", function(done) {
+            var originalException = process.listeners("uncaughtException").pop();
+            process.removeListener("uncaughtException", originalException);
+            process.once("uncaughtException", function(err) {
+                err.message.should.be.eql("0");
+                process.on("uncaughtException", originalException);
+                done();
+            });
+
+            var i = 0;
+            Model.count(function() {
+                throw new Error(i++);
+            });
+        });
+    });
+
     describe("generate", function() {
         it("should fix #32, 逻辑运算 AND 或者 OR 的时候有 NULL 时发生的 Bug", function(done) {
             var sql = Model.where({ key1: { $neq: [ 0, null ] } }).makeSQL("find");
