@@ -1,3 +1,16 @@
+<a name="0.7.2"></a>
+## [0.7.2](https://github.com/XadillaX/Toshihiko/compare/v0.7.1...v0.7.2) (2016-01-20)
+
+### Bug Fixes
+
+* fix #34, Model.count 的时候，在 callback 函数里面 throw Error 会触发两次 callback ([e567060](https://github.com/XadillaX/Toshihiko/commit/e567060)), closes [#34](https://github.com/XadillaX/Toshihiko/issues/34)
+* use count to instead of result[0]['COUNT(0)'] ([c335b84](https://github.com/XadillaX/Toshihiko/commit/c335b84))
+
+### Features
+
+* add a test case for #34 ([57daa41](https://github.com/XadillaX/Toshihiko/commit/57daa41))
+* **package.json:** update denpendencies ([22ec1c2](https://github.com/XadillaX/Toshihiko/commit/22ec1c2))
+
 <a name="0.7.1"></a>
 ## [0.7.1](https://github.com/XadillaX/Toshihiko/compare/v0.7.0...v0.7.1) (2016-01-09)
 
