@@ -487,5 +487,6 @@ You're welcome to make pull requests!
 Thanks to:
 
 + [@luicfer](https://github.com/luicfer)
++ [@mapleincode](https://github.com/mapleincode)
 
 「雖然我覺得不怎麼可能有人會關注我」
