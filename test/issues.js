@@ -4,7 +4,7 @@
  * Copyright (c) 2015 Souche.com, all rights
  * reserved
  */
-require("should");
+var should = require("should");
 
 var T = require("../");
 
@@ -19,7 +19,7 @@ var toshihiko = new T.Toshihiko("myapp_test", "root", "", {
 var Model = null;
 describe("issues", function () {
     before(function (done) {
-        var sql = "CREATE TABLE `test` (" +
+        var sql = "CREATE TABLE IF NOT EXISTS `test` (" +
             "`id` int(11) unsigned NOT NULL AUTO_INCREMENT," +
             "`key2` float NOT NULL," +
             "`key3` varchar(200) NOT NULL DEFAULT ''," +
@@ -35,8 +35,8 @@ describe("issues", function () {
             { name: "key1", column: "id", primaryKey: true, type: T.Type.Integer },
             {
                 name: "key2",
-                type: T.Type.Float, 
-                defaultValue: 0.44, 
+                type: T.Type.Float,
+                defaultValue: 0.44,
                 validators: [
                     function(v) {
                         if(v > 100) return "`key2` can't be greater than 100";
@@ -111,6 +111,23 @@ describe("issues", function () {
             sql.should.be.eql("SELECT `id`, `key2`, `key3`, `key4`, `index` FROM `test` WHERE ((`id` IS NOT NULL))");
 
             done();
+        });
+    });
+
+    // Before fix:
+    // 1. sql: UPDATE `test` SET `key2` = 1.2, `key3` = '{\"foo\":\"bar\"}', WHERE (`id` = 1)
+    // 2. sql execution will end up with an error
+    describe("makeSQL", function() {
+        it("should fix #35, Model数据是一个多属性JSON对象时，Update生成的SQL语句有语法错误", function(done) {
+            var yukari = Model.build({ key2: 1.1, key3: {foo: "bar"}, key4: "foo4", key5: 1});
+            yukari.insert(function (err) {
+                should(err).equal(undefined);
+                var updateData = {key2: 1.2, key3: {foo: "bar"}};
+                Model.where({ key1: 1 }).update(updateData, function(err, result, sql) {
+                    sql.should.be.eql("UPDATE `test` SET `key2` = 1.2, `key3` = '{\\\"foo\\\":\\\"bar\\\"}' WHERE (`id` = 1)");
+                    done();
+                });
+            });
         });
     });
 });
