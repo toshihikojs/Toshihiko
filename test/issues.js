@@ -118,7 +118,7 @@ describe("issues", function () {
     // 1. sql: UPDATE `test` SET `key2` = 1.2, `key3` = '{\"foo\":\"bar\"}', WHERE (`id` = 1)
     // 2. sql execution will end up with an error
     describe("makeSQL", function() {
-        it("should fix #35, Model数据是一个多属性JSON对象时，Update生成的SQL语句有语法错误", function(done) {
+        it("should fix #37, Model数据是一个多属性JSON对象时，Update生成的SQL语句有语法错误", function(done) {
             var yukari = Model.build({ key2: 1.1, key3: {foo: "bar"}, key4: "foo4", key5: 1});
             yukari.insert(function (err) {
                 should(err).equal(undefined);
