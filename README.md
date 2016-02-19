@@ -478,7 +478,7 @@ Type.parse = function(v) {
 Type.defaultValue = 0.1;    ///< Default value
 ```
 
-You can refers to [lib/fieldType/json.js](lib/fieldType/json.js) to get more information.
+You can refers to [lib/fieldType/json.js](lib/field_type/json.js) to get more information.
 
 ## Contribute
 
