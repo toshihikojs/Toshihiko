@@ -4,7 +4,7 @@
  * Copyright (c) 2015 Souche.com, all rights
  * reserved
  */
-require("should");
+var should = require("should");
 
 var T = require("../");
 
@@ -17,6 +17,7 @@ var toshihiko = new T.Toshihiko("myapp_test", "root", "", {
 });
 
 var Model = null;
+var Model2 = null;
 describe("issues", function () {
     before(function (done) {
         var sql = "CREATE TABLE `test` (" +
@@ -27,7 +28,18 @@ describe("issues", function () {
             "`index` int(11) NOT NULL DEFAULT 1," +
             "PRIMARY KEY (`id`)" +
             ") ENGINE=InnoDB DEFAULT CHARSET=utf8;";
-        toshihiko.execute(sql, done);
+        var sql2 = "CREATE TABLE `test2` (" +
+            "`id` int(11) unsigned NOT NULL AUTO_INCREMENT," +
+            "`key2` float NOT NULL," +
+            "`key3` varchar(200) NOT NULL DEFAULT ''," +
+            "`key4` varchar(200) NOT NULL DEFAULT ''," +
+            "`index` int(11) NOT NULL DEFAULT 1," +
+            "PRIMARY KEY (`index`)," +
+            "KEY(`id`)" +
+            ") ENGINE=InnoDB DEFAULT CHARSET=utf8;";
+        toshihiko.execute(sql, function() {
+            toshihiko.execute(sql2, done);
+        });
     });
 
     before(function () {
@@ -47,10 +59,29 @@ describe("issues", function () {
             { name: "key4", type: T.Type.String, defaultValue:"Ha!"},
             { name: "key5", column: "index", type: T.Type.Integer }
         ]);
+
+        Model2 = toshihiko.define("test2", [
+            { name: "key1", column: "id", type: T.Type.Integer },
+            {
+                name: "key2",
+                type: T.Type.Float, 
+                defaultValue: 0.44, 
+                validators: [
+                    function(v) {
+                        if(v > 100) return "`key2` can't be greater than 100";
+                    }
+                ]
+            },
+            { name: "key3", type: T.Type.Json, defaultValue: {} },
+            { name: "key4", type: T.Type.String, defaultValue:"Ha!"},
+            { name: "key5", column: "index", type: T.Type.Integer, primaryKey: true }
+        ]);
     });
 
     after(function(done) {
-        toshihiko.execute("DROP TABLE `test`;", done);
+        toshihiko.execute("DROP TABLE `test`;", function() {
+            toshihiko.execute("DROP TABLE `test2`;", done);
+        });
     });
 
     describe("transform", function () {
@@ -111,6 +142,23 @@ describe("issues", function () {
             sql.should.be.eql("SELECT `id`, `key2`, `key3`, `key4`, `index` FROM `test` WHERE ((`id` IS NOT NULL))");
 
             done();
+        });
+    });
+
+    describe("CURD", function() {
+        it("should fix #38, 非主键自增 Id 时，插入后会被认为主键", function(done) {
+            var test = Model2.build({
+                key2: 1,
+                key3: 2,
+                key4: 3,
+                key5: 4
+            });
+            test.save(function(err, t) {
+                should.ifError(err);
+                should(t).not.be.empty();
+                t.key5.should.be.eql(4);
+                done();
+            });
         });
     });
 });
