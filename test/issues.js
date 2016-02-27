@@ -61,7 +61,7 @@ describe("issues", function () {
         ]);
 
         Model2 = toshihiko.define("test2", [
-            { name: "key1", column: "id", type: T.Type.Integer },
+            { name: "key1", column: "id", type: T.Type.Integer, autoIncrement: true },
             {
                 name: "key2",
                 type: T.Type.Float, 
