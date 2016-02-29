@@ -8,12 +8,12 @@
   },
   "dependencies": {
     "async": "^1.5.2",
-    "bluebird": "^3.1.1",
+    "bluebird": "^3.3.3",
     "colors": "^1.1.2",
     "fbbk-json": "^0.0.8",
-    "lodash": "^4.0.0",
-    "moment": "^2.11.1",
-    "mysql2": "^0.15.8",
+    "lodash": "^4.5.1",
+    "moment": "^2.11.2",
+    "mysql2": "^1.0.0-rc.1",
     "scarlet-task": "^0.1.0-comment",
     "toshihiko-memcached": "^1.0.0"
   },
