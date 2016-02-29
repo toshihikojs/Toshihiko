@@ -1,3 +1,18 @@
+<a name="0.7.3"></a>
+## [0.7.3](https://github.com/XadillaX/Toshihiko/compare/v0.7.2...v0.7.3) (2016-02-29)
+
+
+### Bug Fixes
+
+* fix #38 ([bdde107](https://github.com/XadillaX/Toshihiko/commit/bdde107)), closes [#38](https://github.com/XadillaX/Toshihiko/issues/38)
+
+### Features
+
+* add a AUTO_INCREMENT field in model ([cb8a871](https://github.com/XadillaX/Toshihiko/commit/cb8a871))
+* add a new optional column for field -> autoIncrement ([e891d6e](https://github.com/XadillaX/Toshihiko/commit/e891d6e))
+
+
+
 <a name="0.7.2"></a>
 ## [0.7.2](https://github.com/XadillaX/Toshihiko/compare/v0.7.1...v0.7.2) (2016-01-20)
 
