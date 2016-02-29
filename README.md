@@ -81,7 +81,7 @@ Define a model schema:
 
 ```javascript
 var Model = toshihiko.define(tableName, [
-    { name: "key1", column: "key_one", primaryKey: true, type: Toshihiko.Type.Integer },
+    { name: "key1", column: "key_one", primaryKey: true, type: Toshihiko.Type.Integer, autoIncrement: true },
     { name: "key2", type: Toshihiko.Type.String, defaultValue: "Ha~" },
     { name: "key3", type: Toshihiko.Type.Json, defaultValue: [] },
     { name: "key4", validators: [
@@ -109,6 +109,10 @@ Model.sayHello = function() {
 
 > `options` is optional. You can specify `cache` here if you haven't defined it in `Toshihiko`. Otherwise, you can let
 > it be `null` when you don't want to use `cache` in this `Model` but you had specify it in `Toshihiko`.
+
+> **Important Note:** `autoIncrement` is optional. But if you specify a non-primary key as auto increment, you **must**
+> mark it as `autoIncrement`! (For further reading please go [#38](https://github.com/XadillaX/Toshihiko/issues/38)
+> and [#39](https://github.com/XadillaX/Toshihiko/pull/39))
 
 ### Query & Update
 
