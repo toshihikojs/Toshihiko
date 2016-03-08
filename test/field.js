@@ -233,4 +233,26 @@ describe("Field",function () {
             });
         });
     });
+    describe("Datetime type", function() {
+        var Datetime = field.Datetime;
+        var tz = Math.abs((new Date()).getTimezoneOffset() / 60);
+        describe("#restore", function() {
+            it("Timestamp to String", function() {
+                Datetime.restore(0).should.be.eql("1970-01-01 0" + tz + ":00:00");
+            });
+            it("Date to String", function() {
+                Datetime.restore(new Date(0)).should.be.eql("1970-01-01 0" + tz + ":00:00");
+            });
+        });
+        describe("#parse", function() {
+            it("String to String", function() {
+                Datetime.parse("1970-01-01 0" + tz + ":00:00").should.be.eql(new Date(0));
+            });
+        });
+        describe("#toJSON", function() {
+            it("toJSON", function() {
+                Datetime.toJSON(new Date(0)).should.be.eql("1970-01-01T0" + tz + ":00:00.000+0" + tz + ":00");
+            });
+        });
+    });
 });
