@@ -1,3 +1,13 @@
+<a name="0.7.5"></a>
+## [0.7.5](https://github.com/XadillaX/Toshihiko/compare/v0.7.4...v0.7.5) (2016-03-08)
+
+
+### Bug Fixes
+
+* **lib/field_type/datetime.js:** Datetime.toJSON "Invalid date" error when datetime value is null ([86dc5a8](https://github.com/XadillaX/Toshihiko/commit/86dc5a8))
+
+
+
 <a name="0.7.4"></a>
 ## [0.7.4](https://github.com/XadillaX/Toshihiko/compare/v0.7.3...v0.7.4) (2016-03-02)
 
