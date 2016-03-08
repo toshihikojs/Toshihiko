@@ -4,7 +4,7 @@
  * Copyright (c) 2015 Souche.com, all rights
  * reserved
  */
-require("should");
+var should = require("should");
 
 var field = require("../lib/field_type");
 
@@ -252,6 +252,9 @@ describe("Field",function () {
         describe("#toJSON", function() {
             it("toJSON", function() {
                 Datetime.toJSON(new Date(0)).should.be.eql("1970-01-01T0" + tz + ":00:00.000+0" + tz + ":00");
+            });
+            it("null toJSON", function() {
+                should(Datetime.toJSON(null)).be.eql(null);
             });
         });
     });
