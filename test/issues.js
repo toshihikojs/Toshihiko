@@ -18,6 +18,7 @@ var toshihiko = new T.Toshihiko("myapp_test", "root", "", {
 
 var Model = null;
 var Model2 = null;
+var Model3 = null;
 describe("issues", function () {
     before(function (done) {
         var sql = "CREATE TABLE `test` (" +
@@ -37,8 +38,18 @@ describe("issues", function () {
             "PRIMARY KEY (`index`)," +
             "KEY(`id`)" +
             ") ENGINE=InnoDB DEFAULT CHARSET=utf8;";
+        var sql3 = "CREATE TABLE `test3` (" +
+            "`id` int(11) unsigned NOT NULL," +
+            "`key2` float NOT NULL," +
+            "`key3` varchar(200) NOT NULL DEFAULT ''," +
+            "`key4` varchar(200) NOT NULL DEFAULT ''," +
+            "`index` int(11) NOT NULL DEFAULT 1," +
+            "PRIMARY KEY (`index`, `id`)" +
+            ") ENGINE=InnoDB DEFAULT CHARSET=utf8;";
         toshihiko.execute(sql, function() {
-            toshihiko.execute(sql2, done);
+            toshihiko.execute(sql2, function() {
+                toshihiko.execute(sql3, done);
+            });
         });
     });
 
@@ -76,11 +87,30 @@ describe("issues", function () {
             { name: "key4", type: T.Type.String, defaultValue:"Ha!"},
             { name: "key5", column: "index", type: T.Type.Integer, primaryKey: true }
         ]);
+
+        Model3 = toshihiko.define("test3", [
+            { name: "key1", column: "id", type: T.Type.Integer },
+            {
+                name: "key2",
+                type: T.Type.Float, 
+                defaultValue: 0.44, 
+                validators: [
+                    function(v) {
+                        if(v > 100) return "`key2` can't be greater than 100";
+                    }
+                ]
+            },
+            { name: "key3", type: T.Type.Json, defaultValue: {} },
+            { name: "key4", type: T.Type.String, defaultValue:"Ha!"},
+            { name: "key5", column: "index", type: T.Type.Integer, primaryKey: true }
+        ]);
     });
 
     after(function(done) {
         toshihiko.execute("DROP TABLE `test`;", function() {
-            toshihiko.execute("DROP TABLE `test2`;", done);
+            toshihiko.execute("DROP TABLE `test2`;", function() {
+                toshihiko.execute("DROP TABLE `test3`;", done);
+            });
         });
     });
 
@@ -158,6 +188,22 @@ describe("issues", function () {
                 should(t).not.be.empty();
                 t.key5.should.be.eql(4);
                 done();
+            });
+        });
+
+        it("should fix #42, 没有任何自增键时往表里插入数据时，返回结果错误", function(done) {
+            var test = Model3.build({ key1: 1, key2: 2, key3: 3, key4: 4, key5: 5 });
+            test.save(function(err) {
+                should.ifError(err);
+
+                var test2 = Model3.build({ key1: 2, key2: 3, key3: 4, key4: 5, key5: 6 });
+                test2.save(function(err, t) {
+                    should.ifError(err);
+                    should(t).not.be.empty();
+                    t.key1.should.be.eql(2);
+                    t.key5.should.be.eql(6);
+                    done();
+                });
             });
         });
     });
