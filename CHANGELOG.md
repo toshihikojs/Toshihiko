@@ -1,3 +1,13 @@
+<a name="0.7.6"></a>
+## [0.7.6](https://github.com/XadillaX/Toshihiko/compare/v0.7.5...v0.7.6) (2016-03-09)
+
+
+### Bug Fixes
+
+* **lib/yukari.js:** add another condition branch with no insertId when insert ([f82f624](https://github.com/XadillaX/Toshihiko/commit/f82f624))
+
+
+
 <a name="0.7.5"></a>
 ## [0.7.5](https://github.com/XadillaX/Toshihiko/compare/v0.7.4...v0.7.5) (2016-03-08)
 
