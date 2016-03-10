@@ -26,6 +26,7 @@ describe("yukari", function () {
             "`key2` float NOT NULL," +
             "`key3` varchar(200) NOT NULL DEFAULT ''," +
             "`key4` varchar(200) NOT NULL DEFAULT ''," +
+            "`key5` int(11) NULL DEFAULT NULL," +
             "PRIMARY KEY (`id`)" +
             ") ENGINE=InnoDB DEFAULT CHARSET=utf8;";
         toshihiko.execute(sql, done);
@@ -45,7 +46,8 @@ describe("yukari", function () {
                 ]
             },
             { name: "key3", type: T.Type.Json, defaultValue: {} },
-            { name: "key4", type: T.Type.String, defaultValue:"Ha!"}
+            { name: "key4", type: T.Type.String, defaultValue:"Ha!"},
+            { name: "key5", type: T.Type.Boolean, allowNull: true, defaultValue: null }
         ]);
 
         yukari = Model.build({
@@ -91,7 +93,46 @@ describe("yukari", function () {
             done();
         });
     });
-    it("update by jsonData", function (done) {
+    it("#check value is null", function(done) {
+        Model.where({key1: 1}).findOne(function(err, y) {
+            should.ifError(err);
+            should(y.key5).equal(null);
+            done();
+        });
+    });
+    it("#update value null to false", function (done) {
+        yukari.key2 = 4;
+        yukari.key5 = false;
+        yukari.update(function(err, data) {
+            should.ifError(err);
+            data.should.be.eql(yukari);
+            done();
+        });
+    });
+    it("#check value set to be false", function(done) {
+        Model.where({key1: 1}).findOne(function(err, y) {
+            should.ifError(err);
+            should(y.key5).be.exactly(false);
+            done();
+        });
+    });
+    it("#update value false to null", function (done) {
+        yukari.key2 = 3;
+        yukari.key5 = null;
+        yukari.update(function(err, data) {
+            should.ifError(err);
+            data.should.be.eql(yukari);
+            done();
+        });
+    });
+    it("#check value set to be null", function(done) {
+        Model.where({key1: 1}).findOne(function(err, y) {
+            should.ifError(err);
+            should(y.key5).equal(null);
+            done();
+        });
+    });
+    it("#update by jsonData", function (done) {
         yukari.updateByJson({key2: 5}, function(err, data) {
             should.ifError(err);
             data.should.be.eql(yukari);
