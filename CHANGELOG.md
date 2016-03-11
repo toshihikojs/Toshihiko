@@ -1,3 +1,14 @@
+<a name="0.7.7"></a>
+## [0.7.7](https://github.com/XadillaX/Toshihiko/compare/v0.7.6...v0.7.7) (2016-03-11)
+
+
+### Bug Fixes
+
+* **lib/yukari.js:** fix the bug memcache should be delete but not when update ([b599506](https://github.com/XadillaX/Toshihiko/commit/b599506))
+* **lib/yukari.js:** fix the bug: null is not equl to false(or 0, '') ([6fd7c12](https://github.com/XadillaX/Toshihiko/commit/6fd7c12))
+
+
+
 <a name="0.7.6"></a>
 ## [0.7.6](https://github.com/XadillaX/Toshihiko/compare/v0.7.5...v0.7.6) (2016-03-09)
 
