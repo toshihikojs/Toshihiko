@@ -163,7 +163,7 @@ describe("model", function () {
             };
 
             Model.where({ key1: 1 }).update(nData, function(err, data) {
-                should(err).not.be.ok;
+                should(err).be.eql(undefined);
                 data.affectedRows.should.be.eql(1);
 
                 Model.findById(99, function(err, data) {
@@ -178,7 +178,7 @@ describe("model", function () {
     describe("delete", function() {
         it("delete", function(done) {
             Model.where({ key1: 1 }).delete(function(err/**,data*/) {
-                should(err).not.be.ok;
+                should(err).be.eql(undefined);
                 done();
             }, true);
         });
