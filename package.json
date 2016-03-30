@@ -28,7 +28,7 @@
     "jsxhint": "^0.15.1",
     "mocha": "^2.3.4",
     "should": "^8.0.1",
-    "validate-commit-msg": "^1.0.0"
+    "validate-commit-msg": "^2.5.0"
   },
   "scripts": {
     "test": "make test",
