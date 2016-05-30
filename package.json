@@ -26,7 +26,7 @@
     "ghooks": "^1.0.3",
     "istanbul": "^1.0.0-alpha.2",
     "jsxhint": "^0.15.1",
-    "mocha": "^2.3.4",
+    "mocha": "^2.5.0",
     "should": "^8.0.1",
     "validate-commit-msg": "^2.5.0"
   },
