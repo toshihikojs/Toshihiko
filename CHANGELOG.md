@@ -1,3 +1,15 @@
+<a name="0.8.0"></a>
+# [0.8.0](https://github.com/XadillaX/Toshihiko/compare/v0.7.7...v0.8.0) (2016-06-12)
+
+
+
+### Bug Fixes
+
+* **lib/query.js:** fix bug the model update and delete callback null ([dff7c57](https://github.com/XadillaX/Toshihiko/commit/dff7c57))
+* **test:** make test correct after updating shouldjs to 9.* ([2ab9410](https://github.com/XadillaX/Toshihiko/commit/2ab9410))
+
+
+
 <a name="0.7.7"></a>
 ## [0.7.7](https://github.com/XadillaX/Toshihiko/compare/v0.7.6...v0.7.7) (2016-03-11)
 
@@ -71,7 +83,7 @@
 * add `updateByJson` method in Yukari ([d7fa632...1c19aa6](https://github.com/XadillaX/Toshihiko/compare/d7fa632...1c19aa6))
 * add test cases for `updateByJson` ([c0f2a29](https://github.com/XadillaX/Toshihiko/commit/c0f2a291661f4c89227ac5f63e20bff1eaef9e0a))
 
-## [0.7.0](https://github.com/XadillaX/Toshihiko/compare/0.6.4...v0.7.0) (2016-01-07)
+# [0.7.0](https://github.com/XadillaX/Toshihiko/compare/0.6.4...v0.7.0) (2016-01-07)
 
 ### Features
 
@@ -125,7 +137,7 @@
   + [[fca5f18744](https://github.com/XadillaX/Toshihiko/commit/fca5f18744)] - Add **Boolean** field type support and test cases.
   + [[7ee1c910cb](https://github.com/XadillaX/Toshihiko/commit/7ee1c910cb)] - Remove `npm-shrinkwrap.json`.
 
-## 2015-10-23, Version 0.6.0, @XadillaX
+# 2015-10-23, Version 0.6.0, @XadillaX
 
 ### Notable Changes
 

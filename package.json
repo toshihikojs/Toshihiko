@@ -35,7 +35,7 @@
     "lint": "./node_modules/.bin/jsxhint .",
     "validate": "npm ls",
     "commit-msg": "./node_modules/.bin/validate-commit-msg",
-    "changelog": "./node_modules/.bin/conventional-changelog -p angular -i CHANGELOG.md -w"
+    "changelog": "./node_modules/.bin/conventional-changelog -p angular -i CHANGELOG.md -s"
   },
   "repository": {
     "type": "git",
