@@ -5,6 +5,7 @@
  * reserved.
  */
 var should = require("should");
+should.config.checkProtoEql = false;
 
 var Toshihiko = require("../lib/toshihiko");
 var Type = require("../lib/field_type");
@@ -42,7 +43,7 @@ describe("toshihiko", function() {
                 should(err).equal(null);
                 data.should.be.an.instanceOf(Array);
                 data.should.have.length(1);
-                data.should.eql([{
+                data.should.be.eql([{
                     id: 1,
                     ls: 1
                 }]);
@@ -90,4 +91,3 @@ describe("toshihiko", function() {
 
     });
 });
-

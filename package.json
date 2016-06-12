@@ -22,7 +22,7 @@
     "cliparoo": "^1.1.1",
     "conventional-changelog": "^0.5.3",
     "coveralls": "^2.11.6",
-    "cz-conventional-changelog": "^1.1.5",
+    "cz-conventional-changelog": "^1.1.6",
     "ghooks": "^1.2.2",
     "istanbul": "^1.0.0-alpha.2",
     "jsxhint": "^0.15.1",
