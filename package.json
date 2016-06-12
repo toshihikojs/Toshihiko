@@ -20,7 +20,7 @@
   "devDependencies": {
     "chinese-random-skill": "0.0.3-rdm",
     "cliparoo": "1.1.1",
-    "conventional-changelog": "1.1.0",
+    "conventional-changelog-cli": "1.2.0",
     "coveralls": "2.11.9",
     "cz-conventional-changelog": "1.1.6",
     "ghooks": "1.2.3",
