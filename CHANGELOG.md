@@ -1,3 +1,14 @@
+<a name="0.8.1"></a>
+## [0.8.1](https://github.com/XadillaX/Toshihiko/compare/v0.7.7...v0.8.1) (2016-06-12)
+
+
+### Bug Fixes
+
+* **lib/query.js:** fix bug the model update and delete callback null ([dff7c57](https://github.com/XadillaX/Toshihiko/commit/dff7c57))
+* **test:** make test correct after updating shouldjs to 9.* ([2ab9410](https://github.com/XadillaX/Toshihiko/commit/2ab9410))
+
+
+
 <a name="0.8.0"></a>
 # [0.8.0](https://github.com/XadillaX/Toshihiko/compare/v0.7.7...v0.8.0) (2016-06-12)
 
