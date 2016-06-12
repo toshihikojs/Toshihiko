@@ -7,28 +7,28 @@
     "test": "test"
   },
   "dependencies": {
-    "async": "^1.5.2",
-    "bluebird": "^3.3.3",
-    "colors": "^1.1.2",
-    "fbbk-json": "^1.0.0",
-    "lodash": "^4.5.1",
-    "moment": "^2.11.2",
-    "mysql2": "^1.0.0-rc.1",
-    "scarlet-task": "^0.1.0-comment",
-    "toshihiko-memcached": "^1.0.0"
+    "async": "2.0.0-rc.6",
+    "bluebird": "3.4.0",
+    "colors": "1.1.2",
+    "fbbk-json": "1.0.0",
+    "lodash": "4.13.1",
+    "moment": "2.13.0",
+    "mysql2": "1.0.0-rc.3",
+    "scarlet-task": "0.1.0-comment",
+    "toshihiko-memcached": "1.0.0"
   },
   "devDependencies": {
-    "chinese-random-skill": "^0.0.3-rdm",
-    "cliparoo": "^1.1.1",
-    "conventional-changelog": "^0.5.3",
-    "coveralls": "^2.11.6",
-    "cz-conventional-changelog": "^1.1.6",
-    "ghooks": "^1.2.2",
-    "istanbul": "^1.0.0-alpha.2",
-    "jsxhint": "^0.15.1",
-    "mocha": "^2.5.0",
-    "should": "^9.0.2",
-    "validate-commit-msg": "^2.5.0"
+    "chinese-random-skill": "0.0.3-rdm",
+    "cliparoo": "1.1.1",
+    "conventional-changelog": "1.1.0",
+    "coveralls": "2.11.9",
+    "cz-conventional-changelog": "1.1.6",
+    "ghooks": "1.2.3",
+    "istanbul": "1.0.0-alpha.2",
+    "jsxhint": "0.15.1",
+    "mocha": "2.5.3",
+    "should": "9.0.2",
+    "validate-commit-msg": "2.6.1"
   },
   "scripts": {
     "test": "make test",
