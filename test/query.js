@@ -133,4 +133,21 @@ describe("query object", function () {
 
         answer.should.be.eql(sql);
     });
+
+    describe("should generate SQL with fields", function() {
+        it("#array", function() {
+            var sql = Model.where({ key4: "foo" }).field([ "key1", "key2" ]).makeSQL("find");
+            sql.should.be.eql("SELECT `id`, `key2` FROM `test` WHERE (`key4` = \"foo\")");
+        });
+
+        it("#string", function() {
+            var sql = Model.where({ key4: "foo" }).field("key1").makeSQL("find");
+            sql.should.be.eql("SELECT `id` FROM `test` WHERE (`key4` = \"foo\")");
+        });
+
+        it("#string with ,", function() {
+            var sql = Model.where({ key4: "foo" }).field("key1, key2").makeSQL("find");
+            sql.should.be.eql("SELECT `id`, `key2` FROM `test` WHERE (`key4` = \"foo\")");
+        });
+    });
 });
