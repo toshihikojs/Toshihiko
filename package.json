@@ -14,7 +14,7 @@
     "lodash": "4.13.1",
     "moment": "2.13.0",
     "mysql2": "1.0.0-rc.3",
-    "scarlet-task": "0.1.0-comment",
+    "scarlet-task": "1.0.0",
     "toshihiko-memcached": "1.0.0"
   },
   "devDependencies": {
