@@ -15,7 +15,7 @@
     "moment": "2.14.1",
     "mysql2": "1.0.0-rc.3",
     "scarlet-task": "1.0.0",
-    "toshihiko-memcached": "1.0.0"
+    "toshihiko-memcached": "1.0.1"
   },
   "devDependencies": {
     "chinese-random-skill": "0.0.3-rdm",
