@@ -9,8 +9,11 @@ clean:
 install:
 	@npm install -d --registry=http://registry.npm.taobao.org/
 
-test: install
-	@NODE_ENV=test $(MOCHA) -t $(TIMEOUT)
+debug-test:
+	@NODE_ENV=test DEBUG=toshihiko:* $(MOCHA) -t $(TIMEOUT) --recursive
+
+test:
+	@NODE_ENV=test $(MOCHA) -t $(TIMEOUT) --recursive
 
 before-test-travis: install
 	@mysql -e 'create database myapp_test;' & \
