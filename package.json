@@ -8,18 +8,12 @@
   },
   "dependencies": {
     "async": "2.0.1",
-    "bluebird": "3.4.1",
     "colors": "1.1.2",
-    "fbbk-json": "1.0.0",
     "lodash": "4.14.1",
-    "moment": "2.14.1",
     "mysql2": "1.0.0-rc.3",
-    "scarlet-task": "1.0.0",
-    "toshihiko-memcached": "1.0.1"
+    "scarlet-task": "1.0.0"
   },
   "devDependencies": {
-    "chinese-random-skill": "0.0.3-rdm",
-    "cliparoo": "1.1.1",
     "conventional-changelog-cli": "1.2.0",
     "coveralls": "2.11.12",
     "cz-conventional-changelog": "1.1.7",
