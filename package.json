@@ -40,9 +40,9 @@
     "url": "https://github.com/XadillaX/Toshihiko.git"
   },
   "keywords": [
-    "ORM",
-    "MySQL",
-    "Cache"
+    "orm",
+    "mysql",
+    "cache"
   ],
   "author": [
     "XadillaX <i@2333.moe>",
@@ -54,6 +54,9 @@
     "url": "https://github.com/XadillaX/Toshihiko/issues"
   },
   "homepage": "https://github.com/XadillaX/Toshihiko",
+  "engines": {
+    "node": ">=4.0"
+  },
   "config": {
     "commitizen": {
       "path": "./node_modules/cz-conventional-changelog"
