@@ -16,16 +16,14 @@ test:
 	@NODE_ENV=test $(MOCHA) -t $(TIMEOUT) --recursive
 
 before-test-travis: install
-	@mysql -e 'create database myapp_test;' & \
-		memcached -p 11211 -d & \
-  		memcached -p 11212 -d & \
-  		memcached -p 11213 -d
+	@mysql -e 'create database toshihiko;' & \
+		memcached -p 11211 -d
 
 test-coveralls: install
 	NODE_ENV=test $(ISTANBUL) cover $(MOCHA) \
 		--report lcovonly \
 		-- \
-		-t $(TIMEOUT) \
+		-t $(TIMEOUT) --recursive \
 		-R spec && cat ./coverage/lcov.info | \
 		\
 		$(COVERALLS) && rm -rf ./coverage 
