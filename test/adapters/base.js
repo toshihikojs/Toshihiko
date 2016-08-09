@@ -11,14 +11,33 @@ require("should");
 const Adapter = require("../../lib/adapters/base");
 
 describe("🐣 adapters/base", function() {
-    it("should create a base adapter", function() {
-        const par = {};
-        const options = { foo: "bar" };
-        const adapter = new Adapter(par, options);
+    const adapter = new Adapter({}, {});
 
-        adapter.parent.should.be.eql(par);
+    describe("create", function() {
+        it("should create a base adapter", function() {
+            const par = {};
+            const options = { foo: "bar" };
+            const adapter = new Adapter(par, options);
 
-        adapter.options.should.deepEqual(options);
-        adapter.options.should.not.equal(options);
+            adapter.parent.should.be.eql(par);
+
+            adapter.options.should.deepEqual(options);
+            adapter.options.should.not.equal(options);
+        });
+    });
+
+    describe("execute", function() {
+        it("should be async", function(done) {
+            let flag = false;
+            let ok = false;
+
+            adapter.execute({}, function() {
+                flag = true;
+                if(ok) done();
+            });
+
+            flag.should.equal(false);
+            ok = true;
+        });
     });
 });
