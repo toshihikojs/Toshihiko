@@ -24,6 +24,7 @@
     "mocha": "3.0.1",
     "mysql": "^2.11.1",
     "mysql2": "^1.0.0-rc.9",
+    "otrans": "^1.0.0",
     "should": "10.0.0",
     "sync-runner": "^0.1.5",
     "validate-commit-msg": "2.6.1"
