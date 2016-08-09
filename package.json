@@ -11,7 +11,10 @@
     "config.util": "^1.20.2-1",
     "debug": "^2.2.0",
     "eventemitter2": "^2.1.0",
-    "lodash": "4.14.1"
+    "fbbk-json": "^1.0.0",
+    "lodash": "4.14.1",
+    "moment": "^2.14.1",
+    "otrans": "^1.0.0"
   },
   "devDependencies": {
     "conventional-changelog-cli": "1.2.0",
@@ -24,7 +27,6 @@
     "mocha": "3.0.1",
     "mysql": "^2.11.1",
     "mysql2": "^1.0.0-rc.9",
-    "otrans": "^1.0.0",
     "should": "10.0.0",
     "sync-runner": "^0.1.5",
     "validate-commit-msg": "2.6.1"
