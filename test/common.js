@@ -30,7 +30,7 @@ describe("🐣 common", function() {
             common.getParamNames(func).should.deepEqual([ "foo", "bar" ]);
             func = (function(_asdf, 囍, _, λ) {}) ;// jshint ignore: line
             common.getParamNames(func).should.deepEqual([ "_asdf", "囍", "_", "λ" ]);
-            eval("func = function (   as   \n , sadf, /** sadf, */ 我, _  \n      \n  \t) {  //\n this.a = 1;       }"); // jshint ignore: line
+            eval("func = function 洗(   as   \n , sadf, /** sadf, */ 我, _  \n      \n  \t) {  //\n this.a = 1;       }"); // jshint ignore: line
             common.getParamNames(func).should.deepEqual([ "as", "sadf", "我", "_" ]);
         });
     });
