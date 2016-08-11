@@ -40,4 +40,14 @@ describe("🐣 adapters/base", function() {
             ok = true;
         });
     });
+
+    describe("find", function() {
+        it("should get error", function(done) {
+            adapter.find(null, function(err) {
+                err.should.be.instanceof(Error);
+                err.message.indexOf("not implemented").should.above(0);
+                done();
+            });
+        });
+    });
 });
