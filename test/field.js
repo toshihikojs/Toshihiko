@@ -11,6 +11,17 @@ const Type = require("../lib/field_type");
 
 describe("🐣 field", function() {
     describe("create", function() {
+        it("should throw error", function(done) {
+            try {
+                let a = new Field({});
+                a = 0;
+            } catch(e) {
+                e.should.be.instanceof(Error);
+                e.message.indexOf("no field name").should.above(-1);
+                done();
+            }
+        });
+
         it("should create json object", function() {
             const field = new Field({
                 name: "foo",
@@ -54,6 +65,36 @@ describe("🐣 field", function() {
             field = new Field({ name: "foo", validators: [ v2, v1 ] });
             field.validators[0].should.equal(v2);
             field.validators[1].should.equal(v1);
+        });
+    });
+
+    describe("parse and restore", function() {
+        it("👙 parse", function() {
+            const field = new Field({
+                name: "foo",
+                type: {
+                    parse: function(value) {
+                        value.should.equal("foo");
+                        return [ "foo" ];
+                    },
+                    restore: function() {}
+                }
+            });
+            field.parse("foo").should.deepEqual([ "foo" ]);
+        }); 
+
+        it("👙 restore", function() {
+            const field = new Field({
+                name: "foo",
+                type: {
+                    restore: function(value) {
+                        value.should.equal("foo");
+                        return [ "foo" ];
+                    },
+                    parse: function() {}
+                }
+            });
+            field.restore("foo").should.deepEqual([ "foo" ]);
         });
     });
 });
