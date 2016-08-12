@@ -9,12 +9,15 @@
 const path = require("path");
 
 const decache = require("decache");
+const moment = require("moment");
 const otrans = require("otrans");
 const runSync = require("sync-runner");
 const should = require("should");
 
 const Adapter = require("../../lib/adapters/base");
+const common = require("../util/common");
 const MySQLAdapter = require("../../lib/adapters/mysql");
+const Toshihiko = require("../../lib/toshihiko");
 
 describe("🐣 adapters/mysql", function() {
     describe("create", function() {
@@ -138,6 +141,125 @@ describe("🐣 adapters/mysql", function() {
                     rows.serverStatus.should.equal(2);
                     done();
                 });
+            });
+        });
+
+        describe(`${name} makeSql`, function() {
+            const toshihiko = new Toshihiko("mysql", {
+                username: "root",
+                password: "",
+                database: "toshihiko",
+                charset: "utf8mb4_general_ci"
+            });
+            const adapter = toshihiko.adapter;
+            const model = toshihiko.define("test", common.COMMON_SCHEMA);
+
+            after(function() {
+                adapter.mysql.end();
+            });
+
+            describe("should generate find sql", function() {
+                it("with fields", function() {
+                    const sql = adapter.makeSql("find", model, {
+                        fields: model.schema.map(field => field.name)
+                    });
+
+                    console.log(sql);
+                });
+            });
+        });
+
+        describe(`${name} makeFieldWhere`, function() {
+            const toshihiko = new Toshihiko("mysql", {
+                username: "root",
+                password: "",
+                database: "toshihiko",
+                charset: "utf8mb4_general_ci"
+            });
+            const adapter = toshihiko.adapter;
+            const model = toshihiko.define("test", common.COMMON_SCHEMA);
+
+            after(function() {
+                adapter.mysql.end();
+            });
+
+            it("should generate - 1", function() {
+                let sql;
+
+                sql = adapter.makeFieldWhere(model, "key1", {
+                    $neq: 1
+                }, "and");
+                sql.should.equal("`id` != 1");
+
+                sql = adapter.makeFieldWhere(model, "key2", {
+                    $eq: 1.2
+                }, "and");
+                sql.should.equal("`key2` = 1.2");
+
+                sql = adapter.makeFieldWhere(model, "key2", {
+                    $in: [ 1.2, 1.3 ]
+                }, "and");
+                sql.should.equal("`key2` IN (1.2, 1.3)");
+
+                sql = adapter.makeFieldWhere(model, "key2", {
+                    $neq: [ 1.2, 1.3 ]
+                }, "and");
+                sql.should.equal("(`key2` != 1.2 AND `key2` != 1.3)");
+
+                sql = adapter.makeFieldWhere(model, "key2", {
+                    $or: { $gt: 10, $lt: 3, $in: [ 4, 5 ], $neq: [ 6, 8 ] }
+                }, "and");
+                sql.should.equal("(`key2` > 10 OR `key2` < 3 OR `key2` IN (4, 5) OR (`key2` != 6 AND `key2` != 8))");
+
+                sql = adapter.makeFieldWhere(model, "key2", {
+                    $or: { $gt: 10, $lt: 3 },
+                    $neq: [ 1, 11, null ]
+                }, "and");
+                sql.should.equal("((`key2` > 10 OR `key2` < 3) AND (`key2` != 1 AND `key2` != 11 AND " +
+                    "`key2` IS NOT NULL))");
+
+                sql = adapter.makeFieldWhere(model, "key2", {
+                    $or: { $gt: 10, $lt: 3, $eq: { $or: [ 4, 5, 6, null ], $and: [ 1, 2 ] } },
+                    $neq: [ 1, 11 ]
+                }, "and");
+                sql.should.equal("((`key2` > 10 OR `key2` < 3 OR ((`key2` = 1 AND `key2` = 2) AND (`key2` = 4 " +
+                    "OR `key2` = 5 OR `key2` = 6 OR `key2` IS NULL))) AND (`key2` != 1 AND `key2` != 11))");
+
+                sql = adapter.makeFieldWhere(model, "key3", {
+                    $neq: [ { foo: "bar" }, { foo: "baz" }, [ { foo: "bar" } ] ]
+                }, "and");
+                sql.should.equal("(`key3` != (\"{\\\"foo\\\":\\\"bar\\\"}\") AND `key3` != " +
+                    "(\"{\\\"foo\\\":\\\"baz\\\"}\") AND `key3` != (\"[{\\\"foo\\\":\\\"bar\\\"}]\"))");
+
+                sql = adapter.makeFieldWhere(model, "key3", {
+                    foo: "bar"
+                }, "and");
+                sql.should.equal("`key3` = \"{\\\"foo\\\":\\\"bar\\\"}\"");
+
+                const date = new Date(0);
+                const dateStr = moment(0).format("YYYY-MM-DD HH:mm:ss");
+                sql = adapter.makeFieldWhere(model, "key5", date, "and");
+                sql.should.equal("`key5` = \"" + dateStr + "\"");
+            });
+
+            it("should generate - 2", function() {
+                let sql;
+
+                sql = adapter.makeFieldWhere(model, "key1", {
+                    $gt: 1,
+                    $lt: -5,
+                    $eq: null
+                }, "or");
+                sql.should.equal("(`id` > 1 OR `id` < -5 OR `id` IS NULL)");
+            });
+
+            it("should generate - 3", function() {
+                try {
+                    adapter.makeFieldWhere(model, "fsdaklj", 1, "or");
+                } catch(e) {
+                    e.should.be.instanceof(Error);
+                    e.message.indexOf("no field named").should.above(-1);
+                }
             });
         });
     });
