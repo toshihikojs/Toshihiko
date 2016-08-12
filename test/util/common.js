@@ -23,6 +23,16 @@ module.exports = {
         },
         { name: "key3", type: Type.Json, defaultValue: {} },
         { name: "key4", type: Type.String, defaultValue:"Ha!", allowNull: true },
-        { name: "key5", type: Type.Datetime }
+        { name: "key5", type: Type.Datetime },
+        { name: "key6", type: {
+            name: "Bin",
+            parse: function(v) {
+                return { dec: parseInt(v, 2) };
+            },
+            restore: function(v) {
+                return `BIN(${parseInt(v.dec)})`;
+            },
+            needQuotes: false
+        } }
     ]
 };

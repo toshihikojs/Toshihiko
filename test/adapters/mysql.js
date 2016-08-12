@@ -251,6 +251,23 @@ describe("🐣 adapters/mysql", function() {
                     $eq: null
                 }, "or");
                 sql.should.equal("(`id` > 1 OR `id` < -5 OR `id` IS NULL)");
+
+                sql = adapter.makeFieldWhere(model, "key1", 1, "and");
+                sql.should.equal("`id` = 1");
+
+                sql = adapter.makeFieldWhere(model, "key3", 1, "and");
+                sql.should.equal("`key3` = \"1\"");
+
+                sql = adapter.makeFieldWhere(model, "key3", null, "and");
+                sql.should.equal("`key3` IS NULL");
+
+                sql = adapter.makeFieldWhere(model, "key4", {
+                    $in: [ 1, 2, "bar" ]
+                }, "and");
+                sql.should.equal("`key4` IN (\"1\", \"2\", \"bar\")");
+
+                sql = adapter.makeFieldWhere(model, "key6", { dec: 100 }, "and");
+                sql.should.equal("`key6` = BIN(100)");
             });
 
             it("should generate - 3", function() {
