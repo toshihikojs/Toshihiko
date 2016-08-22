@@ -279,5 +279,57 @@ describe("🐣 adapters/mysql", function() {
                 }
             });
         });
+
+        describe(`${name} makeOrder`, function() {
+            const toshihiko = new Toshihiko("mysql", {
+                username: "root",
+                password: "",
+                database: "toshihiko",
+                charset: "utf8mb4_general_ci"
+            });
+            const adapter = toshihiko.adapter;
+            const model = toshihiko.define("test", common.COMMON_SCHEMA);
+
+            after(function() {
+                adapter.mysql.end();
+            });
+
+
+            it("should generate - 1", function() {
+                let sql;
+
+                sql = adapter.makeOrder(model, [ { key1: -1 } ]);
+                sql.should.equal("`id` DESC");
+
+                sql = adapter.makeOrder(model, []);
+                sql.should.equal("");
+
+                sql = adapter.makeOrder(model, [{
+                    key1: -1
+                }, {
+                    key2: 1
+                }, {
+                    key3: 2
+                }, {
+                    key4: -1
+                }, {
+                    key5: "123"
+                }]);
+                sql.should.equal("`id` DESC, `key2` ASC, `key3` ASC, `key4` DESC, `key5` ASC");
+            });
+
+            it("should generate - 2", function() {
+                let sql;
+
+                sql = adapter.makeOrder(model, [ {} ]);
+                sql.should.equal("");
+
+                try {
+                    sql = adapter.makeOrder(model, [ { id: -1 } ]);
+                } catch(e) {
+                    e.message.indexOf("no field").should.above(-1);
+                }
+            });
+        });
     });
 });
