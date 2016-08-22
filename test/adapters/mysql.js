@@ -331,5 +331,37 @@ describe("🐣 adapters/mysql", function() {
                 }
             });
         });
+
+        describe(`${name} makeLimit`, function() {
+            const toshihiko = new Toshihiko("mysql", {
+                username: "root",
+                password: "",
+                database: "toshihiko",
+                charset: "utf8mb4_general_ci"
+            });
+            const adapter = toshihiko.adapter;
+            const model = toshihiko.define("test", common.COMMON_SCHEMA);
+
+            after(function() {
+                adapter.mysql.end();
+            });
+
+
+            it("should generate - 1", function() {
+                let sql;
+
+                sql = adapter.makeLimit(model, [ 12489, 4783 ]);
+                sql.should.equal("12489, 4783");
+
+                sql = adapter.makeLimit(model, [ 389 ]);
+                sql.should.equal("389");
+
+                sql = adapter.makeLimit(model, [ "4389", "98347" ]);
+                sql.should.equal("4389, 98347");
+
+                sql = adapter.makeLimit(model, [ "dsklj", "dsa" ]);
+                sql.should.equal("0, 0");
+            });
+        });
     });
 });
