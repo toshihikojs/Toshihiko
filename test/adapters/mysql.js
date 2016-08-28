@@ -9,6 +9,7 @@
 const path = require("path");
 
 const decache = require("decache");
+const Mock = require("mockjs");
 const moment = require("moment");
 const otrans = require("otrans");
 const runSync = require("sync-runner");
@@ -453,6 +454,89 @@ describe("🐣 adapters/mysql", function() {
         });
 
         describe(`${name} makeFind`, function() {
+            const toshihiko = new Toshihiko("mysql", {
+                username: "root",
+                password: "",
+                database: "toshihiko",
+                charset: "utf8mb4_general_ci"
+            });
+            const adapter = toshihiko.adapter;
+            const model = toshihiko.define("test", common.COMMON_SCHEMA);
+
+            const $where = adapter.makeWhere;
+            const $order = adapter.makeOrder;
+            const $limit = adapter.makeLimit;
+
+            before(function() {
+                adapter.makeWhere = function() {
+                    arguments[0].should.equal(model);
+                    return JSON.stringify(arguments[1]);
+                };
+
+                adapter.makeOrder = function() {
+                    arguments[0].should.equal(model);
+                    return JSON.stringify(arguments[1]);
+                };
+
+                adapter.makeLimit = function() {
+                    arguments[0].should.equal(model);
+                    return JSON.stringify(arguments[1]);
+                };
+            });
+
+            after(function() {
+                adapter.makeWhere = $where;
+                adapter.makeOrder = $order;
+                adapter.makeLimit = $limit;
+
+                adapter.mysql.end();
+            });
+
+            it("no options", function() {
+                let sql;
+
+                sql = adapter.makeFind(model);
+                sql.should.equal("SELECT * FROM `test`");
+
+                sql = adapter.makeFind(model, {});
+                sql.should.equal("SELECT * FROM `test`");
+            });
+
+            it("call other functions", function() {
+                let sql;
+                const whereSchema = { "list|1-10": [{ "id|+1": 1 }] };
+
+                const where1 = Mock.mock(whereSchema);
+                sql = adapter.makeFind(model, { where: where1 });
+                sql.should.equal(`SELECT * FROM \`test\` WHERE ${JSON.stringify(where1)}`);
+
+                const order1 = [ Mock.mock(whereSchema) ];
+                sql = adapter.makeFind(model, { order: order1 });
+                sql.should.equal(`SELECT * FROM \`test\` ORDER BY ${JSON.stringify(order1)}`);
+
+                const limit1 = [ Mock.mock(whereSchema) ];
+                sql = adapter.makeFind(model, { limit: limit1 });
+                sql.should.equal(`SELECT * FROM \`test\` LIMIT ${JSON.stringify(limit1)}`);
+
+                sql = adapter.makeFind(model, {
+                    where: where1,
+                    order: order1,
+                    limit: limit1
+                });
+                sql.should.equal(`SELECT * FROM \`test\` WHERE ${JSON.stringify(where1)} ORDER BY ${JSON.stringify(order1)} LIMIT ${JSON.stringify(limit1)}`);
+            });
+
+            it("use field", function() {
+                let sql;
+                sql = adapter.makeFind(model, { fields: model.schema.map(field => field.name) });
+                sql.should.equal("SELECT `id`, `key2`, `key3`, `key4`, `key5`, `key6` FROM `test`");
+            });
+
+            it("should count", function() {
+                let sql;
+                sql = adapter.makeFind(model, { count: true, fields: model.schema.map(field => field.name) });
+                sql.should.equal("SELECT COUNT(0) FROM `test`");
+            });
         });
     });
 });
