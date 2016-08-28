@@ -280,7 +280,7 @@ describe("🐣 adapters/mysql", function() {
             });
         });
 
-        describe(`${name} makeOrder`, function() {
+        describe(`${name} makeWhere`, function() {
             const toshihiko = new Toshihiko("mysql", {
                 username: "root",
                 password: "",
@@ -294,6 +294,94 @@ describe("🐣 adapters/mysql", function() {
                 adapter.mysql.end();
             });
 
+            it("should generate - 1", function() {
+                let sql;
+
+                sql = adapter.makeWhere(model, { key1: "1", key2: "2" });
+                sql.should.equal("(`id` = 1 AND `key2` = 2)");
+
+                sql = adapter.makeWhere(model, { key1: "1", key2: "2" }, "OR");
+                sql.should.equal("(`id` = 1 OR `key2` = 2)");
+
+                sql = adapter.makeWhere(model, { key1: "1", key2: "2", $or: {
+                    key3: 1,
+                    key4: "2"
+                } }, "AND");
+                sql.should.equal("(`id` = 1 AND `key2` = 2 AND (`key3` = \"1\" OR `key4` = \"2\"))");
+
+                sql = adapter.makeWhere(model, { key1: "1", key2: "2", $or: [
+                    { key3: 1, key4: "2" },
+                    { $or: { key3: 2, key4: "3" } },
+                    { $and: { key3: 3, key4: "4" } }
+                ], $and: [
+                    { $or: { key3: 1, key4: 2 } },
+                    { key1: 1 }
+                ] }, "AND");
+                sql.should.equal("(`id` = 1 AND `key2` = 2 AND ((`key3` = \"1\" AND `key4` = \"2\") OR ((`key3` = " +
+                    "\"2\" OR `key4` = \"3\")) OR ((`key3` = \"3\" AND `key4` = \"4\"))) AND " +
+                    "(((`key3` = \"1\" OR `key4` = \"2\")) AND (`id` = 1)))");
+            });
+        });
+
+        describe(`${name} makeArrayWhere`, function() {
+            const toshihiko = new Toshihiko("mysql", {
+                username: "root",
+                password: "",
+                database: "toshihiko",
+                charset: "utf8mb4_general_ci"
+            });
+            const adapter = toshihiko.adapter;
+            const model = toshihiko.define("test", common.COMMON_SCHEMA);
+
+            after(function() {
+                adapter.mysql.end();
+            });
+
+            it("should generate - 1", function() {
+                let sql;
+
+                sql = adapter.makeArrayWhere(model, [
+                    { key3: 1, key4: "2" },
+                    { $or: { key3: 2, key4: "3" } },
+                    { $and: { key3: 3, key4: "4" } }
+                ], "AND");
+                sql.should.equal("((`key3` = \"1\" AND `key4` = \"2\") AND ((`key3` = \"2\" OR `key4` = \"3\")) " +
+                    "AND ((`key3` = \"3\" AND `key4` = \"4\")))");
+
+                sql = adapter.makeArrayWhere(model, [
+                    { key3: 1, key4: "2" },
+                    { $or: { key3: 2, key4: "3" } },
+                    { $and: { key3: 3, key4: "4" } }
+                ], "OR");
+                sql.should.equal("((`key3` = \"1\" AND `key4` = \"2\") OR ((`key3` = \"2\" OR `key4` = \"3\")) " +
+                    "OR ((`key3` = \"3\" AND `key4` = \"4\")))"); 
+            });
+
+            it("should generate - 2", function() {
+                try {
+                    adapter.makeArrayWhere(model, {}, "AND");
+                } catch(e) {
+                    e.message.should.equal("Non-array condition.");
+                    return;
+                }
+
+                (1).should.equal(2);
+            });
+        });
+
+        describe(`${name} makeOrder`, function() {
+            const toshihiko = new Toshihiko("mysql", {
+                username: "root",
+                password: "",
+                database: "toshihiko",
+                charset: "utf8mb4_general_ci"
+            });
+            const adapter = toshihiko.adapter;
+            const model = toshihiko.define("test", common.COMMON_SCHEMA);
+
+            after(function() {
+                adapter.mysql.end();
+            });
 
             it("should generate - 1", function() {
                 let sql;
@@ -362,6 +450,9 @@ describe("🐣 adapters/mysql", function() {
                 sql = adapter.makeLimit(model, [ "dsklj", "dsa" ]);
                 sql.should.equal("0, 0");
             });
+        });
+
+        describe(`${name} makeFind`, function() {
         });
     });
 });
