@@ -153,19 +153,35 @@ describe("🐣 adapters/mysql", function() {
                 charset: "utf8mb4_general_ci"
             });
             const adapter = toshihiko.adapter;
-            const model = toshihiko.define("test", common.COMMON_SCHEMA);
+            const model = toshihiko.define("test", common.COMMON_SCHEMA); 
 
             after(function() {
                 adapter.mysql.end();
             });
 
             describe("should generate find sql", function() {
-                it("with fields", function() {
-                    const sql = adapter.makeSql("find", model, {
-                        fields: model.schema.map(field => field.name)
-                    });
+                const _options = { foo: "bar", baz: "bbb" };
+                const _options1 = { foo: "bar", baz: "bbb" };
 
-                    console.log(sql);
+                let called = 0;
+                adapter.makeFind = function(_model, options) {
+                    _model.should.equal(model);
+                    options.should.equal(_options);
+                    options.should.deepEqual(_options1);
+                    called++;
+                    return "OK!";
+                };
+
+                it("should call makeFind", function() {
+                    let sql;
+
+                    sql = adapter.makeSql("find", model, _options);
+                    sql.should.equal("OK!");
+                    called.should.equal(1);
+
+                    sql = adapter.makeSql("blahblah", model, _options);
+                    sql.should.equal("OK!");
+                    called.should.equal(2);
                 });
             });
         });
@@ -321,6 +337,18 @@ describe("🐣 adapters/mysql", function() {
                 sql.should.equal("(`id` = 1 AND `key2` = 2 AND ((`key3` = \"1\" AND `key4` = \"2\") OR ((`key3` = " +
                     "\"2\" OR `key4` = \"3\")) OR ((`key3` = \"3\" AND `key4` = \"4\"))) AND " +
                     "(((`key3` = \"1\" OR `key4` = \"2\")) AND (`id` = 1)))");
+            });
+
+            it("should generate - 2", function() {
+                let sql;
+
+                sql = adapter.makeWhere(model, [
+                    { key3: 1, key4: "2" },
+                    { $or: { key3: 2, key4: "3" } },
+                    { $and: { key3: 3, key4: "4" } }
+                ], "AND");
+                sql.should.equal("((`key3` = \"1\" AND `key4` = \"2\") AND ((`key3` = \"2\" OR `key4` = \"3\")) " +
+                    "AND ((`key3` = \"3\" AND `key4` = \"4\")))");
             });
         });
 
