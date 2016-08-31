@@ -18,6 +18,7 @@ const should = require("should");
 
 const Adapter = require("../../lib/adapters/base");
 const common = require("../util/common");
+const hack = require("../util/hack");
 const MySQLAdapter = require("../../lib/adapters/mysql");
 const Toshihiko = require("../../lib/toshihiko");
 
@@ -147,9 +148,15 @@ describe("🐣 adapters/mysql", function() {
                 const adapter = new MySQLAdapter({}, correctOptions);
                 adapter.execute("DROP TABLE IF EXISTS `test1`;", function(err) {
                     should.ifError(err);
-                    adapter.execute(common.COMMON_SCHEMA_SQL, function(err) {
+                    adapter.execute("DROP TABLE IF EXISTS `test2`;", function(err) {
                         should.ifError(err);
-                        adapter.mysql.end(done);
+                        adapter.execute(common.COMMON_SCHEMA_SQL, function(err) {
+                            should.ifError(err);
+                            adapter.execute(common.NO_AI_SCHEMA_SQL, function(err) {
+                                should.ifError(err);
+                                adapter.mysql.end(done);
+                            });
+                        });
                     });
                 });
             });
@@ -174,7 +181,8 @@ describe("🐣 adapters/mysql", function() {
                         should.ifError(err);
                         otrans.toCamel(rows).should.deepEqual([
                             { tablesInToshihiko: "test" },
-                            { tablesInToshihiko: "test1" }
+                            { tablesInToshihiko: "test1" },
+                            { tablesInToshihiko: "test2" }
                         ]);
                         done();
                     });
@@ -202,6 +210,8 @@ describe("🐣 adapters/mysql", function() {
                     it("should insert 1", function(done) {
                         const now = new Date();
                         now.setMilliseconds(0);
+
+                        const hacked = hack.whereOnce(model, { key1: 1 });
                         adapter.insert(model, {
                             key2: 0.5,
                             key3: { foo: "bar" },
@@ -219,6 +229,190 @@ describe("🐣 adapters/mysql", function() {
                                 key5: now,
                                 key6: "10101000"
                             });
+                            hacked.called.should.equal(1);
+                            done();
+                        });
+                    });
+                });
+
+                describe("ai is not pk", function() {
+                    const toshihiko = new Toshihiko("mysql", correctOptions);
+                    const adapter = toshihiko.adapter;
+                    const model = toshihiko.define("test1", common.COMMON_SCHEMA_AI_IS_NOT_PRIMARY);
+
+                    after(function() {
+                        adapter.mysql.end();
+                    });
+
+                    it("should insert 1", function(done) {
+                        const now = new Date();
+                        now.setMilliseconds(0);
+
+                        const hacked = hack.whereOnce(model, { key4: "dummy primary" });
+                        adapter.insert(model, {
+                            key2: 0.5,
+                            key3: { foo: "bar" },
+                            key4: "dummy primary",
+                            key5: now,
+                            key6: { dec: 610074841 }
+                        }, function(err, _row) {
+                            should.ifError(err);
+                            const row = cu.extendDeep({}, _row);
+                            row.should.match({
+                                id: 2,
+                                key2: 0.5,
+                                key3: JSON.stringify({ foo: "bar" }),
+                                key4: "dummy primary",
+                                key5: now,
+                                key6: "100100010111010000000011011001"
+                            });
+
+                            hacked.called.should.equal(1);
+                            done();
+                        });
+                    });
+                });
+
+                describe("multi-primary-keys", function() {
+                    const toshihiko = new Toshihiko("mysql", correctOptions);
+                    const adapter = toshihiko.adapter;
+                    const model = toshihiko.define("test1", common.COMMON_SCHEMA_MULTI_PRIMARY);
+
+                    after(function() {
+                        adapter.mysql.end();
+                    });
+
+                    it("should insert 1", function(done) {
+                        const now = new Date();
+                        now.setMilliseconds(0);
+
+                        const hacked = hack.whereOnce(model, { key1: 3, key4: "dummy multi primary" });
+                        adapter.insert(model, {
+                            key2: 0.5,
+                            key3: { foo: "bar" },
+                            key4: "dummy multi primary",
+                            key5: now,
+                            key6: { dec: 8644325 }
+                        }, function(err, _row) {
+                            should.ifError(err);
+                            const row = cu.extendDeep({}, _row);
+                            row.should.match({
+                                id: 3,
+                                key2: 0.5,
+                                key3: JSON.stringify({ foo: "bar" }),
+                                key4: "dummy multi primary",
+                                key5: now,
+                                key6: "100000111110011011100101"
+                            });
+
+                            hacked.called.should.equal(1);
+                            done();
+                        });
+                    });
+                });
+
+                describe("no primary key", function() {
+                    const toshihiko = new Toshihiko("mysql", correctOptions);
+                    const adapter = toshihiko.adapter;
+                    const model = toshihiko.define("test1", common.COMMON_SCHEMA_NO_PRIMARY);
+
+                    after(function() {
+                        adapter.mysql.end();
+                    });
+
+                    it("should insert 1", function(done) {
+                        const now = new Date();
+                        now.setMilliseconds(0);
+
+                        const hacked = hack.whereOnce(model, {
+                            key1: 4,
+                            key2: 0.5,
+                            key3: { foo: "bar" },
+                            key4: "dummy no primary",
+                            key5: now,
+                            key6: { dec: 8644325 }
+                        });
+                        adapter.insert(model, {
+                            key2: 0.5,
+                            key3: { foo: "bar" },
+                            key4: "dummy no primary",
+                            key5: now,
+                            key6: { dec: 8644325 }
+                        }, function(err, _row) {
+                            should.ifError(err);
+                            const row = cu.extendDeep({}, _row);
+                            row.should.match({
+                                id: 4,
+                                key2: 0.5,
+                                key3: JSON.stringify({ foo: "bar" }),
+                                key4: "dummy no primary",
+                                key5: now,
+                                key6: "100000111110011011100101"
+                            });
+
+                            hacked.called.should.equal(1);
+                            done();
+                        });
+                    });
+                });
+
+                describe("no ai key", function() {
+                    const toshihiko = new Toshihiko("mysql", correctOptions);
+                    const adapter = toshihiko.adapter;
+                    const model = toshihiko.define("test2", common.NO_AI_SCHEMA);
+
+                    after(function() {
+                        adapter.mysql.end();
+                    });
+
+                    it("should insert 1", function(done) {
+                        const now = new Date();
+                        now.setMilliseconds(0);
+
+                        const hacked = hack.whereOnce(model, { key1: 1 });
+                        adapter.insert(model, {
+                            key1: 1,
+                            key2: 0.5,
+                        }, function(err, _row) {
+                            should.ifError(err);
+                            const row = cu.extendDeep({}, _row);
+                            row.should.match({
+                                id: 1,
+                                key2: 0.5
+                            });
+
+                            hacked.called.should.equal(1);
+                            done();
+                        });
+                    });
+                });
+
+                describe("no ai key with no primary key", function() {
+                    const toshihiko = new Toshihiko("mysql", correctOptions);
+                    const adapter = toshihiko.adapter;
+                    const model = toshihiko.define("test2", common.NO_AI_SCHEMA_WITH_NO_PRIMARY);
+
+                    after(function() {
+                        adapter.mysql.end();
+                    });
+
+                    it("should insert 1", function(done) {
+                        const now = new Date();
+                        now.setMilliseconds(0);
+
+                        const hacked = hack.whereOnce(model, { key1: 2, key2: 1 });
+                        adapter.insert(model, {
+                            key1: 2,
+                            key2: 1,
+                        }, function(err, _row) {
+                            should.ifError(err);
+                            const row = cu.extendDeep({}, _row);
+                            row.should.match({
+                                id: 2,
+                                key2: 1
+                            });
+
+                            hacked.called.should.equal(1);
                             done();
                         });
                     });
