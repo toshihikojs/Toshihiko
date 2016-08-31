@@ -10,7 +10,7 @@ const Type = require("../../lib/field_type");
 
 module.exports = {
     COMMON_SCHEMA: [
-        { name: "key1", column: "id", primaryKey: true, type: Type.Integer },
+        { name: "key1", column: "id", primaryKey: true, type: Type.Integer, autoIncrement: true },
         {
             name: "key2",
             type: Type.Float,
@@ -34,5 +34,15 @@ module.exports = {
             },
             needQuotes: false
         } }
-    ]
+    ],
+
+    COMMON_SCHEMA_SQL: "CREATE TABLE IF NOT EXISTS `test1` ( \
+      `id` int(11) unsigned NOT NULL AUTO_INCREMENT, \
+      `key2` float NOT NULL, \
+      `key3` longtext NOT NULL, \
+      `key4` varchar(255) DEFAULT NULL, \
+      `key5` datetime NOT NULL, \
+      `key6` varchar(512) NOT NULL DEFAULT '', \
+      PRIMARY KEY (`id`) \
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;"
 };
