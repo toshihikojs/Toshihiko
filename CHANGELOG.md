@@ -1,3 +1,8 @@
+<a name="0.8.4"></a>
+## [0.8.4](https://github.com/XadillaX/Toshihiko/compare/0.8.3...v0.8.4) (2016-09-15)
+
+
+
 <a name="0.8.3"></a>
 ## [0.8.3](https://github.com/XadillaX/Toshihiko/compare/0.8.2...v0.8.3) (2016-07-29)
 
