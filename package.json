@@ -27,7 +27,7 @@
     "istanbul": "1.0.0-alpha.2",
     "jsxhint": "0.15.1",
     "mocha": "3.0.2",
-    "should": "10.0.0",
+    "should": "11.0.0",
     "validate-commit-msg": "2.6.1"
   },
   "scripts": {
