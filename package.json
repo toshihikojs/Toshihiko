@@ -12,7 +12,7 @@
     "debug": "^2.2.0",
     "eventemitter2": "^2.1.0",
     "fbbk-json": "^1.0.0",
-    "lodash": "4.14.1",
+    "lodash": "4.15.0",
     "moment": "^2.14.1",
     "otrans": "^1.0.0",
     "sqlstring": "^2.0.1"
