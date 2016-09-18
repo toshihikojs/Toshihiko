@@ -29,7 +29,7 @@
     "mockjs": "^1.0.1-beta3",
     "mysql": "^2.11.1",
     "mysql2": "^1.0.0-rc.9",
-    "should": "10.0.0",
+    "should": "11.1.0",
     "sync-runner": "^0.1.5",
     "toshihiko-memcached": "^1.0.1",
     "validate-commit-msg": "2.6.1"
