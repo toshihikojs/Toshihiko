@@ -243,7 +243,6 @@ describe("🐣 query", function() {
             toshihiko.adapter.find = function(_query, callback, options) {
                 query.should.equal(_query);
                 options.should.deepEqual({
-                    toJSON: false,
                     single: false
                 });
                 toshihiko.adapter.find = find;

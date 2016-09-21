@@ -20,6 +20,7 @@ const Adapter = require("../../lib/adapters/base");
 const common = require("../util/common");
 const hack = require("../util/hack");
 const MySQLAdapter = require("../../lib/adapters/mysql");
+const Query = require("../../lib/query");
 const Toshihiko = require("../../lib/toshihiko");
 
 describe("🐣 adapters/mysql", function() {
@@ -226,12 +227,12 @@ describe("🐣 adapters/mysql", function() {
                             should.ifError(err);
                             const row = cu.extendDeep({}, _row);
                             row.should.match({
-                                id: 1,
+                                key1: 1,
                                 key2: 0.5,
-                                key3: JSON.stringify({ foo: "bar" }),
+                                key3: { foo: "bar" },
                                 key4: null,
                                 key5: now,
-                                key6: "10101000"
+                                key6: { dec: 168 }
                             });
                             hacked.called.should.equal(1);
                             done();
@@ -263,12 +264,12 @@ describe("🐣 adapters/mysql", function() {
                             should.ifError(err);
                             const row = cu.extendDeep({}, _row);
                             row.should.match({
-                                id: 2,
+                                key1: 2,
                                 key2: 0.5,
-                                key3: JSON.stringify({ foo: "bar" }),
+                                key3: { foo: "bar" },
                                 key4: "dummy primary",
                                 key5: now,
-                                key6: "100100010111010000000011011001"
+                                key6: { dec: 610074841 }
                             });
 
                             hacked.called.should.equal(1);
@@ -301,12 +302,12 @@ describe("🐣 adapters/mysql", function() {
                             should.ifError(err);
                             const row = cu.extendDeep({}, _row);
                             row.should.match({
-                                id: 3,
+                                key1: 3,
                                 key2: 0.5,
-                                key3: JSON.stringify({ foo: "bar" }),
+                                key3: { foo: "bar" },
                                 key4: "dummy multi primary",
                                 key5: now,
-                                key6: "100000111110011011100101"
+                                key6: { dec: 8644325 }
                             });
 
                             hacked.called.should.equal(1);
@@ -346,12 +347,12 @@ describe("🐣 adapters/mysql", function() {
                             should.ifError(err);
                             const row = cu.extendDeep({}, _row);
                             row.should.match({
-                                id: 4,
+                                key1: 4,
                                 key2: 0.5,
-                                key3: JSON.stringify({ foo: "bar" }),
+                                key3: { foo: "bar" },
                                 key4: "dummy no primary",
                                 key5: now,
-                                key6: "100000111110011011100101"
+                                key6: { dec: 8644325 }
                             });
 
                             hacked.called.should.equal(1);
@@ -381,7 +382,7 @@ describe("🐣 adapters/mysql", function() {
                             should.ifError(err);
                             const row = cu.extendDeep({}, _row);
                             row.should.match({
-                                id: 1,
+                                key1: 1,
                                 key2: 0.5
                             });
 
@@ -412,7 +413,7 @@ describe("🐣 adapters/mysql", function() {
                             should.ifError(err);
                             const row = cu.extendDeep({}, _row);
                             row.should.match({
-                                id: 2,
+                                key1: 2,
                                 key2: 1
                             });
 
@@ -808,6 +809,98 @@ describe("🐣 adapters/mysql", function() {
                     let sql;
                     sql = adapter.makeFind(model, { count: true, fields: model.schema.map(field => field.name) });
                     sql.should.equal("SELECT COUNT(0) FROM `test`");
+                });
+            });
+
+            describe(`${name} findWithNoCache`, function() {
+                const toshihiko = new Toshihiko("mysql", correctOptions);
+                const adapter = toshihiko.adapter;
+                const model = toshihiko.define("test1", common.COMMON_SCHEMA);
+
+                after(function() {
+                    adapter.mysql.end();
+                });
+
+                it("normal 1", function(done) {
+                    const query = new Query(model).fields("key1,key2,key3").order("key1 asc").limit(100);
+
+                    adapter.findWithNoCache(query.model, function(err, rows, extra) {
+                        should.ifError(err);
+                        extra.should.equal("SELECT `id`, `key2`, `key3` FROM `test1` ORDER BY `id` ASC LIMIT 100");
+                        rows.should.match([
+                            { id: 1, key2: 0.5, key3: "{\"foo\":\"bar\"}" },
+                            { id: 2, key2: 0.5, key3: "{\"foo\":\"bar\"}" },
+                            { id: 3, key2: 0.5, key3: "{\"foo\":\"bar\"}" },
+                            { id: 4, key2: 0.5, key3: "{\"foo\":\"bar\"}" }
+                        ]);
+                        done();
+                    }, adapter.queryToOptions(query, {}));
+                });
+
+                it("normal 2", function(done) {
+                    const query = new Query(model).fields("key1,key2,key3").order("key2 asc").limit(100);
+
+                    adapter.findWithNoCache(query.model, function(err, rows, extra) {
+                        should.ifError(err);
+                        extra.should.equal("SELECT `id`, `key2`, `key3` FROM `test1` ORDER BY `key2` ASC LIMIT 100");
+                        rows.should.match([
+                            { id: 1, key2: 0.5, key3: "{\"foo\":\"bar\"}" },
+                            { id: 2, key2: 0.5, key3: "{\"foo\":\"bar\"}" },
+                            { id: 3, key2: 0.5, key3: "{\"foo\":\"bar\"}" },
+                            { id: 4, key2: 0.5, key3: "{\"foo\":\"bar\"}" }
+                        ]);
+                        done();
+                    }, adapter.queryToOptions(query, {}));
+                });
+
+                describe("single", function() {
+                    it("no limit", function(done) {
+                        const query = new Query(model).fields("key1,key2,key3").order("key2 asc");
+
+                        adapter.findWithNoCache(query.model, function(err, rows, extra) {
+                            should.ifError(err);
+                            extra.should.equal("SELECT `id`, `key2`, `key3` FROM `test1` ORDER BY `key2` " +
+                                "ASC LIMIT 0, 1");
+                            rows.should.match({ id: 1, key2: 0.5, key3: "{\"foo\":\"bar\"}" });
+                            done();
+                        }, adapter.queryToOptions(query, { single: true }));
+                    });
+
+                    it("limit 10", function(done) {
+                        const query = new Query(model).fields("key1,key2,key3").order("key2 asc").limit(10);
+
+                        adapter.findWithNoCache(query.model, function(err, rows, extra) {
+                            should.ifError(err);
+                            extra.should.equal("SELECT `id`, `key2`, `key3` FROM `test1` ORDER BY `key2` " +
+                                "ASC LIMIT 1");
+                            rows.should.match({ id: 1, key2: 0.5, key3: "{\"foo\":\"bar\"}" });
+                            done();
+                        }, adapter.queryToOptions(query, { single: true }));
+                    });
+
+                    it("limit 1, 100", function(done) {
+                        const query = new Query(model).fields("key1,key2,key3").order("key2 asc").limit(1, 100);
+
+                        adapter.findWithNoCache(query.model, function(err, rows, extra) {
+                            should.ifError(err);
+                            extra.should.equal("SELECT `id`, `key2`, `key3` FROM `test1` ORDER BY `key2` " +
+                                "ASC LIMIT 1, 1");
+                            rows.should.match({ id: 2, key2: 0.5, key3: "{\"foo\":\"bar\"}" });
+                            done();
+                        }, adapter.queryToOptions(query, { single: true }));
+                    });
+
+                    it("limit 100, 100", function(done) {
+                        const query = new Query(model).fields("key1,key2,key3").order("key2 asc").limit(100, 100);
+
+                        adapter.findWithNoCache(query.model, function(err, rows, extra) {
+                            should.ifError(err);
+                            extra.should.equal("SELECT `id`, `key2`, `key3` FROM `test1` ORDER BY `key2` " +
+                                "ASC LIMIT 100, 1");
+                            should(rows).equal(null);
+                            done();
+                        }, adapter.queryToOptions(query, { single: true }));
+                    });
                 });
             });
         });
