@@ -12,15 +12,15 @@
     "debug": "^2.2.0",
     "eventemitter2": "^2.1.0",
     "fbbk-json": "^1.0.0",
-    "lodash": "4.14.1",
+    "lodash": "4.15.0",
     "moment": "^2.14.1",
     "otrans": "^1.0.0",
     "sqlstring": "^2.0.1"
   },
   "devDependencies": {
     "conventional-changelog-cli": "1.2.0",
-    "coveralls": "2.11.12",
-    "cz-conventional-changelog": "1.1.7",
+    "coveralls": "2.11.13",
+    "cz-conventional-changelog": "1.2.0",
     "decache": "^4.1.0",
     "ghooks": "1.3.2",
     "istanbul": "1.0.0-alpha.2",
@@ -29,10 +29,12 @@
     "mockjs": "^1.0.1-beta3",
     "mysql": "^2.11.1",
     "mysql2": "^1.1.0",
-    "should": "10.0.0",
+    "should": "11.0.0",
+    "mysql2": "^1.0.0-rc.9",
+    "should": "11.1.0",
     "sync-runner": "^0.1.5",
     "toshihiko-memcached": "^1.0.1",
-    "validate-commit-msg": "2.6.1"
+    "validate-commit-msg": "2.8.0"
   },
   "scripts": {
     "test": "make test",
