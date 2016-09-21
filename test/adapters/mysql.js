@@ -145,7 +145,9 @@ describe("🐣 adapters/mysql", function() {
     [ "mysql", "mysql2" ].forEach(name => {
         describe(name, function() {
             before(function(done) {
-                const adapter = new MySQLAdapter({}, correctOptions);
+                const options = cu.extendDeep({}, correctOptions);
+                options.package = name;
+                const adapter = new MySQLAdapter({}, options);
                 adapter.execute("DROP TABLE IF EXISTS `test1`;", function(err) {
                     should.ifError(err);
                     adapter.execute("DROP TABLE IF EXISTS `test2`;", function(err) {
@@ -217,7 +219,9 @@ describe("🐣 adapters/mysql", function() {
                             key3: { foo: "bar" },
                             key4: null,
                             key5: now,
-                            key6: { dec: 168 }
+                            key6: { dec: 168 },
+                            $123: 1,
+                            ok: function() {}
                         }, function(err, _row) {
                             should.ifError(err);
                             const row = cu.extendDeep({}, _row);
