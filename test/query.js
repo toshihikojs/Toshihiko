@@ -22,7 +22,7 @@ describe("🐣 query", function() {
         query.field.should.equal(query.fields);
         query.orderBy.should.equal(query.order);
 
-        query._fields.should.deepEqual([]);
+        query._fields.should.deepEqual([ "key1" ]);
         query._limit.should.deepEqual([]);
         query._order.should.deepEqual([]);
         query._updateData.should.deepEqual({});
