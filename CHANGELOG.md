@@ -1,3 +1,14 @@
+<a name="0.9.0"></a>
+# [0.9.0](https://github.com/XadillaX/Toshihiko/compare/0.8.4...v0.9.0) (2016-09-22)
+
+
+### Features
+
+* 添加 force index 支持 ([d63146d](https://github.com/XadillaX/Toshihiko/commit/d63146d))
+* 移除模板字符串 ([db3329d](https://github.com/XadillaX/Toshihiko/commit/db3329d))
+
+
+
 <a name="0.8.4"></a>
 ## [0.8.4](https://github.com/XadillaX/Toshihiko/compare/0.8.3...v0.8.4) (2016-09-15)
 
