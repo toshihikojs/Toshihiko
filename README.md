@@ -229,6 +229,14 @@ foo.orderBy([ "key1 asc", "key2 desc" ]);
 foo.orderBy({ key1: "asc", key2: "desc", key3: 1, key4: -1 });
 ```
 
+#### index
+
+Force use an index key, something like `SELECT * FROM foo FORCE INDEX(key) ...`.
+
+```javascript
+foo.index("key_name");
+```
+
 #### count
 
 Count the records with a certain condition:
