@@ -26,7 +26,8 @@ describe("model", function () {
             "`key2` float NOT NULL," +
             "`key3` varchar(200) NOT NULL DEFAULT ''," +
             "`key4` varchar(200) NOT NULL DEFAULT ''," +
-            "PRIMARY KEY (`id`)" +
+            "PRIMARY KEY (`id`)," +
+            "KEY `test_key` (`key2`, `key3`)" +
             ") ENGINE=InnoDB DEFAULT CHARSET=utf8;";
         toshihiko.execute(sql, done);
     });
@@ -80,6 +81,14 @@ describe("model", function () {
     });
 
     describe("query", function () {
+        it("index", function(done) {
+            Model.index("test_key").find(function(err, data) {
+                should(err).not.be.ok;
+                data.length.should.eql(10);
+                done();
+            });
+        });
+
         it("limit", function(done) {
             Model.limit("0,5").find(function(err, data) {
                 should(err).not.be.ok;
