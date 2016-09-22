@@ -10,10 +10,11 @@ const should = require("should");
 
 const Query = require("../lib/query");
 const Toshihiko = require("../lib/toshihiko");
+const Yukari = require("../lib/yukari");
 
 describe("🐣 query", function() {
     const toshihiko = new Toshihiko("base");
-    const model = toshihiko.define("model", []);
+    const model = toshihiko.define("model", [ { name: "key1" } ]);
 
     it("should create instance", function() {
         const query = new Query(model);
@@ -252,6 +253,52 @@ describe("🐣 query", function() {
             query.find(function() {
                 done();
             });
+        });
+
+        it("should get yukari", function(done) {
+            const find = toshihiko.adapter.find;
+            toshihiko.adapter.find = function(_query, callback) {
+                return callback(undefined, [ { key1: "13" } ]);
+            };
+            query.find(function(err, rows) {
+                should.ifError(err);
+                toshihiko.adapter.find = find;
+                rows.length.should.equal(1);
+                const row = rows[0];
+                row.should.be.instanceof(Yukari);
+                row.key1.should.equal("13");
+                done();
+            });
+        });
+
+        it("should get JSON", function(done) {
+            const find = toshihiko.adapter.find;
+            toshihiko.adapter.find = function(_query, callback) {
+                return callback(undefined, [ { key1: "13" } ]);
+            };
+            query.find(function(err, rows) {
+                should.ifError(err);
+                toshihiko.adapter.find = find;
+                rows.length.should.equal(1);
+                const row = rows[0];
+                row.should.not.be.instanceof(Yukari);
+                row.should.match({ key1: "13" });
+                done();
+            }, true);
+        });
+
+        it("should get single", function(done) {
+            const find = toshihiko.adapter.find;
+            toshihiko.adapter.find = function(_query, callback) {
+                return callback(undefined, { key1: "13" });
+            };
+            query.find(function(err, row) {
+                should.ifError(err);
+                toshihiko.adapter.find = find;
+                row.should.not.be.instanceof(Yukari);
+                row.should.match({ key1: "13" });
+                done();
+            }, true, { single: true });
         });
     });
 });
