@@ -243,7 +243,8 @@ describe("🐣 query", function() {
             toshihiko.adapter.find = function(_query, callback, options) {
                 query.should.equal(_query);
                 options.should.deepEqual({
-                    single: false
+                    single: false,
+                    noCache: false
                 });
                 toshihiko.adapter.find = find;
                 process.nextTick(callback);

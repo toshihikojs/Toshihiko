@@ -903,6 +903,81 @@ describe("🐣 adapters/mysql", function() {
                     });
                 });
             });
+
+        describe(`${name} findWithCache`, function() {
+                const toshihiko = new Toshihiko("mysql", correctOptions);
+                const adapter = toshihiko.adapter;
+                const model = toshihiko.define("test1", common.COMMON_SCHEMA, {
+                    cache: {
+                        name: "memcached",
+                        servers: [ "localhost:11211" ],
+                        options: { prefix: "findWithCache_" }
+                    }
+                });
+
+                after(function() {
+                    model.cache.memcached.flush(function() {
+                        adapter.mysql.end();
+                    });
+                });
+
+                it("normal 1", function(done) {
+                    const query = new Query(model).fields("key1,key2,key3,key5").order("key1 asc").limit(1);
+                    adapter.findWithCache(model.cache, model, function(err, rows, extra) {
+                        should.ifError(err);
+                        extra.should.equal("SELECT `id`, `key2`, `key3`, `key5` FROM `test1` " +
+                            "ORDER BY `id` ASC LIMIT 1");
+                        rows.should.match([
+                            { id: 1, key2: 0.5, key3: "{\"foo\":\"bar\"}" }
+                        ]);
+                        model.cache.memcached.get("findWithCache___toshihiko__:test1:1", function(err, res) {
+                            should.ifError(err);
+                            res.should.match({ id: 1,
+                                key2: 0.5,
+                                key3: "{\"foo\":\"bar\"}",
+                                key4: null,
+                                key5: rows[0].key5.toISOString(),
+                                key6: "10101000"
+                            });
+
+                            model.cache.memcached.get("findWithCache___toshihiko__:test1:2", function(err, res) {
+                                should.ifError(err);
+                                should(res).equal(undefined);
+                                done();
+                            });
+                        });
+                    }, adapter.queryToOptions(query, {}));
+                });
+
+                it("normal 2", function(done) {
+                    const query = new Query(model).fields("key1,key2,key3,key5").order("key2 asc").limit(100);
+
+                    adapter.findWithCache(model.cache, model, function(err, rows, extra) {
+                        should.ifError(err);
+                        extra.should.equal("SELECT `id`, `key2`, `key3`, `key5` FROM `test1` " +
+                            "ORDER BY `key2` ASC LIMIT 100");
+                        rows.should.match([
+                            { id: 1, key2: 0.5, key3: "{\"foo\":\"bar\"}" },
+                            { id: 2, key2: 0.5, key3: "{\"foo\":\"bar\"}" },
+                            { id: 3, key2: 0.5, key3: "{\"foo\":\"bar\"}" },
+                            { id: 4, key2: 0.5, key3: "{\"foo\":\"bar\"}" }
+                        ]);
+
+                        model.cache.memcached.get("findWithCache___toshihiko__:test1:2", function(err, res) {
+                            should.ifError(err);
+                            res.should.match({
+                                key2: 0.5,
+                                key3: "{\"foo\":\"bar\"}",
+                                key4: "dummy primary",
+                                key5: rows[1].key5.toISOString(),
+                                key6: "100100010111010000000011011001",
+                                id: 2
+                            });
+                            done();
+                        });
+                    }, adapter.queryToOptions(query, {}));
+                });
+            });
         });
     });
 });
