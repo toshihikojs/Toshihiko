@@ -301,4 +301,36 @@ describe("🐣 query", function() {
             }, true, { single: true });
         });
     });
+
+    describe("👙 findOne", function() {
+        const query = new Query(model);
+
+        it("should get Yukari", function(done) {
+            const find = toshihiko.adapter.find;
+            toshihiko.adapter.find = function(_query, callback) {
+                return callback(undefined, { key1: "13" });
+            };
+            query.findOne(function(err, row) {
+                should.ifError(err);
+                toshihiko.adapter.find = find;
+                row.should.be.instanceof(Yukari);
+                row.should.match({ key1: "13" });
+                done();
+            });
+        });
+
+        it("should get JSON", function(done) {
+            const find = toshihiko.adapter.find;
+            toshihiko.adapter.find = function(_query, callback) {
+                return callback(undefined, { key1: "13" });
+            };
+            query.findOne(function(err, row) {
+                should.ifError(err);
+                toshihiko.adapter.find = find;
+                row.should.not.be.instanceof(Yukari);
+                row.should.match({ key1: "13" });
+                done();
+            }, true);
+        });
+    });
 });
