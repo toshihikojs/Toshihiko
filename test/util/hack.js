@@ -21,3 +21,13 @@ exports.whereOnce = function(parent, assume) {
 
     return called;
 };
+
+exports.hackOnce = function(obj, name) {
+    const old = obj[name];
+    const called = { called: 0 };
+    obj[name] = function() {
+        called.called++;
+        obj[name] = old;
+        return obj[name].apply(null, arguments);
+    };
+};

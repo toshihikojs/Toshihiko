@@ -149,16 +149,18 @@ describe("🐣 adapters/mysql", function() {
                 const options = cu.extendDeep({}, correctOptions);
                 options.package = name;
                 const adapter = new MySQLAdapter({}, options);
-                adapter.execute("DROP TABLE IF EXISTS `test1`;", function(err) {
+
+                const Pool = require(name === "mysql" ? "mysql/lib/Pool" : "mysql2/lib/pool");
+                adapter.mysql.should.be.instanceof(Pool);
+
+                adapter.execute("DROP TABLE IF EXISTS `test1`, `test2`;", function(err) {
                     should.ifError(err);
-                    adapter.execute("DROP TABLE IF EXISTS `test2`;", function(err) {
+                    adapter.execute(common.COMMON_SCHEMA_SQL, function(err) {
+                        console.log(err);
                         should.ifError(err);
-                        adapter.execute(common.COMMON_SCHEMA_SQL, function(err) {
+                        adapter.execute(common.NO_AI_SCHEMA_SQL, function(err) {
                             should.ifError(err);
-                            adapter.execute(common.NO_AI_SCHEMA_SQL, function(err) {
-                                should.ifError(err);
-                                adapter.mysql.end(done);
-                            });
+                            adapter.mysql.end(done);
                         });
                     });
                 });
@@ -904,7 +906,7 @@ describe("🐣 adapters/mysql", function() {
                 });
             });
 
-        describe(`${name} findWithCache`, function() {
+            describe(`${name} findWithCache`, function() {
                 const toshihiko = new Toshihiko("mysql", correctOptions);
                 const adapter = toshihiko.adapter;
                 const model = toshihiko.define("test1", common.COMMON_SCHEMA, {
@@ -978,6 +980,8 @@ describe("🐣 adapters/mysql", function() {
                     }, adapter.queryToOptions(query, {}));
                 });
             });
+        
+            require("./mysql_update")(name, correctOptions);
         });
     });
 });
