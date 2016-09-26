@@ -16,7 +16,8 @@
     "moment": "^2.14.1",
     "otrans": "^1.0.0",
     "scarlet-task": "^1.0.0",
-    "sqlstring": "^2.0.1"
+    "sqlstring": "^2.0.1",
+    "toshihiko-mysqlparser": "^1.0.0"
   },
   "devDependencies": {
     "conventional-changelog-cli": "1.2.0",
@@ -29,7 +30,7 @@
     "mocha": "3.0.1",
     "mockjs": "^1.0.1-beta3",
     "mysql": "^2.11.1",
-    "mysql2": "^1.0.0-rc.9",
+    "mysql2": "^1.1.0",
     "should": "11.1.0",
     "sync-runner": "^0.1.5",
     "toshihiko-memcached": "^1.0.1",
