@@ -333,4 +333,24 @@ describe("🐣 query", function() {
             }, true);
         });
     });
+
+    describe("👙 update", function() {
+        const query = new Query(model);
+
+        it("should update", function(done) {
+            const updateByQuery = toshihiko.adapter.updateByQuery;
+            toshihiko.adapter.updateByQuery = function(_query, callback) {
+                _query.should.equal(query);
+                query._updateData.should.deepEqual({ key1: "2" });
+                callback(undefined, {}, "EXTRA");
+            };
+            query.where({ key1: "1" }).update({ key1: "2" }, function(err, result, extra) {
+                should.ifError(err);
+                result.should.deepEqual({});
+                extra.should.equal("EXTRA");
+                toshihiko.adapter.updateByQuery = updateByQuery;
+                done();
+            });
+        });
+    });
 });
