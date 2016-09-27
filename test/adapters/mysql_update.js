@@ -137,8 +137,8 @@ module.exports = function(name, options) {
                 database.should.equal("__toshihiko__");
                 name.should.equal("test1");
                 keys.should.match([
-                    { id: 1 },
-                    { id: 2 }
+                    { id: 2 },
+                    { id: 1 }
                 ]);
                 model.cache.deleteKeys = $deleteKeys;
                 deleteKeysCalled++;
@@ -146,14 +146,14 @@ module.exports = function(name, options) {
             };
 
             adapter.execute = function(sql, callback) {
-                sql.should.equal("SELECT `id` FROM `test1` WHERE (`id` < 3)");
+                sql.should.equal("SELECT `id` FROM `test1` WHERE (`id` < 3) ORDER BY `id` DESC LIMIT 5");
                 adapter.execute = $execute;
                 executeCalled++;
                 return $execute.call(adapter, sql, callback);
             };
 
             const query = new Query(model);
-            query.where({ key1: { $lt: 3 } });
+            query.where({ key1: { $lt: 3 } }).limit(5).order({ key1: -1 });
             query._updateData = { key1: "{{key1}}" };
             adapter.updateByQuery(query, function(err, result, sql) {
                 should.ifError(err);
@@ -165,7 +165,7 @@ module.exports = function(name, options) {
                     warningStatus: 0,
                     changedRows: 0
                 });
-                sql.should.equal("UPDATE `test1` SET `id` = id WHERE (`id` < 3)");
+                sql.should.equal("UPDATE `test1` SET `id` = id WHERE (`id` < 3) ORDER BY `id` DESC LIMIT 5");
 
                 deleteKeysCalled.should.equal(1);
                 executeCalled.should.equal(1);
