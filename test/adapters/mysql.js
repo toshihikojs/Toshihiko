@@ -982,6 +982,7 @@ describe("🐣 adapters/mysql", function() {
             });
         
             require("./mysql_update")(name, correctOptions);
+            require("./mysql_delete")(name, correctOptions);
         });
     });
 });
