@@ -353,4 +353,23 @@ describe("🐣 query", function() {
             });
         });
     });
+
+    describe("👙 delete", function() {
+        const query = new Query(model);
+
+        it("should delete", function(done) {
+            const deleteByQuery = toshihiko.adapter.deleteByQuery;
+            toshihiko.adapter.deleteByQuery = function(_query, callback) {
+                _query.should.equal(query);
+                callback(undefined, {}, "EXTRA");
+            };
+            query.where({ key1: "1" }).delete(function(err, result, extra) {
+                should.ifError(err);
+                result.should.deepEqual({});
+                extra.should.equal("EXTRA");
+                toshihiko.adapter.deleteByQuery = deleteByQuery;
+                done();
+            });
+        });
+    });
 });
