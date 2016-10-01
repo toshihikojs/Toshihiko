@@ -714,7 +714,6 @@ describe("🐣 adapters/mysql", function() {
                     adapter.mysql.end();
                 });
 
-
                 it("should generate - 1", function() {
                     let sql;
 
@@ -732,6 +731,26 @@ describe("🐣 adapters/mysql", function() {
                 });
             });
 
+            describe(`${name} makeIndex`, function() {
+                const toshihiko = new Toshihiko("mysql", correctOptions);
+                const adapter = toshihiko.adapter;
+                const model = toshihiko.define("test", common.COMMON_SCHEMA);
+
+                after(function() {
+                    adapter.mysql.end();
+                });
+
+                it("should generate - 1", function() {
+                    let sql;
+
+                    sql = adapter.makeIndex(model, "idx");
+                    sql.should.equal("FORCE INDEX(`idx`)");
+
+                    sql = adapter.makeIndex(model);
+                    sql.should.equal("");
+                });
+            });
+
             describe(`${name} makeFind`, function() {
                 const toshihiko = new Toshihiko("mysql", correctOptions);
                 const adapter = toshihiko.adapter;
@@ -740,6 +759,7 @@ describe("🐣 adapters/mysql", function() {
                 const $where = adapter.makeWhere;
                 const $order = adapter.makeOrder;
                 const $limit = adapter.makeLimit;
+                const $index = adapter.makeIndex;
 
                 before(function() {
                     adapter.makeWhere = function() {
@@ -755,6 +775,11 @@ describe("🐣 adapters/mysql", function() {
                     adapter.makeLimit = function() {
                         arguments[0].should.equal(model);
                         return JSON.stringify(arguments[1]);
+                    };
+
+                    adapter.makeIndex = function() {
+                        arguments[0].should.equal(model);
+                        return $index.apply(adapter, arguments);
                     };
                 });
 
@@ -792,12 +817,17 @@ describe("🐣 adapters/mysql", function() {
                     sql = adapter.makeFind(model, { limit: limit1 });
                     sql.should.equal(`SELECT * FROM \`test\` LIMIT ${JSON.stringify(limit1)}`);
 
+                    const index1 = "idx";
+                    sql = adapter.makeFind(model, { index: index1 });
+                    sql.should.equal(`SELECT * FROM \`test\` FORCE INDEX(\`idx\`)`);
+
                     sql = adapter.makeFind(model, {
                         where: where1,
                         order: order1,
-                        limit: limit1
+                        limit: limit1,
+                        index: index1
                     });
-                    sql.should.equal(`SELECT * FROM \`test\` WHERE ${JSON.stringify(
+                    sql.should.equal(`SELECT * FROM \`test\` FORCE INDEX(\`idx\`) WHERE ${JSON.stringify(
                         where1)} ORDER BY ${JSON.stringify(order1)} LIMIT ${JSON.stringify(limit1)}`);
                 });
 

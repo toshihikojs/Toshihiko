@@ -73,10 +73,11 @@ module.exports = function(name, options) {
                 where: {
                     key1: 123,
                     key4: "456"
-                }
+                },
+                index: "idx"
             });
-            sql.should.equal("UPDATE `test` SET `id` = 421, `key2` = 1.23, `key3` = '{\\\"a\\\":\\\"123\\\"}', " +
-                "`key4` = '123' WHERE (`id` = 123 AND `key4` = \"456\")");
+            sql.should.equal("UPDATE `test` FORCE INDEX(`idx`) SET `id` = 421, `key2` = 1.23, " +
+                "`key3` = '{\\\"a\\\":\\\"123\\\"}', `key4` = '123' WHERE (`id` = 123 AND `key4` = \"456\")");
         });
 
         it("should makeUpdate with no where", function() {
