@@ -334,6 +334,95 @@ describe("🐣 query", function() {
         });
     });
 
+    describe("👙 findById", function() {
+        it("should get with cache", function(done) {
+            const find = toshihiko.adapter.find;
+            toshihiko.adapter.find = function() {};
+
+            const model = toshihiko.define("model", [
+                { name: "key1" },
+                { name: "key2", primaryKey: true },
+                { name: "key3", primaryKey: true }
+            ], {
+                cache: {
+                    getData: function(database, table, id, callback) {
+                        database.should.equal("");
+                        table.should.equal("model");
+                        id.should.deepEqual({ key2: "1", key3: "2" });
+                        callback(undefined, [ { key1: "3", key2: "1", key3: "2" } ]);
+                    },
+                    setData: function() {},
+                    deleteData: function() {},
+                    deleteKeys: function() {}
+                }
+            });
+            (new Query(model)).findById({ key2: "1", key3: "2" }, function(err, yukari) {
+                should.ifError(err);
+                yukari.should.be.instanceof(Yukari);
+                yukari.should.match({ key1: "3", key2: "1", key3: "2" });
+                toshihiko.adapter.find = find;
+                done();
+            });
+        });
+
+        it("should get without cache because of fallback", function(done) {
+            const find = toshihiko.adapter.find;
+            toshihiko.adapter.find = function(query, callback, options) {
+                options.single.should.equal(true);
+                options.noCache.should.equal(false);
+                query._fields.should.deepEqual([ "key1", "key2", "key3" ]);
+                query._where.should.deepEqual({ key2: "1", key3: "2" });
+                return callback(undefined, { key1: "3", key2: "1", key3: "2" });
+            };
+
+            const model = toshihiko.define("model", [
+                { name: "key1" },
+                { name: "key2", primaryKey: true },
+                { name: "key3", primaryKey: true }
+            ], {
+                cache: {
+                    getData: function(database, table, id, callback) {
+                        callback(new Error("err"));
+                    },
+                    setData: function() {},
+                    deleteData: function() {},
+                    deleteKeys: function() {}
+                }
+            });
+            (new Query(model)).findById({ key2: "1", key3: "2" }, function(err, yukari) {
+                should.ifError(err);
+                yukari.should.be.instanceof(Yukari);
+                yukari.should.match({ key1: "3", key2: "1", key3: "2" });
+                toshihiko.adapter.find = find;
+                done();
+            });
+        });
+
+        it("should get without cache", function(done) {
+            const find = toshihiko.adapter.find;
+            toshihiko.adapter.find = function(query, callback, options) {
+                options.single.should.equal(true);
+                options.noCache.should.equal(false);
+                query._fields.should.deepEqual([ "key1", "key2", "key3" ]);
+                query._where.should.deepEqual({ key2: "1", key3: "2" });
+                return callback(undefined, { key1: "3", key2: "1", key3: "2" });
+            };
+
+            const model = toshihiko.define("model", [
+                { name: "key1" },
+                { name: "key2", primaryKey: true },
+                { name: "key3", primaryKey: true }
+            ]);
+            (new Query(model)).findById({ key2: "1", key3: "2" }, function(err, yukari) {
+                should.ifError(err);
+                yukari.should.be.instanceof(Yukari);
+                yukari.should.match({ key1: "3", key2: "1", key3: "2" });
+                toshihiko.adapter.find = find;
+                done();
+            });
+        });
+    });
+
     describe("👙 update", function() {
         const query = new Query(model);
 
