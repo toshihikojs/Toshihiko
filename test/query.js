@@ -14,7 +14,7 @@ const Yukari = require("../lib/yukari");
 
 describe("🐣 query", function() {
     const toshihiko = new Toshihiko("base");
-    const model = toshihiko.define("model", [ { name: "key1" } ]);
+    const model = toshihiko.define("model", [ { name: "key1", primaryKey: true } ]);
 
     it("should create instance", function() {
         const query = new Query(model);
@@ -418,6 +418,36 @@ describe("🐣 query", function() {
                 yukari.should.be.instanceof(Yukari);
                 yukari.should.match({ key1: "3", key2: "1", key3: "2" });
                 toshihiko.adapter.find = find;
+                done();
+            });
+        });
+
+        it("single id", function(done) {
+            const find = toshihiko.adapter.find;
+            toshihiko.adapter.find = function(query, callback, options) {
+                options.single.should.equal(true);
+                options.noCache.should.equal(false);
+                query._fields.should.deepEqual([ "key1" ]);
+                query._where.should.deepEqual({ key1: "1" });
+                return callback(undefined, { key1: "1" });
+            };
+            (new Query(model)).findById("1", function(err, yukari) {
+                should.ifError(err);
+                yukari.should.be.instanceof(Yukari);
+                yukari.should.match({ key1: "1" });
+                toshihiko.adapter.find = find;
+                done();
+            });
+        });
+
+        it("invalid Ids object", function(done) {
+            const model = toshihiko.define("model", [
+                { name: "key1" },
+                { name: "key2", primaryKey: true },
+                { name: "key3", primaryKey: true }
+            ]);
+            (new Query(model)).findById("1", function(err) {
+                err.message.should.equal("you should pass a valid IDs object");
                 done();
             });
         });
