@@ -236,6 +236,18 @@ describe("🐣 query", function() {
         });
     });
 
+    describe("👙 index", function() {
+        const query = new Query(model);
+
+        it("should pass index", function() {
+            let ret;
+            const obj = {};
+            ret = query.index(obj);
+            ret.should.equal(query);
+            ret._index.should.equal(obj);
+        });
+    });
+
     describe("👙 find", function() {
         const query = new Query(model);
 
@@ -448,6 +460,25 @@ describe("🐣 query", function() {
             ]);
             (new Query(model)).findById("1", function(err) {
                 err.message.should.equal("you should pass a valid IDs object");
+                done();
+            });
+        });
+    });
+
+    describe("👙 count", function() {
+        const query = new Query(model);
+
+        it("should call count", function(done) {
+            const count = toshihiko.adapter.count;
+            toshihiko.adapter.count = function(_query, callback) {
+                _query.should.equal(query);
+                callback(undefined, 1, {});
+            };
+            query.count(function(err, result, extra) {
+                should.ifError(err);
+                result.should.equal(1);
+                extra.should.deepEqual({});
+                toshihiko.adapter.count = count;
                 done();
             });
         });
