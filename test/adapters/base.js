@@ -41,13 +41,24 @@ describe("🐣 adapters/base", function() {
         });
     });
 
-    describe("find", function() {
-        it("should get error", function(done) {
-            adapter.find(null, function(err) {
-                err.should.be.instanceof(Error);
-                err.message.indexOf("not implemented").should.above(0);
-                done();
+    describe("not implemented", function() {
+        function test(name, callbackPos) {
+            it(`${name}: should get error`, function(done) {
+                const argu = [];
+                for(let i = 0; i < callbackPos; i++) argu.push(null);
+                argu.push(function(err) {
+                    err.should.be.instanceof(Error);
+                    err.message.indexOf("not implemented").should.above(0);
+                    done();
+                });
+                adapter[name].apply(adapter, argu);
             });
-        });
+        }
+
+        test("find", 1);
+        test("count", 1);
+        test("updateByQuery", 1);
+        test("deleteByQuery", 1);
+        test("insert", 2);
     });
 });
