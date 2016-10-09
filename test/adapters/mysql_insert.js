@@ -12,6 +12,7 @@ const should = require("should");
 const hack = require("../util/hack");
 const common = require("../util/common");
 const Toshihiko = require("../../lib/toshihiko");
+const Yukari = require("../../lib/yukari");
 
 module.exports = function(name, options) {
     describe(`${name} insert`, function() {
@@ -29,7 +30,7 @@ module.exports = function(name, options) {
                 now.setMilliseconds(0);
     
                 const hacked = hack.whereOnce(model, { key1: 1 });
-                adapter.insert(model, {
+                adapter.insert(model, Yukari.extractAdapterData(model, {
                     key2: 0.5,
                     key3: { foo: "bar" },
                     key4: null,
@@ -37,7 +38,7 @@ module.exports = function(name, options) {
                     key6: { dec: 168 },
                     $123: 1,
                     ok: function() {}
-                }, function(err, _row) {
+                }), function(err, _row) {
                     should.ifError(err);
                     const row = cu.extendDeep({}, _row);
                     row.should.match({
@@ -68,13 +69,13 @@ module.exports = function(name, options) {
                 now.setMilliseconds(0);
     
                 const hacked = hack.whereOnce(model, { key4: "dummy primary" });
-                adapter.insert(model, {
+                adapter.insert(model, Yukari.extractAdapterData(model, {
                     key2: 0.5,
                     key3: { foo: "bar" },
                     key4: "dummy primary",
                     key5: now,
                     key6: { dec: 610074841 }
-                }, function(err, _row) {
+                }), function(err, _row) {
                     should.ifError(err);
                     const row = cu.extendDeep({}, _row);
                     row.should.match({
@@ -106,13 +107,13 @@ module.exports = function(name, options) {
                 now.setMilliseconds(0);
     
                 const hacked = hack.whereOnce(model, { key1: 3, key4: "dummy multi primary" });
-                adapter.insert(model, {
+                adapter.insert(model, Yukari.extractAdapterData(model, {
                     key2: 0.5,
                     key3: { foo: "bar" },
                     key4: "dummy multi primary",
                     key5: now,
                     key6: { dec: 8644325 }
-                }, function(err, _row) {
+                }), function(err, _row) {
                     should.ifError(err);
                     const row = cu.extendDeep({}, _row);
                     row.should.match({
@@ -151,13 +152,13 @@ module.exports = function(name, options) {
                     key5: now,
                     key6: { dec: 8644325 }
                 });
-                adapter.insert(model, {
+                adapter.insert(model, Yukari.extractAdapterData(model, {
                     key2: 0.5,
                     key3: { foo: "bar" },
                     key4: "dummy no primary",
                     key5: now,
                     key6: { dec: 8644325 }
-                }, function(err, _row) {
+                }), function(err, _row) {
                     should.ifError(err);
                     const row = cu.extendDeep({}, _row);
                     row.should.match({
@@ -189,10 +190,10 @@ module.exports = function(name, options) {
                 now.setMilliseconds(0);
     
                 const hacked = hack.whereOnce(model, { key1: 1 });
-                adapter.insert(model, {
+                adapter.insert(model, Yukari.extractAdapterData(model, {
                     key1: 1,
                     key2: 0.5,
-                }, function(err, _row) {
+                }), function(err, _row) {
                     should.ifError(err);
                     const row = cu.extendDeep({}, _row);
                     row.should.match({
@@ -220,10 +221,10 @@ module.exports = function(name, options) {
                 now.setMilliseconds(0);
     
                 const hacked = hack.whereOnce(model, { key1: 2, key2: 1 });
-                adapter.insert(model, {
+                adapter.insert(model, Yukari.extractAdapterData(model, {
                     key1: 2,
                     key2: 1,
-                }, function(err, _row) {
+                }), function(err, _row) {
                     should.ifError(err);
                     const row = cu.extendDeep({}, _row);
                     row.should.match({

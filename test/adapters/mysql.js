@@ -151,7 +151,6 @@ describe("🐣 adapters/mysql", function() {
                 adapter.execute("DROP TABLE IF EXISTS `test1`, `test2`;", function(err) {
                     should.ifError(err);
                     adapter.execute(common.COMMON_SCHEMA_SQL, function(err) {
-                        console.log(err);
                         should.ifError(err);
                         adapter.execute(common.NO_AI_SCHEMA_SQL, function(err) {
                             should.ifError(err);
