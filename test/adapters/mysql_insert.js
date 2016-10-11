@@ -6,6 +6,7 @@
  */
 "use strict";
 
+const async = require("async");
 const cu = require("config.util");
 const should = require("should");
 
@@ -233,6 +234,69 @@ module.exports = function(name, options) {
                     });
     
                     hacked.called.should.equal(1);
+                    done();
+                });
+            });
+        });
+    
+        describe(`${name} fail`, function() {
+            const toshihiko = new Toshihiko("mysql", options);
+            const adapter = toshihiko.adapter;
+            const model = toshihiko.define("test1", common.COMMON_SCHEMA, {
+                cache: {
+                    name: "memcached",
+                    servers: [ "localhost:11211" ],
+                    options: { prefix: "fail_" }
+                }
+            });
+        
+            after(function() {
+                model.cache.memcached.flush(function() {
+                    adapter.mysql.end();
+                });
+            });
+
+            it("deleteByQuery", function(done) {
+                async.waterfall([
+                    function(callback) {
+                        hack.hackAsyncReturn(adapter, "execute", [ undefined ]);
+                        adapter.insert(model, [{ field: model.schema[1], value: "123" }], function(err) {
+                            err.message.should.equal("no row inserted.");
+                            callback();
+                        });
+                    },
+
+                    function(callback) {
+                        const where = model.where;
+                        model.where = function() {
+                            const a = {};
+                            hack.hackAsyncErr(a, "findOne");
+                            return a;
+                        };
+                        hack.hackAsyncReturn(adapter, "execute", [ undefined, { insertId: 100 } ]);
+                        adapter.insert(model, [{ field: model.schema[1], value: "123" }], function(err) {
+                            model.where = where;
+                            err.message.should.equal("findOne predefinition 1");
+                            callback();
+                        });
+                    },
+
+                    function(callback) {
+                        const where = model.where;
+                        model.where = function() {
+                            const a = {};
+                            hack.hackAsyncReturn(a, "findOne", [ undefined, null ]);
+                            return a;
+                        };
+                        hack.hackAsyncReturn(adapter, "execute", [ undefined, { insertId: 100 } ]);
+                        adapter.insert(model, [{ field: model.schema[1], value: "123" }], function(err) {
+                            model.where = where;
+                            err.message.should.equal("insert successfully but failed to read the record.");
+                            callback();
+                        });
+                    }
+                ], function(err) {
+                    should.ifError(err);
                     done();
                 });
             });
