@@ -1,5 +1,6 @@
 TIMEOUT = 3000
 MOCHA = ./node_modules/.bin/_mocha
+MOCHA_OPTIONS = -t $(TIMEOUT) --recursive
 ISTANBUL = ./node_modules/.bin/istanbul
 COVERALLS = ./node_modules/coveralls/bin/coveralls.js
 
@@ -13,7 +14,10 @@ debug-test:
 	@NODE_ENV=test DEBUG=toshihiko:* $(MOCHA) -t $(TIMEOUT) --recursive
 
 test:
-	@NODE_ENV=test $(MOCHA) -t $(TIMEOUT) --recursive
+	@NODE_ENV=test $(MOCHA) $(MOCHA_OPTIONS)
+
+coverage:
+	@NODE_ENV=test $(ISTANBUL) cover $(MOCHA) -- $(MOCHA_OPTIONS)
 
 before-test-travis: install
 	@mysql -e 'create database toshihiko;' & \
@@ -23,9 +27,9 @@ test-coveralls: install
 	NODE_ENV=test $(ISTANBUL) cover $(MOCHA) \
 		--report lcovonly \
 		-- \
-		-t $(TIMEOUT) --recursive \
+		$(MOCHA_OPTIONS) \
 		-R spec && cat ./coverage/lcov.info | \
 		\
 		$(COVERALLS) && rm -rf ./coverage 
 
-.PHONY: test
+.PHONY: test coverage
