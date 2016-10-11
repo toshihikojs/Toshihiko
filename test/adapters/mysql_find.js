@@ -324,5 +324,23 @@ module.exports = function(name, options) {
                 done();
             }); 
         });
+
+        it("count", function(done) {
+            async.waterfall([
+                function(callback) {
+                    hack.hackAsyncErr(adapter, "execute");
+                    adapter.count(new Query(model), function(err, ret, sql) {
+                        err.message.should.equal("execute predefinition 1");
+                        should(ret).equal(undefined);
+                        sql.should.equal("SELECT COUNT(0) FROM `test1`");
+                        callback();
+                    });
+                }
+            ], function(err) {
+                should.ifError(err);
+                done();
+            }); 
+        });
+
     });
 };
