@@ -6,9 +6,11 @@
  */
 "use strict";
 
+const async = require("async");
 const should = require("should");
 
 const common = require("../util/common");
+const hack = require("../util/hack");
 const Query = require("../../lib/query");
 const Toshihiko = require("../../lib/toshihiko");
 const Yukari = require("../../lib/yukari");
@@ -141,13 +143,30 @@ module.exports = function(name, options) {
             });
         });
 
+        it("no cache", function(done) {
+            const model = toshihiko.define("test1", common.COMMON_SCHEMA);
+            const query = new Query(model).where({ key4: "123123" }).limit(5).order({ key1: -1 });
+            adapter.deleteByQuery(query, function(err, result, sql) {
+                should.ifError(err);
+                result.should.match({
+                    fieldCount: 0,
+                    affectedRows: 0,
+                    insertId: 0,
+                    serverStatus: 34,
+                    warningStatus: 0
+                });
+                sql.should.equal("DELETE FROM `test1` WHERE (`key4` = \"123123\") ORDER BY `id` DESC LIMIT 5");
+                done();
+            });
+        });
+
         it("should really delete cache", function(done) {
             const query = new Query(model);
             query.where({ key4: "tobedeleted" });
             adapter.deleteByQuery(query, function(err, result, sql) {
                 should.ifError(err);
                 result.should.match({
-                    affectedRows: 1
+                    affectedRows: 2
                 });
                 sql.should.equal("DELETE FROM `test1` WHERE (`key4` = \"tobedeleted\")");
 
@@ -163,4 +182,46 @@ module.exports = function(name, options) {
             });
         });
     });
+
+    describe(`${name} fail`, function() {
+        const toshihiko = new Toshihiko("mysql", options);
+        const adapter = toshihiko.adapter;
+        const model = toshihiko.define("test1", common.COMMON_SCHEMA, {
+            cache: {
+                name: "memcached",
+                servers: [ "localhost:11211" ],
+                options: { prefix: "fail_" }
+            }
+        });
+    
+        after(function() {
+            model.cache.memcached.flush(function() {
+                adapter.mysql.end();
+            });
+        });
+
+        it("deleteByQuery", function(done) {
+            async.waterfall([
+                function(callback) {
+                    hack.hackSyncErr(adapter, "makeSql");
+                    adapter.deleteByQuery(new Query(model), function(err) {
+                        err.message.should.equal("makeSql predefinition 1");
+                        callback();
+                    });
+                },
+
+                function(callback) {
+                    hack.hackSyncErr(adapter, "makeSql", 2);
+                    adapter.deleteByQuery(new Query(model), function(err) {
+                        err.message.should.equal("makeSql predefinition 2");
+                        callback();
+                    });
+                }
+            ], function(err) {
+                should.ifError(err);
+                done();
+            });
+        });
+    });
+
 };
