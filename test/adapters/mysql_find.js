@@ -182,6 +182,26 @@ module.exports = function(name, options) {
         });
     });
 
+    describe(`${name} count`, function() {
+        const toshihiko = new Toshihiko("mysql", options);
+        const adapter = toshihiko.adapter;
+        const model = toshihiko.define("test1", common.COMMON_SCHEMA);
+    
+        after(function() {
+            adapter.mysql.end();
+        });
+    
+        it("should get", function(done) {
+            const query = new Query(model).where({ key1: { $gte: 2 } });
+            adapter.count(query, function(err, rows, extra) {
+                should.ifError(err);
+                extra.should.equal("SELECT COUNT(0) FROM `test1` WHERE (`id` >= 2)");
+                rows.should.equal(3);
+                done();
+            });
+        });
+    });
+
     describe(`${name} fail`, function() {
         const toshihiko = new Toshihiko("mysql", options);
         const adapter = toshihiko.adapter;
