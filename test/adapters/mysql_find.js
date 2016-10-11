@@ -219,7 +219,6 @@ module.exports = function(name, options) {
             });
         });
 
-
         it("findWithNoCache", function(done) {
             async.waterfall([
                 function(callback) {

@@ -6,9 +6,11 @@
  */
 "use strict";
 
+const async = require("async");
 const should = require("should");
 
 const common = require("../util/common");
+const hack = require("../util/hack");
 const Query = require("../../lib/query");
 const Toshihiko = require("../../lib/toshihiko");
 
@@ -173,6 +175,25 @@ module.exports = function(name, options) {
                 deleteKeysCalled.should.equal(1);
                 executeCalled.should.equal(1);
 
+                done();
+            });
+        });
+
+        it("no cache", function(done) {
+            const model = toshihiko.define("test1", common.COMMON_SCHEMA);
+            const query = new Query(model);
+            query._updateData = { key1: "{{key1}}" };
+            adapter.updateByQuery(query, function(err, result, sql) {
+                should.ifError(err);
+                result.should.match({
+                    fieldCount: 0,
+                    affectedRows: 4,
+                    insertId: 0,
+                    serverStatus: 34,
+                    warningStatus: 0,
+                    changedRows: 0
+                });
+                sql.should.equal("UPDATE `test1` SET `id` = id");
                 done();
             });
         });
@@ -369,6 +390,49 @@ module.exports = function(name, options) {
                     err.message.should.equal("Broken update data information.");
                         done();
                 });
+            });
+        });
+    });
+
+    describe(`${name} fail`, function() {
+        const toshihiko = new Toshihiko("mysql", options);
+        const adapter = toshihiko.adapter;
+        const model = toshihiko.define("test1", common.COMMON_SCHEMA, {
+            cache: {
+                name: "memcached",
+                servers: [ "localhost:11211" ],
+                options: { prefix: "fail_" }
+            }
+        });
+    
+        after(function() {
+            model.cache.memcached.flush(function() {
+                adapter.mysql.end();
+            });
+        });
+
+        it("updateByQuery", function(done) {
+            async.waterfall([
+                function(callback) {
+                    hack.hackSyncErr(adapter, "makeSql");
+                    adapter.updateByQuery(new Query(model), function(err) {
+                        err.message.should.equal("makeSql predefinition 1");
+                        callback();
+                    });
+                },
+
+                function(callback) {
+                    hack.hackSyncErr(adapter, "makeSql", 2);
+                    const query = new Query(model);
+                    query._updateData = { key1: 5 };
+                    adapter.updateByQuery(query, function(err) {
+                        err.message.should.equal("makeSql predefinition 2");
+                        callback();
+                    });
+                }
+            ], function(err) {
+                should.ifError(err);
+                done();
             });
         });
     });
