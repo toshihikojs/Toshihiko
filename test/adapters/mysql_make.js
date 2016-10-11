@@ -203,6 +203,20 @@ module.exports = function(name, options) {
             sql.should.equal("((`key3` = \"1\" AND `key4` = \"2\") AND ((`key3` = \"2\" OR `key4` = \"3\")) " +
                 "AND ((`key3` = \"3\" AND `key4` = \"4\")))");
         });
+
+        it("should generate - 3", function() {
+            let sql;
+            sql = adapter.makeWhere(model, {});
+            sql.should.equal("()");
+
+            try {
+                sql = adapter.makeWhere(model, { key100: 100 });
+            } catch(e) {
+                return e.message.indexOf("key100").should.above(-1);
+            }
+
+            (1).should.equal(0);
+        });
     });
 
     describe(`${name} makeArrayWhere`, function() {

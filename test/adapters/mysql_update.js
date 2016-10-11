@@ -269,7 +269,7 @@ module.exports = function(name, options) {
                     value: 0.5
                 }], function(err, extra) {
                     should.ifError(err);
-                    extra.should.equal("UPDATE `test1` SET `key2` = 0.5 WHERE `id` = 4");
+                    extra.should.equal("UPDATE `test1` SET `key2` = 0.5 WHERE (`id` = 4)");
                     done();
                 });
             });
@@ -279,12 +279,12 @@ module.exports = function(name, options) {
                     { field: model.fieldNamesMap.key1, value: 100 },
                     { field: model.fieldNamesMap.key2, value: 100.5 },
                     { field: model.fieldNamesMap.key3, value: { baz: "bbb" } },
-                    { field: model.fieldNamesMap.key4, value: "updated" },
+                    { field: model.fieldNamesMap.key4, value: null },
                     { field: model.fieldNamesMap.key6, value: { dec: 152 } }
                 ], function(err, extra) {
                     should.ifError(err);
                     extra.should.equal("UPDATE `test1` SET `id` = 100, `key2` = 100.5, `key3` = " +
-                        "'{\\\"baz\\\":\\\"bbb\\\"}', `key4` = 'updated', `key6` = BIN(152) WHERE `id` = 4");
+                        "'{\\\"baz\\\":\\\"bbb\\\"}', `key4` = NULL, `key6` = BIN(152) WHERE (`id` = 4)");
                     model.cache.getData("__toshihiko__", "test1", [ { id: 4 } ], function(err, result) {
                         should.ifError(err);
                         result.should.deepEqual([]);
@@ -295,7 +295,7 @@ module.exports = function(name, options) {
                                 key1: 100,
                                 key2: 100.5,
                                 key3: { baz: "bbb" },
-                                key4: "updated",
+                                key4: null,
                                 key6: { dec: 152 }
                             });
                             done();
@@ -318,7 +318,7 @@ module.exports = function(name, options) {
                 ], function(err, extra) {
                     should.ifError(err);
                     extra.should.equal("UPDATE `test1` SET `id` = 4, `key2` = 0.5, `key3` = '{\\\"foo\\\":" +
-                        "\\\"bar\\\"}', `key4` = 'dummy no primary', `key6` = BIN(8644325) WHERE `id` = 100");
+                        "\\\"bar\\\"}', `key4` = 'dummy no primary', `key6` = BIN(8644325) WHERE (`id` = 100)");
                     model.findById(4, function(err, yukari) {
                             should.ifError(err);
                             yukari.should.match({
@@ -339,7 +339,7 @@ module.exports = function(name, options) {
                     value: 4
                 }], function(err, extra) {
                     err.message.should.equal("Out-dated yukari data.");
-                    extra.should.equal("UPDATE `test1` SET `id` = 4 WHERE `id` = 100");
+                    extra.should.equal("UPDATE `test1` SET `id` = 4 WHERE (`id` = 100)");
                     done();
                 });
             });

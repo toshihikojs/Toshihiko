@@ -6,9 +6,11 @@
  */
 "use strict";
 
+const async = require("async");
 const should = require("should");
 
 const common = require("../util/common");
+const hack = require("../util/hack");
 const Query = require("../../lib/query");
 const Toshihiko = require("../../lib/toshihiko");
 
@@ -177,6 +179,131 @@ module.exports = function(name, options) {
                     done();
                 });
             }, adapter.queryToOptions(query, {}));
+        });
+    });
+
+    describe(`${name} fail`, function() {
+        const toshihiko = new Toshihiko("mysql", options);
+        const adapter = toshihiko.adapter;
+        const model = toshihiko.define("test1", common.COMMON_SCHEMA, {
+            cache: {
+                name: "memcached",
+                servers: [ "localhost:11211" ],
+                options: { prefix: "fail_" }
+            }
+        });
+    
+        after(function() {
+            model.cache.memcached.flush(function() {
+                adapter.mysql.end();
+            });
+        });
+
+
+        it("findWithNoCache", function(done) {
+            async.waterfall([
+                function(callback) {
+                    hack.hackSyncErr(adapter, "makeSql");
+                    adapter.findWithNoCache(model, function(err) {
+                        err.message.should.equal("makeSql predefinition 1");
+                        callback();
+                    });
+                },
+
+                function(callback) {
+                    hack.hackAsyncErr(adapter, "execute");
+                    adapter.findWithNoCache(model, function(err) {
+                        err.message.should.equal("execute predefinition 1");
+                        callback();
+                    });
+                }
+            ], function(err) {
+                should.ifError(err);
+                done();
+            }); 
+        });
+
+        it("findWithCache", function(done) {
+            async.waterfall([
+                function(callback) {
+                    hack.hackSyncErr(adapter, "makeSql");
+                    adapter.findWithCache(model.cache, model, function(err) {
+                        err.message.should.equal("makeSql predefinition 1");
+                        callback();
+                    });
+                },
+
+                function(callback) {
+                    hack.hackAsyncErr(adapter, "execute");
+                    adapter.findWithCache(model.cache, model, function(err) {
+                        err.message.should.equal("execute predefinition 1");
+                        callback();
+                    });
+                },
+
+                function(callback) {
+                    hack.hackAsyncErr(adapter, "execute");
+                    hack.hackSyncErr(adapter, "makeSql", 2);
+                    adapter.findWithCache(model.cache, model, function(err) {
+                        err.message.should.equal("makeSql predefinition 2");
+                        callback();
+                    });
+                },
+
+                function(callback) {
+                    hack.hackAsyncErr(model.cache, "getData");
+                    adapter.findWithCache(model.cache, model, function(err, rows, extra) {
+                        should.ifError(err);
+                        rows.length.should.equal(4);
+                        extra.should.equal("SELECT `id`, `key2`, `key3`, `key4`, `key5`, `key6` FROM `test1`");
+                        callback();
+                    });
+                },
+
+                function(callback) {
+                    hack.hackAsyncErr(model.cache, "getData");
+                    hack.hackSyncErr(adapter, "makeSql", 3);
+                    adapter.findWithCache(model.cache, model, function(err, rows, extra) {
+                        err.message.should.equal("makeSql predefinition 3");
+                        rows.length.should.equal(3);
+                        extra.should.equal("SELECT `id`, `key2`, `key3`, `key4`, `key5`, `key6` FROM `test1`");
+                        callback();
+                    });
+                },
+
+                function(callback) {
+                    hack.hackAsyncErr(model.cache, "getData");
+                    hack.hackAsyncErr(adapter, "execute", 2);
+                    adapter.findWithCache(model.cache, model, function(err, rows, extra) {
+                        err.message.should.equal("execute predefinition 2");
+                        rows.length.should.equal(3);
+                        extra.should.equal("SELECT `id`, `key2`, `key3`, `key4`, `key5`, `key6` FROM `test1`");
+                        callback();
+                    });
+                },
+
+                function(callback) {
+                    hack.hackAsyncReturn(adapter, "execute", [ undefined, [] ], 2);
+                    hack.hackAsyncErr(model.cache, "getData");
+                    adapter.findWithCache(model.cache, model, function(err, rows, extra) {
+                        should.ifError(err);
+                        rows.length.should.equal(3);
+                        extra.should.equal("SELECT `id`, `key2`, `key3`, `key4`, `key5`, `key6` FROM `test1`");
+                        callback();
+                    });
+                },
+
+                function(callback) {
+                    hack.hackSyncErr(adapter, "makeSql", 2);
+                    adapter.findWithCache(model.cache, model, function(err) {
+                        err.message.should.equal("makeSql predefinition 2");
+                        callback();
+                    });
+                }
+            ], function(err) {
+                should.ifError(err);
+                done();
+            }); 
         });
     });
 };
