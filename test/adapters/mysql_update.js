@@ -411,6 +411,21 @@ module.exports = function(name, options) {
             });
         });
 
+        it("update", function(done) {
+            async.waterfall([
+                function(callback) {
+                    hack.hackSyncErr(adapter, "makeSql");
+                    adapter.update(model, { key1: 1 }, [{ field: model.schema[2], data: null }], function(err) {
+                        err.message.should.equal("makeSql predefinition 1");
+                        callback();
+                    });
+                }
+            ], function(err) {
+                should.ifError(err);
+                done();
+            });
+        });
+
         it("updateByQuery", function(done) {
             async.waterfall([
                 function(callback) {
