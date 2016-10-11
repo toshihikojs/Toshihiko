@@ -22,22 +22,22 @@ module.exports = function(name, options) {
             adapter.mysql.end();
         });
 
-        describe("should generate find sql", function() {
-            const _options = { foo: "bar", baz: "bbb" };
-            const _options1 = { foo: "bar", baz: "bbb" };
-
-            let called = 0;
-            adapter.makeFind = function(_model, options) {
-                _model.should.equal(model);
-                options.should.equal(_options);
-                options.should.deepEqual(_options1);
-                called++;
-                return "OK!";
-            };
-
+        describe("makeSql", function() {
             it("should call makeFind", function() {
-                let sql;
+                const _options = { foo: "bar", baz: "bbb" };
+                const _options1 = { foo: "bar", baz: "bbb" };
+                const _options2 = { foo: "bar", baz: "bbb", count: true };
 
+                let called = 0;
+                adapter.makeFind = function(_model, options) {
+                    _model.should.equal(model);
+                    options.should.equal(_options);
+                    options.should.deepEqual(called > 1 ? _options2 : _options1);
+                    called++;
+                    return "OK!";
+                };
+
+                let sql;
                 sql = adapter.makeSql("find", model, _options);
                 sql.should.equal("OK!");
                 called.should.equal(1);
@@ -45,6 +45,48 @@ module.exports = function(name, options) {
                 sql = adapter.makeSql("blahblah", model, _options);
                 sql.should.equal("OK!");
                 called.should.equal(2);
+
+                sql = adapter.makeSql("count", model, _options);
+                sql.should.equal("OK!");
+                called.should.equal(3);
+            });
+
+            it("should call makeUpdate", function() {
+                const _options = { foo: "bar", baz: "bbb" };
+                const _options1 = { foo: "bar", baz: "bbb" };
+
+                let called = 0;
+                adapter.makeUpdate = function(_model, options) {
+                    _model.should.equal(model);
+                    options.should.equal(_options);
+                    options.should.deepEqual(_options1);
+                    called++;
+                    return "UPDATE!";
+                };
+
+                let sql;
+                sql = adapter.makeSql("update", model, _options);
+                sql.should.equal("UPDATE!");
+                called.should.equal(1);
+            });
+
+            it("should call makeDelete", function() {
+                const _options = { foo: "bar", baz: "bbb" };
+                const _options1 = { foo: "bar", baz: "bbb" };
+
+                let called = 0;
+                adapter.makeDelete = function(_model, options) {
+                    _model.should.equal(model);
+                    options.should.equal(_options);
+                    options.should.deepEqual(_options1);
+                    called++;
+                    return "DELETE!";
+                };
+
+                let sql;
+                sql = adapter.makeSql("delete", model, _options);
+                sql.should.equal("DELETE!");
+                called.should.equal(1);
             });
         });
     });
