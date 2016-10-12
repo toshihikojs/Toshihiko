@@ -18,6 +18,9 @@ module.exports = {
             validators: [
                 function(v) {
                     if(v > 100) return "`key2` can't be greater than 100";
+                },
+                function(v) {
+                    if(v < -100) return "`key2` can't be smaller than -100";
                 }
             ]
         },
@@ -33,6 +36,9 @@ module.exports = {
                 return `BIN(${parseInt(v.dec)})`;
             },
             needQuotes: false
+        }, validators: function(v, callback) {
+            if(v.dec < -100) return callback(new Error("`key6` can't be smaller than -100"));
+            return callback();
         } }
     ],
 
