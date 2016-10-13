@@ -89,10 +89,10 @@ describe("🐣 yukari", function() {
             it("row not in original name", function() {
                 const yukari = new Yukari(model, "new");
                 yukari.$source.should.equal("new");
-                yukari.buildNewRow({ key1: 234, key2: 345 });
+                yukari.buildNewRow({ key1: 234, key2: 345, $fromCache: true });
                 yukari.should.match({ key1: 234 });
                 yukari.$origData.should.deepEqual({});
-                yukari.$fromCache.should.equal(false);
+                yukari.$fromCache.should.equal(true);
             });
         });
     });
@@ -147,6 +147,22 @@ describe("🐣 yukari", function() {
                             err.message.should.equal("`key2` can't be greater than 100");
                             callback();
                         });
+                    },
+
+                    function(callback) {
+                        const yukari = new Yukari(model, "new");
+                        yukari.validateOne("key100", 100, function(err) {
+                            err.message.should.equal("No such field key100");
+                            callback();
+                        });
+                    },
+
+                    function(callback) {
+                        const yukari = new Yukari(model, "new");
+                        yukari.validateOne("key1", null, function(err) {
+                            err.message.should.equal("Field key1 can't be null.");
+                            callback();
+                        });
                     }
                 ], function(err) {
                     should.ifError(err);
@@ -170,6 +186,7 @@ describe("🐣 yukari", function() {
                     key2: 50,
                     key6: { dec: 50 }
                 });
+                yukari.$foo = "bar";
                 yukari.validateAll(function(err) {
                     should.ifError(err);
                     done();
@@ -212,5 +229,6 @@ describe("🐣 yukari", function() {
         });
 
         require("./delete")(model);
+        require("./update")(model);
     });
 });

@@ -35,7 +35,10 @@ module.exports = {
             restore: function(v) {
                 return `BIN(${parseInt(v.dec)})`;
             },
-            needQuotes: false
+            needQuotes: false,
+            equal: function(a, b) {
+                return a.dec === b.dec;
+            }
         }, validators: function(v, callback) {
             if(v.dec < -100) return callback(new Error("`key6` can't be smaller than -100"));
             return callback();
@@ -128,6 +131,9 @@ module.exports = {
             },
             restore: function(v) {
                 return `BIN(${parseInt(v.dec)})`;
+            },
+            equal: function(a, b) {
+                return a.dec === b.dec;
             },
             needQuotes: false
         } }

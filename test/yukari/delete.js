@@ -17,6 +17,14 @@ module.exports = function(model) {
     const toshihiko = model.parent;
 
     describe("👯 delete", function() {
+        it("should get error", function(done) {
+            const yukari = new Yukari(model, "new");
+            yukari.delete(function(err) {
+                err.message.should.equal("You can't call this function via a new Yukari object.");
+                done();
+            });
+        });
+
         it("with single primary key", function(done) {
             const yukari = new Yukari(model, "query");
             yukari.fillRowFromSource({ key1: 123 });
