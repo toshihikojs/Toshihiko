@@ -10,6 +10,7 @@ const async = require("async");
 const should = require("should");
 
 const common = require("../util/common");
+const hack = require("../util/hack");
 const Toshihiko = require("../../lib/toshihiko");
 const Yukari = require("../../lib/yukari");
 
@@ -231,5 +232,69 @@ describe("🐣 yukari", function() {
         require("./insert")(model);
         require("./update")(model);
         require("./delete")(model);
+
+        describe("👯 save", function() {
+            it("should insert", function(done) {
+                const yukari = new Yukari(model, "new");
+                hack.hackAsyncReturn(yukari, "insert", [ undefined, "insert", "ok" ]);
+                yukari.save(function(err, _yukari, extra) {
+                    should.ifError(err);
+                    _yukari.should.equal("insert");
+                    extra.should.equal("ok");
+                    done();
+                });
+            });
+
+            it("should update", function(done) {
+                const yukari = new Yukari(model, "query");
+                hack.hackAsyncReturn(yukari, "update", [ undefined, "update", "ok~" ]);
+                yukari.save(function(err, _yukari, extra) {
+                    should.ifError(err);
+                    _yukari.should.equal("update");
+                    extra.should.equal("ok~");
+                    done();
+                });
+            });
+        });
+
+        describe("👯 toJSON", function() {
+            const date = new Date();
+            const origData = {
+                key1: 123,
+                key2: 1.5,
+                key3: "{ foo: \"bar\" }",
+                key4: "234",
+                key5: date.toISOString(),
+                key6: "1100101001"
+            };
+
+            it("should to JSON (new)", function() {
+                const yukari = new Yukari(model, "query");
+                yukari.fillRowFromSource(origData);
+                yukari.key1 = 234;
+                yukari.toJSON().should.deepEqual({
+                    key1: 234,
+                    key2: 1.5,
+                    key3: { foo: "bar" },
+                    key4: "234",
+                    key5: date,
+                    key6: { dec: 809 }
+                });
+            });
+
+            it("should to JSON (old)", function() {
+                const yukari = new Yukari(model, "query");
+                yukari.fillRowFromSource(origData);
+                yukari.key1 = 234;
+                yukari.toJSON(true).should.deepEqual({
+                    key1: 123,
+                    key2: 1.5,
+                    key3: { foo: "bar" },
+                    key4: "234",
+                    key5: date,
+                    key6: { dec: 809 }
+                });
+            });
+        });
     });
 });
