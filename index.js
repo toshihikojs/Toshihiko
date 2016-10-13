@@ -8,3 +8,4 @@
 
 exports.Toshihiko = require("./lib/toshihiko");
 exports.Type = require("./lib/field_type");
+exports.Escaper = require("./util/escaper");
