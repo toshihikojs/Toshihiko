@@ -228,7 +228,8 @@ describe("🐣 yukari", function() {
             });
         });
 
-        require("./delete")(model);
+        require("./insert")(model);
         require("./update")(model);
+        require("./delete")(model);
     });
 });
