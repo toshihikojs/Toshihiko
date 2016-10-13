@@ -272,13 +272,14 @@ describe("🐣 yukari", function() {
                 const yukari = new Yukari(model, "query");
                 yukari.fillRowFromSource(origData);
                 yukari.key1 = 234;
+                hack.hackSyncReturn(yukari.$schema[5].type, "toJSON", "OKOKOK");
                 yukari.toJSON().should.deepEqual({
                     key1: 234,
                     key2: 1.5,
                     key3: { foo: "bar" },
                     key4: "234",
                     key5: date,
-                    key6: { dec: 809 }
+                    key6: "OKOKOK"
                 });
             });
 
@@ -286,15 +287,53 @@ describe("🐣 yukari", function() {
                 const yukari = new Yukari(model, "query");
                 yukari.fillRowFromSource(origData);
                 yukari.key1 = 234;
+                hack.hackSyncReturn(yukari.$schema[5].type, "toJSON", "OKOKOK");
                 yukari.toJSON(true).should.deepEqual({
                     key1: 123,
                     key2: 1.5,
                     key3: { foo: "bar" },
                     key4: "234",
                     key5: date,
-                    key6: { dec: 809 }
+                    key6: "OKOKOK"
                 });
             });
         });
+    
+        describe("👯 ::extractAdapterData", function() {
+            const date = new Date();
+            const origData = {
+                key1: 123,
+                key2: 1.5,
+                key3: "{ foo: \"bar\" }",
+                key4: "234",
+                key5: date.toISOString(),
+                key6: "1100101001"
+            };
+
+            it("should get extracted data", function() {
+                const yukari = new Yukari(model, "query");
+                yukari.fillRowFromSource(origData);
+                Yukari.extractAdapterData(model, yukari).should.deepEqual([{
+                    field: model.schema[0],
+                    value: 123
+                }, {
+                    field: model.schema[1],
+                    value: 1.5
+                }, {
+                    field: model.schema[2],
+                    value: { foo: "bar" }
+                }, {
+                    field: model.schema[3],
+                    value: "234"
+                }, {
+                    field: model.schema[4],
+                    value: date
+                }, {
+                    field: model.schema[5],
+                    value: { dec: 809 }
+                }]);
+            });
+        });
+
     });
 });

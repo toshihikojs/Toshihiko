@@ -52,6 +52,24 @@ exports.hackSyncErr = function(obj, name, whichCall) {
     };
 };
 
+exports.hackSyncReturn = function(obj, name, result, whichCall) {
+    whichCall = whichCall || 1;
+    const old = obj[name];
+    let called = 0;
+
+    obj[name] = function() {
+        called++;
+
+        debug(`sync err: ${name} ${called} ${whichCall}`);
+        if(called === whichCall) {
+            obj[name] = old;
+            return result;
+        }
+
+        return old.apply(obj, arguments);
+    };
+};
+
 exports.hackAsyncErr = function(obj, name, whichCall) {
     whichCall = whichCall || 1;
     const old = obj[name];
