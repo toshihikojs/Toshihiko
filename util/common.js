@@ -6,6 +6,7 @@
  */
 "use strict";
 
+const _ = require("lodash");
 const debug = require("debug")("toshihiko:common");
 
 const STRIP_COMMENTS = /((\/\/.*$)|(\/\*[\s\S]*?\*\/))/mg;
@@ -23,4 +24,25 @@ common.getParamNames = function(func) {
     debug("function detected.", fnStr);
     const result = fnStr.slice(fnStr.indexOf("(") + 1, fnStr.indexOf(")")).match(ARGUMENT_NAMES);
     return (null === result) ? [] : result;
+};
+
+common.extend = function(_default, options) {
+    _default = _default || {};
+    const obj = _.cloneDeep(options);
+
+    for(let key in _default) {
+        if(!_default.hasOwnProperty(key)) continue;
+
+        if(undefined === obj[key]) {
+            obj[key] = _.cloneDeep(_default[key]);
+            continue;
+        }
+
+        if(typeof _default[key] === "object" && typeof obj[key] === "object") {
+            obj[key] = common.extend(obj[key], _default[key]);
+            continue;
+        }
+    }
+
+    return obj;
 };
