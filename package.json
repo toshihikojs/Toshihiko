@@ -8,7 +8,6 @@
   },
   "dependencies": {
     "async": "2.1.1",
-    "config.util": "^1.20.2-1",
     "debug": "^2.2.0",
     "eventemitter2": "^2.1.0",
     "fbbk-json": "^1.0.0",
