@@ -1,6 +1,6 @@
 {
   "name": "toshihiko",
-  "version": "0.8.3",
+  "version": "1.0.0-alpha",
   "description": "Yet another simple ORM for node.js.",
   "main": "index.js",
   "directories": {
