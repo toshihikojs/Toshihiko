@@ -8,7 +8,6 @@
 
 const path = require("path");
 
-const cu = require("config.util");
 const decache = require("decache");
 const otrans = require("otrans");
 const runSync = require("sync-runner");
@@ -27,7 +26,7 @@ describe("🐣 adapters/mysql", function() {
     };
 
     before(function(done) {
-        const adapter = new MySQLAdapter({}, cu.extendDeep({}, correctOptions, {
+        const adapter = new MySQLAdapter({}, require("../../util/common").extend(correctOptions, {
             database: "mysql"
         }));
         adapter.execute("CREATE DATABASE IF NOT EXISTS `__toshihiko__`;", function(err) {
@@ -136,12 +135,32 @@ describe("🐣 adapters/mysql", function() {
                 adapter.mysql.end(done);
             });
         });
+
+        it("with frozen options", function(done) {
+            const options = {};
+            Object.defineProperties(options, {
+                package: { value: "mysql", enumerable: true },
+                username: { value: "username", enumerable: true },
+                password: { value: "password", enumerable: true },
+                foo: { value: "b", enumerable: true }
+            });
+            const adapter = new MySQLAdapter({}, options);
+
+            adapter.options.should.deepEqual({
+                host: "localhost",
+                port: 3306,
+                package: "mysql",
+                foo: "b"
+            });
+            options.should.deepEqual({ package: "mysql", username: "username", password: "password", foo: "b" });
+            adapter.mysql.end(done);
+        });
     });
 
     [ "mysql", "mysql2" ].forEach(name => {
         describe(name, function() {
             before(function(done) {
-                const options = cu.extendDeep({}, correctOptions);
+                const options = require("../../util/common").extend({}, correctOptions);
                 options.package = name;
                 const adapter = new MySQLAdapter({}, options);
 

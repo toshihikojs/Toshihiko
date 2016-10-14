@@ -7,7 +7,6 @@
 "use strict";
 
 const async = require("async");
-const cu = require("config.util");
 const should = require("should");
 
 const hack = require("../util/hack");
@@ -41,7 +40,7 @@ module.exports = function(name, options) {
                     ok: function() {}
                 }), function(err, _row) {
                     should.ifError(err);
-                    const row = cu.extendDeep({}, _row);
+                    const row = require("../../util/common").extend({}, _row);
                     row.should.match({
                         key1: 1,
                         key2: 0.5,
@@ -78,7 +77,7 @@ module.exports = function(name, options) {
                     key6: { dec: 610074841 }
                 }), function(err, _row) {
                     should.ifError(err);
-                    const row = cu.extendDeep({}, _row);
+                    const row = require("../../util/common").extend({}, _row);
                     row.should.match({
                         key1: 2,
                         key2: 0.5,
@@ -116,7 +115,7 @@ module.exports = function(name, options) {
                     key6: { dec: 8644325 }
                 }), function(err, _row) {
                     should.ifError(err);
-                    const row = cu.extendDeep({}, _row);
+                    const row = require("../../util/common").extend({}, _row);
                     row.should.match({
                         key1: 3,
                         key2: 0.5,
@@ -161,7 +160,7 @@ module.exports = function(name, options) {
                     key6: { dec: 8644325 }
                 }), function(err, _row) {
                     should.ifError(err);
-                    const row = cu.extendDeep({}, _row);
+                    const row = require("../../util/common").extend({}, _row);
                     row.should.match({
                         key1: 4,
                         key2: 0.5,
@@ -196,7 +195,7 @@ module.exports = function(name, options) {
                     key2: 0.5,
                 }), function(err, _row) {
                     should.ifError(err);
-                    const row = cu.extendDeep({}, _row);
+                    const row = require("../../util/common").extend({}, _row);
                     row.should.match({
                         key1: 1,
                         key2: 0.5
@@ -227,7 +226,7 @@ module.exports = function(name, options) {
                     key2: 1,
                 }), function(err, _row) {
                     should.ifError(err);
-                    const row = cu.extendDeep({}, _row);
+                    const row = require("../../util/common").extend({}, _row);
                     row.should.match({
                         key1: 2,
                         key2: 1
