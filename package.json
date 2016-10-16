@@ -7,7 +7,7 @@
     "test": "test"
   },
   "dependencies": {
-    "async": "2.1.1",
+    "async": "2.1.2",
     "debug": "^2.2.0",
     "eventemitter2": "^2.1.0",
     "fbbk-json": "^1.0.0",
