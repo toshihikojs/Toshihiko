@@ -11,6 +11,7 @@ const should = require("should");
 const Model = require("../lib/model");
 const Query = require("../lib/query");
 const Toshihiko = require("../lib/toshihiko");
+const Yukari = require("../lib/yukari");
 
 describe("🐣 model", function() {
     const toshihiko = new Toshihiko("base");
@@ -99,6 +100,16 @@ describe("🐣 model", function() {
 
             model.toshihiko.should.equal(toshihiko);
         });
+
+        it("should have getters", function() {
+            model._fields.should.equal(model.schema);
+        });
+    });
+
+    it("should build", function() {
+        const yukari = new Yukari(model, "new");
+        yukari.buildNewRow({ key1: 0 });
+        yukari.should.deepEqual(model.build({ key1: 0 }));
     });
 
     describe("queries", function() {
@@ -113,6 +124,7 @@ describe("🐣 model", function() {
         test("fields", [ "key1" ]);
         test("field", [ "key1" ]);
         test("limit", [ 1, 2 ]);
+        test("limit", [ 1 ]);
         test("order", [{ key1: 1 }]);
         test("orderBy", [{ key1: -1 }]);
         test("index", [ "idx" ]);
@@ -190,6 +202,40 @@ describe("🐣 model", function() {
 
         it("should return undefined", function() {
             should(model.convertColumnToName(1)).equal(undefined);
+        });
+    });
+
+    describe("compatible", function() {
+        const model1 = new Model("base", toshihiko, require("./util/common").COMMON_SCHEMA);
+        const model2 = new Model("base", toshihiko, require("./util/common").COMMON_SCHEMA_NO_PRIMARY);
+        const model3 = new Model("base", toshihiko, require("./util/common").COMMON_SCHEMA_MULTI_PRIMARY);
+
+        describe("getPrimaryKeysName", function() {
+            it("no primary key", function() {
+                model2.getPrimaryKeysName().should.deepEqual([]);
+            });
+
+            it("single primary key", function() {
+                model1.getPrimaryKeysName().should.deepEqual("key1");
+            });
+
+            it("multiple primary keys", function() {
+                model3.getPrimaryKeysName().should.deepEqual([ "key1", "key4" ]);
+            });
+        });
+
+        describe("getPrimaryKeysColumn", function() {
+            it("no primary key", function() {
+                model2.getPrimaryKeysColumn().should.deepEqual([]);
+            });
+
+            it("single primary key", function() {
+                model1.getPrimaryKeysColumn().should.deepEqual("id");
+            });
+
+            it("multiple primary keys", function() {
+                model3.getPrimaryKeysColumn().should.deepEqual([ "id", "key4" ]);
+            });
         });
     });
 });

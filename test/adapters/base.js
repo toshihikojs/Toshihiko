@@ -61,5 +61,6 @@ describe("🐣 adapters/base", function() {
         test("deleteByQuery", 1);
         test("insert", 2);
         test("update", 3);
+        test("execute", 100);
     });
 });

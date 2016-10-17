@@ -522,4 +522,23 @@ describe("🐣 query", function() {
             });
         });
     });
+
+    describe("👙 execute", function() {
+        const query = new Query(model);
+
+        it("should execute", function(done) {
+            const execute = toshihiko.adapter.execute;
+            toshihiko.adapter.execute = function(sql, callback) {
+                sql.should.equal("OJOJOJ");
+                callback(undefined, { foo: "bar" }, "EXTRA");
+            };
+            query.execute("OJOJOJ", function(err, result, extra) {
+                should.ifError(err);
+                result.should.deepEqual({ foo: "bar" });
+                extra.should.equal("EXTRA");
+                toshihiko.adapter.execute = execute;
+                done();
+            });
+        });
+    });
 });
