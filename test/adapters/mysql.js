@@ -22,7 +22,8 @@ describe("🐣 adapters/mysql", function() {
         username: "root",
         password: "",
         database: "__toshihiko__",
-        charset: "utf8mb4_general_ci"
+        charset: "utf8mb4_general_ci",
+        showSql: true
     };
 
     before(function(done) {
