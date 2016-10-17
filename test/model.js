@@ -158,6 +158,13 @@ describe("🐣 model", function() {
                 done();
             });
         });
+
+        it("execute", function(done) {
+            model.execute(function(err) {
+                err.message.should.equal("this adapter's execute function is not implemented yet.");
+                done();
+            });
+        });
     });
 
     describe("convertColumnToName", function() {
