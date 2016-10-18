@@ -26,6 +26,13 @@ common.getParamNames = function(func) {
     return (null === result) ? [] : result;
 };
 
+/**
+ * extend object
+ *
+ * @param {Object} _default the default object
+ * @param {Object} options the extend object
+ * @returns {Object} the extended object
+ */
 common.extend = function(_default, options) {
     _default = _default || {};
     const obj = _.cloneDeep(options);
@@ -45,4 +52,34 @@ common.extend = function(_default, options) {
     }
 
     return obj;
+};
+
+common.promisify = function() {
+    // not using Promise.promisify because I don't want to wrap code logic
+    // in a Promise
+    //
+    // I DO LIKE CALLBACK
+    let resolve;
+    let reject;
+    const q = new Promise(function(_resolve, _reject) {
+        // this function will be called synchronous
+        //
+        // see
+        //
+        // https://github.com/petkaantonov/bluebird/blob/v3.4.6/src/promise.js#L78
+        //
+        // and
+        //
+        // https://github.com/petkaantonov/bluebird/blob/v3.4.6/src/debuggability.js#L303-L309
+        //
+        // so we can assign them directly
+        resolve = _resolve;
+        reject = _reject;
+    });
+
+    return {
+        q: q,
+        resolve: resolve,
+        reject: reject
+    };
 };
