@@ -8,6 +8,7 @@
 
 const _ = require("lodash");
 const debug = require("debug")("toshihiko:common");
+const Promise = require("bluebird"); /* jshint ignore: line */
 
 const STRIP_COMMENTS = /((\/\/.*$)|(\/\*[\s\S]*?\*\/))/mg;
 const ARGUMENT_NAMES = /([^\s,]+)/g;
