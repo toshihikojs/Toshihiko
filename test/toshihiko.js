@@ -8,6 +8,7 @@
 
 const path = require("path");
 
+const hack = require("./util/hack");
 const Toshihiko = require("../lib/toshihiko");
 
 describe("🐣 toshihiko", function() {
@@ -43,6 +44,22 @@ describe("🐣 toshihiko", function() {
             const toshihiko = new Toshihiko(Adapter, options);
             toshihiko.adapter.toshihiko.should.equal(toshihiko);
             toshihiko.execute("fooooo", "barrrr");
+        });
+
+        describe("promise", function() {
+            const toshihiko = new Toshihiko("base");
+
+            it("should resolve", function() {
+                hack.hackAsyncReturn(toshihiko.adapter, "execute", [ undefined, [ "ok" ], "again" ]);
+                return toshihiko.execute(1, 2, 3).should.eventually.deepEqual([ "ok" ]);
+            });
+
+            it("should reject", function() {
+                hack.hackAsyncErr(toshihiko.adapter, "execute");
+                return toshihiko.execute(4, function(err) {
+                    err.message.should.equal("execute predefinition 1");
+                }).should.be.rejectedWith("execute predefinition 1");
+            });
         });
     });
 
