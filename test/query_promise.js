@@ -14,6 +14,20 @@ describe("query promise", function() {
     const toshihiko = new Toshihiko("base");
     const model = toshihiko.define("model", [ { name: "key1", primaryKey: true } ]);
 
+    describe("count", function() {
+        it("should resolve", function() {
+            const query = new Query(model);
+            hack.hackAsyncReturn(query.adapter, "count", [ undefined, 10, "again" ]);
+            return query.count().should.eventually.deepEqual(10);
+        });
+
+        it("should reject", function() {
+            const query = new Query(model);
+            hack.hackAsyncErr(query.adapter, "count");
+            return query.count().should.be.rejectedWith("count predefinition 1");
+        });
+    });
+
     describe("find", function() {
         it("should resolve", function() {
             const query = new Query(model);
