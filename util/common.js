@@ -54,7 +54,7 @@ common.extend = function(_default, options) {
     return obj;
 };
 
-common.promisify = function() {
+common.promisify = function(callback) {
     // not using Promise.promisify because I don't want to wrap code logic
     // in a Promise
     //
@@ -77,9 +77,18 @@ common.promisify = function() {
         reject = _reject;
     });
 
-    return {
-        q: q,
-        resolve: resolve,
-        reject: reject
+    const newCallback = function() {
+        if(typeof callback === "function") {
+            callback.apply(null, arguments);
+        }
+
+        if(arguments[0]) {
+            reject(arguments[0]);
+        } else {
+            resolve(arguments[1]);
+        }
     };
+    newCallback.promise = q;
+
+    return newCallback;
 };
