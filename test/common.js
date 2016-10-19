@@ -34,4 +34,34 @@ describe("🐣 common", function() {
             common.getParamNames(func).should.deepEqual([ "as", "sadf", "我", "_" ]);
         });
     });
+
+    describe("👙 promisify", function() {
+        it("should get promise's callback 1", function() {
+            const callback = common.promisify(function(err) {
+                err.message.should.equal("123");
+            });
+
+            callback(new Error("123"));
+
+            return callback.promise.should.be.rejectedWith("123");
+        });
+
+        it("should get promise's callback 2", function() {
+            const callback = common.promisify(function(err, ok) {
+                ok.should.equal(123);
+            });
+
+            callback(undefined, 123);
+
+            return callback.promise.should.eventually.equal(123);
+        });
+
+        it("should have $promise", function() {
+            const callback = common.promisify();
+            callback.promise.should.equal(callback.promise.$promise);
+
+            callback(undefined, "ok");
+            return callback.promise.should.eventually.equal("ok");
+        });
+    });
 });
