@@ -28,7 +28,6 @@ common.getParamNames = function(func) {
 
 /**
  * extend object
- *
  * @param {Object} _default the default object
  * @param {Object} options the extend object
  * @returns {Object} the extended object
@@ -54,6 +53,11 @@ common.extend = function(_default, options) {
     return obj;
 };
 
+/**
+ * make a callback function promisify
+ * @param {Function} [callback] the callback function
+ * @returns {Function} the new callback function with promise
+ */
 common.promisify = function(callback) {
     // not using Promise.promisify because I don't want to wrap code logic
     // in a Promise

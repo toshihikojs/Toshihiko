@@ -8,6 +8,11 @@
 
 const Escaper = module.exports = {};
 
+/**
+ * escape SQL string
+ * @param {String} str the sql string
+ * @returns {String} the escaped string
+ */
 Escaper.escape = function(str) {
     if(typeof str !== "string") {
         return str;
@@ -31,6 +36,11 @@ Escaper.escape = function(str) {
     }, "");
 };
 
+/**
+ * escape SQL string for LIKE
+ * @param {String} str the sql string
+ * @returns {String} the escaped string
+ */
 Escaper.escapeLike = function(str) {
     return str.split("").reduce(function(str, ch) {
         if(ch === "_" || ch === "%") {
