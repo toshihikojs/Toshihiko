@@ -77,6 +77,9 @@ common.promisify = function(callback) {
         reject = _reject;
     });
 
+    // let it be compitable with 0.9
+    q.$promise = q;
+
     const newCallback = function() {
         if(typeof callback === "function") {
             callback.apply(null, arguments);
