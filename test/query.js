@@ -312,6 +312,15 @@ describe("🐣 query", function() {
                 done();
             }, true, { single: true });
         });
+
+        it("with no callback", function() {
+            const find = toshihiko.adapter.find;
+            toshihiko.adapter.find = function(_query, callback, options) {
+                toshihiko.adapter.find = find;
+                return callback(undefined, options.single ? { key1: "13" } : [{ key1: "13" }]);
+            };
+            return query.find(undefined, undefined, { single: true }).should.eventually.match({ key1: "13" });
+        });
     });
 
     describe("👙 findOne", function() {
