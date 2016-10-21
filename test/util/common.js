@@ -8,6 +8,10 @@
 
 const Type = require("../../lib/field_type");
 
+process.on("unhandledRejection", function() {
+    // ... do nothing
+});
+
 module.exports = {
     COMMON_SCHEMA: [
         { name: "key1", column: "id", primaryKey: true, type: Type.Integer, autoIncrement: true },

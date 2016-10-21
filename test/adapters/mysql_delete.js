@@ -52,12 +52,27 @@ module.exports = function(name, options) {
                 order: [ { key2: -1 } ],
                 limit: [ 0, 1 ]
             });
-            sql.should.equal("DELETE FROM `test1` WHERE (`id` = 1) ORDER BY `key2` DESC LIMIT 0, 1");
+            sql.should.equal("DELETE FROM `test1` WHERE (`id` = 1) ORDER BY `key2` DESC LIMIT 1");
         });
 
         it("should makeDelete 4", function() {
             const sql = adapter.makeDelete(model, {});
             sql.should.equal("DELETE FROM `test1`"); 
+        });
+
+        it("should get error in limit", function() {
+            try {
+                adapter.makeDelete(model, {
+                    where: { key1: 1 },
+                    order: [ { key2: -1 } ],
+                    limit: [ 1, 1 ]
+                });
+            } catch(e) {
+                e.message.should.match(/^Invalid limit in delete/g);
+                return;
+            }
+
+            (0).should.equal(1);
         });
     });
 
