@@ -1,6 +1,6 @@
 TIMEOUT = 3000
 MOCHA = ./node_modules/.bin/_mocha
-MOCHA_OPTIONS = -t $(TIMEOUT) --recursive
+MOCHA_OPTIONS = -t $(TIMEOUT) --recursive -r ./test/util/common.js
 ISTANBUL = ./node_modules/.bin/istanbul
 COVERALLS = ./node_modules/coveralls/bin/coveralls.js
 
