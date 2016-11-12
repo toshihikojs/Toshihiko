@@ -1,0 +1,7 @@
+site_name: Toshihiko | Yet another simple Node.js ORM
+repo_url: https://github.com/XadillaX/Toshihiko
+site_favicon: favicon.ico
+site_url: http://docs.toshihikojs.org
+theme: readthedocs
+pages:
+  - Home: index.md
