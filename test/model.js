@@ -20,19 +20,6 @@ var toshihiko = new T.Toshihiko("myapp_test", "root", "", {
 
 var Model = null;
 describe("model", function () {
-    before(function (done) {
-        var sql = "CREATE TABLE `test` (" +
-            "`id` int(11) unsigned NOT NULL AUTO_INCREMENT," +
-            "`key2` float NOT NULL," +
-            "`key3` varchar(200) NOT NULL DEFAULT ''," +
-            "`key4` varchar(200) NOT NULL DEFAULT ''," +
-            "`key5` varchar(200) NULL DEFAULT ''," +
-            "PRIMARY KEY (`id`)," +
-            "KEY `test_key` (`key2`, `key3`)" +
-            ") ENGINE=InnoDB DEFAULT CHARSET=utf8;";
-        toshihiko.execute(sql, done);
-    });
-
     before(function () {
         Model = toshihiko.define("test", [
             { name: "key1", column: "id", primaryKey: true, type: T.Type.Integer },
@@ -50,6 +37,19 @@ describe("model", function () {
             { name: "key4", type: T.Type.String, defaultValue:"Ha!" },
             { name: "key5", type: T.Type.String, defaultValue:"Hello World", allowNull: true }
         ]);
+    });
+
+    before(function (done) {
+        var sql = "CREATE TABLE `test` (" +
+            "`id` int(11) unsigned NOT NULL AUTO_INCREMENT," +
+            "`key2` float NOT NULL," +
+            "`key3` varchar(200) NOT NULL DEFAULT ''," +
+            "`key4` varchar(200) NOT NULL DEFAULT ''," +
+            "`key5` varchar(200) NULL DEFAULT ''," +
+            "PRIMARY KEY (`id`)," +
+            "KEY `test_key` (`key2`, `key3`)" +
+            ") ENGINE=InnoDB DEFAULT CHARSET=utf8;";
+        toshihiko.execute(sql, done);
     });
 
     after(function(done) {
@@ -199,8 +199,22 @@ describe("model", function () {
 
                 Model.findById(98, function(err, data) {
                     should.ifError(err);
-                    console.log(data.toJSON());
                     should(data.key5).be.eql(null);
+                    done();
+                });
+            });
+        });
+        it("update null value without allowNull", function(done) {
+            var nData = {
+                key4: null
+            };
+            Model.where({ key1: 98 }).update(nData, function(err, data) {
+                should(err).be.eql(undefined);
+                data.affectedRows.should.be.eql(1);
+
+                Model.findById(98, function(err, data) {
+                    should.ifError(err);
+                    should(data.key4).be.eql("");
                     done();
                 });
             });
