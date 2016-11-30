@@ -9,6 +9,24 @@ Toshihiko is yet another simple Node.js ORM with cache layer.
 
 > It only support MySQL so far.
 
+## What Toshihiko Is
+
+**Toshihiko** is a simple ORM, with cache layer and high performance query methods.
+
+**Toshihiko** isn't a complex ORM, <span style="color: red;">**NO**</span>:
+
++ foreign key;
++ anything that is not CURD (like create table / update table structure);
++ relation between tables;
++ low performance query methods;
++ etc.
+
+For performance, use Toshihiko as simple as you can.
+
+> I believe that human being is much more reliable than machines. If not, try hard to make yourself more reliable than them!
+>
+> **So don't let ORM do too much things, like creating table.**
+
 ## Example Usage
 
 ```javascript
