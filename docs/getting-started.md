@@ -5,6 +5,12 @@ Toshihiko is available via NPM.
 ```sh
 $ npm install --save toshihiko
 
+# Install adapter layer
+#
+# If you're using MySQL, you should install mysql2 or mysql (mysql2 is recommended)
+$ npm install --save mysql2
+$ npm install --save mysql
+
 # If you want to use memcached / redis / aliyun OCS as your cache layer:
 $ npm install --save toshihiko-memcached
 $ npm install --save toshihiko-redis
