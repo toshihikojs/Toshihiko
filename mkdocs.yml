@@ -5,6 +5,7 @@ site_url: http://docs.toshihikojs.org
 theme: readthedocs
 extra_css:
   - css/custom.css
+  - css/hljs.css
 pages:
   - Home: index.md
   - Documentation:
