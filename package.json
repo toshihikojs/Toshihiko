@@ -21,7 +21,7 @@
   },
   "devDependencies": {
     "conventional-changelog-cli": "1.2.0",
-    "coveralls": "2.11.15",
+    "coveralls": "2.11.16",
     "cz-conventional-changelog": "2.0.0",
     "decache": "^4.1.0",
     "ghooks": "2.0.0",
