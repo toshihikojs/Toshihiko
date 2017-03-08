@@ -34,7 +34,7 @@
     "should": "11.2.0",
     "sync-runner": "^0.1.5",
     "toshihiko-memcached": "^1.0.1",
-    "validate-commit-msg": "2.8.2"
+    "validate-commit-msg": "2.11.1"
   },
   "scripts": {
     "test": "make test",
