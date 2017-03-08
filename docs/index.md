@@ -5,7 +5,7 @@ Toshihiko is yet another simple Node.js ORM with cache layer.
     <span>Toshihiko</span>
 </div>
 
-[Installation](getting-started.md)
+[Installation](docs/getting-started.md)
 
 > It only support MySQL so far.
 

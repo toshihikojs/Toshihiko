@@ -70,7 +70,7 @@
       "path": "./node_modules/cz-conventional-changelog"
     },
     "ghooks": {
-      "pre-commit": "npm run lint && npm run validate",
+      "pre-commit": "npm run lint && npm run validate && rm docs/misc/changelog.md && cp CHANGELOG.md docs/misc/changelog.md && git add docs/misc/changelog.md",
       "commit-msg": "npm run commit-msg",
       "pre-push": "npm test"
     }
