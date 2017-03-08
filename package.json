@@ -9,7 +9,7 @@
   "dependencies": {
     "async": "2.1.5",
     "bluebird": "^3.4.6",
-    "debug": "^2.3.2",
+    "debug": "^2.4.0",
     "eventemitter2": "^3.0.1",
     "fbbk-json": "^1.0.0",
     "lodash": "4.17.4",
@@ -27,14 +27,14 @@
     "ghooks": "2.0.0",
     "istanbul": "1.0.0-alpha.2",
     "jsxhint": "0.15.1",
-    "mocha": "3.1.2",
+    "mocha": "3.2.0",
     "mockjs": "^1.0.1-beta3",
     "mysql": "^2.11.1",
     "mysql2": "^1.1.0",
     "should": "11.2.0",
     "sync-runner": "^0.1.5",
     "toshihiko-memcached": "^1.0.1",
-    "validate-commit-msg": "2.8.2"
+    "validate-commit-msg": "2.11.1"
   },
   "scripts": {
     "test": "make test",
