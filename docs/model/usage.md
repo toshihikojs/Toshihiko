@@ -66,6 +66,8 @@ Model.fields("a,b");
 Model.fields([ "a", "b", "c" ]);
 ```
 
+Querying format for `field` should refer [here](../querying#field).
+
 ### limit - Set the query limit
 
 ```javascript
@@ -73,12 +75,16 @@ Model.fields([ "a", "b", "c" ]);
 Model.limit([ 1, 5 ]);
 ```
 
+Querying format for `limit` should refer [here](../querying#limit-pagination).
+
 ### index - Force use index
 
 ```javascript
 // FORCE INDEX(`a`)
 Model.index("a");
 ```
+
+Querying format for `index` should refer [here](../querying#index).
 
 ## Action
 
@@ -169,6 +175,8 @@ Model.where().limit().update({
     b: "{{b + 1}}"
 }).then().error();
 ```
+
+Querying format for `update` should refer [here](../querying#crowd-update).
 
 ### delete - Delete a crowd of records
 
