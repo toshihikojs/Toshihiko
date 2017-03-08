@@ -25,7 +25,7 @@ $ npm install toshihiko --save
 
 > Toshihiko is releasing 1.x, and new document for 1.x is under writing. We'll see you soon.
 >
-> You can have a preview [here](http://toshihiko.rtfd.io/en/latest/).
+> You can have a preview [here](http://docs.toshihikojs.com/en/latest/).
 
 ## Contribute
 

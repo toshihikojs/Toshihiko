@@ -12,3 +12,4 @@ pages:
       - Getting Started: getting-started.md
       - Model:
         - Definition: model/definition.md
+        - Usage: model/usage.md
