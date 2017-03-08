@@ -13,3 +13,4 @@ pages:
       - Model:
         - Definition: model/definition.md
         - Usage: model/usage.md
+      - Querying: querying.md

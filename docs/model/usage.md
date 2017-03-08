@@ -17,6 +17,12 @@ Model.where(CONDITION).order(ORDER).limit(LIMIT).find(CALLBACK);
 Model.where(CONDITION).order(ORDER).limit(LIMIT).findOne(CALLBACK);
 ```
 
+> **NOTICE:** It will return a `Query` instance after the first call in Model.
+>
+> `Model.where(CONDITION)` will return a Query instance with `CONDITION`. And all of the later calls in the chain are
+> exactly call on that `Query` instance. `...order(ORDER)` returns the previous `Query` instance returned by
+> `Model.where(CONDITION)`.
+
 ## Query
 
 ### where - Set the SELECT / UPDATE / DELETE condition
@@ -36,12 +42,16 @@ Model.where({
 });
 ```
 
+Querying format for `where` should refer [here](../querying#where).
+
 ### order / orderBy - Set the query order
 
 ```javascript
 // ORDER BY a ASC, b DESC
-Model.where({ a: 1, b: -1 });
+Model.orderBy({ a: 1, b: -1 });
 ```
+
+Querying format for `order` should refer [here](../querying#order).
 
 ### field / fields - Set the query field(s)
 
