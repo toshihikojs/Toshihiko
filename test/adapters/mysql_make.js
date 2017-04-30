@@ -118,6 +118,11 @@ module.exports = function(name, options) {
             }, "and");
             sql.should.equal("`key2` IN (1.2, 1.3)");
 
+            sql = adapter.makeFieldWhere(model, "key4", {
+                $like: "abc$%"
+            }, "and");
+            sql.should.equal("`key4` LIKE (\"abc$%\")");
+
             sql = adapter.makeFieldWhere(model, "key2", {
                 $neq: [ 1.2, 1.3 ]
             }, "and");
