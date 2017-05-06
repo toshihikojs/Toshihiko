@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "async": "2.4.0",
-    "bluebird": "^3.4.6",
+    "bluebird": "^3.5.0",
     "debug": "^2.6.6",
     "eventemitter2": "^4.1.0",
     "fbbk-json": "^1.0.1",
