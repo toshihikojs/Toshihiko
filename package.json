@@ -14,7 +14,7 @@
     "fbbk-json": "^1.0.1",
     "lodash": "4.17.4",
     "moment": "^2.14.1",
-    "otrans": "^1.0.0",
+    "otrans": "^1.0.1",
     "scarlet-task": "^1.0.0",
     "sqlstring": "^2.0.1",
     "toshihiko-mysqlparser": "^1.0.0"
