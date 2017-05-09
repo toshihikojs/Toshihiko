@@ -118,6 +118,11 @@ module.exports = function(name, options) {
             }, "and");
             sql.should.equal("`key2` IN (1.2, 1.3)");
 
+            sql = adapter.makeFieldWhere(model, "key4", {
+                $like: "abc$%"
+            }, "and");
+            sql.should.equal("`key4` LIKE (\"abc$%\")");
+
             sql = adapter.makeFieldWhere(model, "key2", {
                 $neq: [ 1.2, 1.3 ]
             }, "and");
@@ -152,6 +157,11 @@ module.exports = function(name, options) {
                 foo: "bar"
             }, "and");
             sql.should.equal("`key3` = \"{\\\"foo\\\":\\\"bar\\\"}\"");
+
+            sql = adapter.makeFieldWhere(model, "key2", {
+                $between: [ 1, 100 ]
+            }, "and");
+            sql.should.equal("`key2` BETWEEN 1 AND 100");
 
             const date = new Date(0);
             const dateStr = moment(0).format("YYYY-MM-DD HH:mm:ss");
@@ -221,17 +231,23 @@ module.exports = function(name, options) {
             } }, "AND");
             sql.should.equal("(`id` = 1 AND `key2` = 2 AND (`key3` = \"1\" OR `key4` = \"2\"))");
 
-            sql = adapter.makeWhere(model, { key1: "1", key2: "2", $or: [
-                { key3: 1, key4: "2" },
-                { $or: { key3: 2, key4: "3" } },
-                { $and: { key3: 3, key4: "4" } }
-            ], $and: [
-                { $or: { key3: 1, key4: 2 } },
-                { key1: 1 }
-            ] }, "AND");
+            sql = adapter.makeWhere(model, {
+                key1: "1",
+                key2: "2",
+                $or: [
+                    { key3: 1, key4: "2" },
+                    { $or: { key3: 2, key4: "3" } },
+                    { $and: { key3: 3, key4: "4" } },
+                    { key2: { $between: [ 1, 100 ] } }
+                ],
+                $and: [
+                    { $or: { key3: 1, key4: 2 } },
+                    { key1: 1 }
+                ]
+            }, "AND");
             sql.should.equal("(`id` = 1 AND `key2` = 2 AND ((`key3` = \"1\" AND `key4` = \"2\") OR ((`key3` = " +
-                "\"2\" OR `key4` = \"3\")) OR ((`key3` = \"3\" AND `key4` = \"4\"))) AND " +
-                "(((`key3` = \"1\" OR `key4` = \"2\")) AND (`id` = 1)))");
+                "\"2\" OR `key4` = \"3\")) OR ((`key3` = \"3\" AND `key4` = \"4\")) OR (`key2` BETWEEN 1 AND 100)) " +
+                "AND (((`key3` = \"1\" OR `key4` = \"2\")) AND (`id` = 1)))");
         });
 
         it("should generate - 2", function() {
