@@ -1,4 +1,4 @@
-This chapter will be used in `Model.where`.
+This chapter will be used in querying.
 
 ## Key name
 
