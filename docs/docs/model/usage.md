@@ -92,14 +92,14 @@ Querying format for `index` should refer [here](../querying#index).
 
 ```javascript
 // Callback
-Model.where().limit().find(function(err, records, extra) {
+Model.where(...).limit(...).find(function(err, records, extra) {
     console.log(err, records, extra);
 
     // `records` will be an array if no error
 });
 
 // Promise
-Model.where().limit().find().then(function(records) {
+Model.where(...).limit(...).find(...).then(function(records) {
     // ...
 }).error(function(err) {
     // ...
@@ -118,7 +118,7 @@ But if you're using `Promise`, **NO EXTRA!** So `Promise` is **NOT** recommend.
 
 ```javascript
 // Callback
-Model.where().limit().findOne(function(err, record, extra) {
+Model.where(...).limit(...).findOne(function(err, record, extra) {
     console.log(err, record, extra);
 
     // `record` will be a Yukari object if no error
@@ -126,7 +126,7 @@ Model.where().limit().findOne(function(err, record, extra) {
 });
 
 // Promise
-Model.where().limit().findOne().then(function(record) {
+Model.where(...).limit(...).findOne(...).then(function(record) {
     // ...
 }).error(function(err) {
     // ...
@@ -139,14 +139,14 @@ Model.where().limit().findOne().then(function(record) {
 
 ```javascript
 // Callback
-Model.where().limit().count(function(err, count, extra) {
+Model.where(...).limit(...).count(function(err, count, extra) {
     console.log(err, count, extra);
 
     // `count` is the result if no error
 });
 
 // Promise
-Model.where().limit().count().then(function(count) {
+Model.where(...).limit(...).count(...).then(function(count) {
     // ...
 }).error(function(err) {
     // ...
@@ -159,7 +159,7 @@ Model.where().limit().count().then(function(count) {
 // SET a = 1, b = b + 1
 
 // Callback
-Model.where().limit().update({
+Model.where(...).limit(...).update({
     a: 1,
     b: "{{b + 1}}"
 }, function(err, result, extra) {
@@ -170,7 +170,7 @@ Model.where().limit().update({
 });
 
 // Promise
-Model.where().limit().update({
+Model.where(...).limit(...).update({
     a: 1,
     b: "{{b + 1}}"
 }).then().error();
@@ -182,14 +182,14 @@ Querying format for `update` should refer [here](../querying#crowd-update).
 
 ```javascript
 // Callback
-Model.where().limit().delete(function(err, result, extra) {
+Model.where(...).limit(...).delete(function(err, result, extra) {
     console.log(err, result, extra);
 
     // `result` will be the update result
 });
 
 // Promise
-Model.where().limit().delete().then().error();
+Model.where(...).limit(...).delete(...).then(...).error(...);
 ```
 
 ## Action With No Query
