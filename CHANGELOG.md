@@ -1,3 +1,60 @@
+<a name="1.0.0-alpha.7"></a>
+# [1.0.0-alpha.7](https://github.com/XadillaX/Toshihiko/compare/0.8.3...1.0.0-alpha.7) (2017-10-27)
+
+
+### Bug Fixes
+
+* "DELETE ... FROM ... LIMIT 0, 1" will have syntax error ([d2d69d3](https://github.com/XadillaX/Toshihiko/commit/d2d69d3))
+* a bug in findWithCache in mysql adapter with single option ([a1f411c](https://github.com/XadillaX/Toshihiko/commit/a1f411c))
+* a bug in yukari delete ([5446a64](https://github.com/XadillaX/Toshihiko/commit/5446a64))
+* a type in Yukari ([6923a1a](https://github.com/XadillaX/Toshihiko/commit/6923a1a))
+* add --recursive in Makefile ([c2e83cf](https://github.com/XadillaX/Toshihiko/commit/c2e83cf))
+* add try in makeSql ([ad2a44d](https://github.com/XadillaX/Toshihiko/commit/ad2a44d))
+* Model._fields be compatible with 0.x ([694676e](https://github.com/XadillaX/Toshihiko/commit/694676e))
+* some bugs in query and base adapter ([2b03dc4](https://github.com/XadillaX/Toshihiko/commit/2b03dc4))
+* toJSON error ([7c3e20d](https://github.com/XadillaX/Toshihiko/commit/7c3e20d))
+* toJSON in yukari ([cb57ede](https://github.com/XadillaX/Toshihiko/commit/cb57ede))
+* update base adapter's execute ([c539243](https://github.com/XadillaX/Toshihiko/commit/c539243))
+*  query  find with no callback ([8cf2d79](https://github.com/XadillaX/Toshihiko/commit/8cf2d79))
+
+
+### Features
+
+* add delete by query ([8d6d522](https://github.com/XadillaX/Toshihiko/commit/8d6d522))
+* add execute function to adapters ([f0494a0](https://github.com/XadillaX/Toshihiko/commit/f0494a0))
+* add force index in query ([87a6882](https://github.com/XadillaX/Toshihiko/commit/87a6882))
+* add promise support in query ([adb99d5](https://github.com/XadillaX/Toshihiko/commit/adb99d5))
+* add promise support in query count ([008bcc8](https://github.com/XadillaX/Toshihiko/commit/008bcc8))
+* add some functions in model ([4ed5864](https://github.com/XadillaX/Toshihiko/commit/4ed5864))
+* add update function in base adapter ([4f78292](https://github.com/XadillaX/Toshihiko/commit/4f78292))
+* base adapter and mysql adapter with some tests ([6fc46b0](https://github.com/XadillaX/Toshihiko/commit/6fc46b0))
+* toJSON of yukari ([d4e41e1](https://github.com/XadillaX/Toshihiko/commit/d4e41e1))
+* **mysql:** add between symbol ([5bfb0ee](https://github.com/XadillaX/Toshihiko/commit/5bfb0ee))
+* compatible with showSql ([84ce8a2](https://github.com/XadillaX/Toshihiko/commit/84ce8a2))
+* count in query ([2b72ede](https://github.com/XadillaX/Toshihiko/commit/2b72ede))
+* delete by query of mysql ([60672fe](https://github.com/XadillaX/Toshihiko/commit/60672fe))
+* delete in yukari ([2d30750](https://github.com/XadillaX/Toshihiko/commit/2d30750))
+* field class finished ([3cd305b](https://github.com/XadillaX/Toshihiko/commit/3cd305b))
+* find with cache in mysql ([8257a67](https://github.com/XadillaX/Toshihiko/commit/8257a67))
+* findById ([c04f23d](https://github.com/XadillaX/Toshihiko/commit/c04f23d))
+* finish mysql adapter makeFieldWhere ([eb7076e](https://github.com/XadillaX/Toshihiko/commit/eb7076e))
+* get function parameter names ([7240c0b](https://github.com/XadillaX/Toshihiko/commit/7240c0b))
+* improve base adapter ([13e0391](https://github.com/XadillaX/Toshihiko/commit/13e0391))
+* let  be compitable with 0.9 ([a1a78cb](https://github.com/XadillaX/Toshihiko/commit/a1a78cb))
+* let toshihiko support promise ([333ff81](https://github.com/XadillaX/Toshihiko/commit/333ff81))
+* makeLimit in mysql adapter ([a651805](https://github.com/XadillaX/Toshihiko/commit/a651805))
+* makeOrder in mysql adapter ([c998ca4](https://github.com/XadillaX/Toshihiko/commit/c998ca4))
+* mysql insert ([5d40852](https://github.com/XadillaX/Toshihiko/commit/5d40852))
+* query feature started ([d1ddc9c](https://github.com/XadillaX/Toshihiko/commit/d1ddc9c))
+* update data by query ([684fda8](https://github.com/XadillaX/Toshihiko/commit/684fda8))
+* update for mysql adapter ([3191759](https://github.com/XadillaX/Toshihiko/commit/3191759))
+* update model and query's execute ([51ba00b](https://github.com/XadillaX/Toshihiko/commit/51ba00b))
+* use bluebird as promise ([0e5bdcf](https://github.com/XadillaX/Toshihiko/commit/0e5bdcf))
+* use common.extend to instead of config.util ([353e260](https://github.com/XadillaX/Toshihiko/commit/353e260))
+* yukari insert ([0463626](https://github.com/XadillaX/Toshihiko/commit/0463626))
+
+
+
 <a name="1.0.0-alpha.6"></a>
 # [1.0.0-alpha.6](https://github.com/XadillaX/Toshihiko/compare/0.8.3...v1.0.0-alpha.6) (2017-05-09)
 
