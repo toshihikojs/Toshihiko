@@ -7,16 +7,16 @@
     "test": "test"
   },
   "dependencies": {
-    "async": "2.4.1",
-    "bluebird": "^3.5.0",
-    "debug": "^2.6.6",
-    "eventemitter2": "^4.1.0",
+    "async": "2.5.0",
+    "bluebird": "^3.5.1",
+    "debug": "^3.1.0",
+    "eventemitter2": "^4.1.2",
     "fbbk-json": "^1.0.1",
     "lodash": "4.17.4",
-    "moment": "^2.14.1",
+    "moment": "^2.19.1",
     "otrans": "^1.0.1",
     "scarlet-task": "^1.0.0",
-    "sqlstring": "^2.0.1",
+    "sqlstring": "^2.3.0",
     "toshihiko-mysqlparser": "^1.0.0"
   },
   "devDependencies": {
