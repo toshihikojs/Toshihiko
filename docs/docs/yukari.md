@@ -11,9 +11,9 @@ Assume you have a model like this:
 
 ```js
 const Model = toshihiko.define("name", [
-    { name: "column1", column: "column_1", type: T.Type.Integer, primaryKey: true }, // it's `AUTO_INCREMENT`
-    { name: "column2", type: T.Type.Integer, primaryKey: true },
-    { name: "column3", type: T.Type.Json, allowNull: true }
+    { name: "column1", column: "column_1", type: toshihiko.Type.Integer, primaryKey: true }, // it's `AUTO_INCREMENT`
+    { name: "column2", type: toshihiko.Type.Integer, primaryKey: true },
+    { name: "column3", type: toshihiko.Type.Json, allowNull: true }
 ]);
 ```
 
