@@ -127,3 +127,47 @@ YourType.equal = function(a, b) {
 };
 ```
 
+### Example
+
+Assume you have a demand like this:
+
+> Column `industry` is a string that formatted like `"BIG_INDUSTRY,SMALL_INDUSTRY"` (eg. `"internet,financial"`). And you want this column be an object like `{ big: "BIG_INDUSTRY", small: "SMALL_INDUSTRY" }` in your `Yukari` object.
+
+Define an type object first:
+
+```js
+const Industry = {};
+Industry.name = "Industry";
+Industry.needQuotes = true;
+```
+
+Next we should implement the `parse` function:
+
+```js
+Industry.parse = function(orig) {
+    if(!orig) return { big: "", small: "" };
+    const temp = orig.split(",");
+    return {
+        big: temp[0] || "",
+        small: temp[1] || ""
+    };
+};
+```
+
+And then we should implement the `restore` function:
+
+```js
+Industry.restore = function(parsed) {
+    if(!parsed) return ",";
+    return (parsed.big || "") + "," + (parsed.small || "");
+};
+```
+
+`equal` and `defaultValue`:
+
+```js
+Industry.equal = function(a, b) {
+    return (a.big === b.big && a.small === b.small);
+};
+Industry.defaultValue = "internet,financial";
+```
