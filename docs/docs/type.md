@@ -171,3 +171,29 @@ Industry.equal = function(a, b) {
 };
 Industry.defaultValue = "internet,financial";
 ```
+
+#### Usage
+
+After you've finished your type definition, you can define your model:
+
+```js
+const Model = toshihiko.define("info", [
+    { name: "industry", type: Industry, ... }
+]);
+```
+
+When you build your `Yukari` object and do insert, the SQL will like this:
+
+```js
+Model.build({ industry: { big: "foo", small: "bar" } }).save(...);
+                                                             
+//< INSERT INTO `info`(`industry`) VALUES("foo,bar");
+```
+
+When you do some query:
+
+```js
+Model.where(...).findOne(function(err, info) {
+    console.log(info.industry); //< { big: "foo", small: "bar" }
+});
+```
