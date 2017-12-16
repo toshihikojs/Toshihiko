@@ -130,12 +130,12 @@ module.exports = function(name, options) {
                 callback();
             };
 
-            adapter.execute = function(sql, callback) {
+            adapter.execute = function(conn, sql, callback) {
                 sql.should.equal("SELECT `id` FROM `test1` WHERE (`key4` = \"tobedeleted\") " +
                     "ORDER BY `id` DESC LIMIT 5");
                 adapter.execute = $execute;
                 executeCalled++;
-                return $execute.call(adapter, sql, callback);
+                return $execute.call(adapter, conn, sql, callback);
             };
 
             const query = new Query(model);
@@ -194,6 +194,16 @@ module.exports = function(name, options) {
                         done();
                     });
                 });
+            });
+        });
+
+        it("should do via a certain connection", function(done) {
+            const query = new Query(model).conn(common.DUMMY_CONN);
+
+            adapter.deleteByQuery(query, function(err, ret) {
+                should.ifError(err);
+                ret.should.equal("hello");
+                done();
             });
         });
     });

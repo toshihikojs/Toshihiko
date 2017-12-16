@@ -30,7 +30,7 @@ module.exports = function(name, options) {
                 now.setMilliseconds(0);
     
                 const hacked = hack.whereOnce(model, { key1: 1 });
-                adapter.insert(model, Yukari.extractAdapterData(model, {
+                adapter.insert(model, null, Yukari.extractAdapterData(model, {
                     key2: 0.5,
                     key3: { foo: "bar" },
                     key4: null,
@@ -69,7 +69,7 @@ module.exports = function(name, options) {
                 now.setMilliseconds(0);
     
                 const hacked = hack.whereOnce(model, { key4: "dummy primary" });
-                adapter.insert(model, Yukari.extractAdapterData(model, {
+                adapter.insert(model, null, Yukari.extractAdapterData(model, {
                     key2: 0.5,
                     key3: { foo: "bar" },
                     key4: "dummy primary",
@@ -107,7 +107,7 @@ module.exports = function(name, options) {
                 now.setMilliseconds(0);
     
                 const hacked = hack.whereOnce(model, { key1: 3, key4: "dummy multi primary" });
-                adapter.insert(model, Yukari.extractAdapterData(model, {
+                adapter.insert(model, null, Yukari.extractAdapterData(model, {
                     key2: 0.5,
                     key3: { foo: "bar" },
                     key4: "dummy multi primary",
@@ -152,7 +152,7 @@ module.exports = function(name, options) {
                     key5: now,
                     key6: { dec: 8644325 }
                 });
-                adapter.insert(model, Yukari.extractAdapterData(model, {
+                adapter.insert(model, null, Yukari.extractAdapterData(model, {
                     key2: 0.5,
                     key3: { foo: "bar" },
                     key4: "dummy no primary",
@@ -190,7 +190,7 @@ module.exports = function(name, options) {
                 now.setMilliseconds(0);
     
                 const hacked = hack.whereOnce(model, { key1: 1 });
-                adapter.insert(model, Yukari.extractAdapterData(model, {
+                adapter.insert(model, null, Yukari.extractAdapterData(model, {
                     key1: 1,
                     key2: 0.5,
                 }), function(err, _row) {
@@ -221,7 +221,7 @@ module.exports = function(name, options) {
                 now.setMilliseconds(0);
     
                 const hacked = hack.whereOnce(model, { key1: 2, key2: 1 });
-                adapter.insert(model, Yukari.extractAdapterData(model, {
+                adapter.insert(model, null, Yukari.extractAdapterData(model, {
                     key1: 2,
                     key2: 1,
                 }), function(err, _row) {
@@ -255,11 +255,18 @@ module.exports = function(name, options) {
                 });
             });
 
-            it("deleteByQuery", function(done) {
+            it("via certain connection", function(done) {
+                adapter.insert(model, common.DUMMY_CONN_WITH_ERR, [], function(err) {
+                    err.message.should.equal("dummy");
+                    done();
+                });
+            });
+
+            it("insert", function(done) {
                 async.waterfall([
                     function(callback) {
                         hack.hackAsyncReturn(adapter, "execute", [ undefined ]);
-                        adapter.insert(model, [{ field: model.schema[1], value: "123" }], function(err) {
+                        adapter.insert(model, null, [{ field: model.schema[1], value: "123" }], function(err) {
                             err.message.should.equal("no row inserted.");
                             callback();
                         });
@@ -273,7 +280,7 @@ module.exports = function(name, options) {
                             return a;
                         };
                         hack.hackAsyncReturn(adapter, "execute", [ undefined, { insertId: 100 } ]);
-                        adapter.insert(model, [{ field: model.schema[1], value: "123" }], function(err) {
+                        adapter.insert(model, null, [{ field: model.schema[1], value: "123" }], function(err) {
                             model.where = where;
                             err.message.should.equal("findOne predefinition 1");
                             callback();
@@ -288,7 +295,7 @@ module.exports = function(name, options) {
                             return a;
                         };
                         hack.hackAsyncReturn(adapter, "execute", [ undefined, { insertId: 100 } ]);
-                        adapter.insert(model, [{ field: model.schema[1], value: "123" }], function(err) {
+                        adapter.insert(model, null, [{ field: model.schema[1], value: "123" }], function(err) {
                             model.where = where;
                             err.message.should.equal("insert successfully but failed to read the record.");
                             callback();

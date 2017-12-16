@@ -157,5 +157,17 @@ module.exports = {
     NO_AI_SCHEMA_WITH_NO_PRIMARY: [
         { name: "key1", column: "id", type: Type.Integer },
         { name: "key2", type: Type.Float, defaultValue: 0.44 }
-    ]
+    ],
+
+    DUMMY_CONN: {
+        query: function() {
+            return arguments[arguments.length - 1](undefined, "hello");
+        }
+    },
+
+    DUMMY_CONN_WITH_ERR: {
+        query: function() {
+            return arguments[arguments.length - 1](new Error("dummy"));
+        }
+    }
 };

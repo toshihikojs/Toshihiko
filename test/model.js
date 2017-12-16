@@ -8,6 +8,7 @@
 
 const should = require("should");
 
+const hack = require("./util/hack");
 const Model = require("../lib/model");
 const Query = require("../lib/query");
 const Toshihiko = require("../lib/toshihiko");
@@ -235,6 +236,32 @@ describe("🐣 model", function() {
 
             it("multiple primary keys", function() {
                 model3.getPrimaryKeysColumn().should.deepEqual([ "id", "key4" ]);
+            });
+        });
+    });
+
+    describe("transaction", function() {
+        it("should begin transaction", function() {
+            hack.hackAsyncReturn(model.parent.adapter, "beginTransaction", [ undefined, { foo: "bar" }]);
+            model.beginTransaction(function(err, conn) {
+                should.ifError(err);
+                conn.should.deepEqual({ foo: "bar" });
+            });
+        });
+
+        it("should commit", function() {
+            hack.hackAsyncReturn(model.parent.adapter, "commit", [ undefined, { foo: "bar" }]);
+            model.commit(function(err, conn) {
+                should.ifError(err);
+                conn.should.deepEqual({ foo: "bar" });
+            });
+        });
+
+        it("should rollback", function() {
+            hack.hackAsyncReturn(model.parent.adapter, "rollback", [ undefined, { foo: "bar" }]);
+            model.rollback(function(err, conn) {
+                should.ifError(err);
+                conn.should.deepEqual({ foo: "bar" });
             });
         });
     });

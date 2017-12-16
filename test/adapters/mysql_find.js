@@ -105,6 +105,14 @@ module.exports = function(name, options) {
                 }, adapter.queryToOptions(query, { single: true }));
             });
         });
+
+        it("via a certain connection", function(done) {
+            const query = new Query(model).conn(common.DUMMY_CONN_WITH_ERR);
+            adapter.findWithNoCache(query.model, function(err) {
+                err.message.should.equal("dummy");
+                done();
+            }, adapter.queryToOptions(query));
+        });
     });
     
     describe(`${name} findWithCache`, function() {
@@ -180,6 +188,14 @@ module.exports = function(name, options) {
                 });
             }, adapter.queryToOptions(query, {}));
         });
+
+        it("via a certain connection", function(done) {
+            const query = new Query(model).conn(common.DUMMY_CONN_WITH_ERR);
+            adapter.findWithCache(model.cache, model, function(err) {
+                err.message.should.equal("dummy");
+                done();
+            }, adapter.queryToOptions(query, {}));
+        });
     });
 
     describe(`${name} count`, function() {
@@ -197,6 +213,14 @@ module.exports = function(name, options) {
                 should.ifError(err);
                 extra.should.equal("SELECT COUNT(0) FROM `test1` WHERE (`id` >= 2)");
                 rows.should.equal(3);
+                done();
+            });
+        });
+
+        it("via a certain connection", function(done) {
+            const query = new Query(model).conn(common.DUMMY_CONN_WITH_ERR);
+            adapter.count(query, function(err) {
+                err.message.should.equal("dummy");
                 done();
             });
         });
@@ -341,6 +365,5 @@ module.exports = function(name, options) {
                 done();
             }); 
         });
-
     });
 };

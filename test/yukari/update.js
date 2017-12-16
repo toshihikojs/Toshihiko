@@ -60,7 +60,7 @@ module.exports = function(model) {
             yukari.key6 = { dec: 23983489 };
 
             const update = yukari.$adapter.update;
-            yukari.$adapter.update = function(_model, pk, data, callback) {
+            yukari.$adapter.update = function(_model, conn, pk, data, callback) {
                 yukari.$adapter.update = update;
                 model.should.equal(_model);
                 pk.should.deepEqual({ key1: 123 });
@@ -96,7 +96,7 @@ module.exports = function(model) {
             const yukari = new Yukari(model, "query");
             yukari.fillRowFromSource(origData);
             const update = yukari.$adapter.update;
-            yukari.$adapter.update = function(_model, pk, data, callback) {
+            yukari.$adapter.update = function(_model, conn, pk, data, callback) {
                 yukari.$adapter.update = update;
                 model.should.equal(_model);
                 pk.should.deepEqual({ key1: 123 });
@@ -142,7 +142,7 @@ module.exports = function(model) {
             const yukari = new Yukari(model, "query");
             yukari.fillRowFromSource(origData);
             const update = yukari.$adapter.update;
-            yukari.$adapter.update = function(_model, pk, data, callback) {
+            yukari.$adapter.update = function(_model, conn, pk, data, callback) {
                 yukari.$adapter.update = update;
                 model.should.equal(_model);
                 pk.should.deepEqual({
