@@ -86,6 +86,15 @@ Model.index("a");
 
 Querying format for `index` should refer [here](../querying#index).
 
+### conn - Force use a certain connection
+
+```javascript
+// Use a certain connection
+Model.conn(conn);
+```
+
+Querying format for `conn` should refer [here](../querying#conn).
+
 ## Action
 
 ### find - Find a list of records
@@ -231,3 +240,56 @@ Model.findById({ key1: 1, key2: 2 }, function(err, record) {
 // Promise
 Model.findById(1).then().error();
 ```
+
+## Transaction
+
+`Model` provides three functions to do transactions.
+
+### beginTransaction - Begin a transaction and returns the connection
+
+This function will get a connection and begin a transaction with it. Then this function returns the connection just got.
+
+**All queries and updates using this connection before committed or rolled-back will in the transaction.**
+
+> Refer: [`Query::conn()`](../querying#conn).
+
+```javascript
+Model.beginTransaction(function(err, conn) {
+    // `conn` is the connection transacted
+});
+```
+
+> Please **DO NOT** use a connection anymore after that connection's transaction being committed or rolled-back since that
+> connection will be released.
+
+### commit - Commit the transaction
+
+This function will commit a transaction in a certain connection and release that connection.
+
+```javascript
+Model.beginTransaction(function(err, conn) {
+    DO_SOMETHING(function() {
+        Model.commit(conn, function(err) {
+            // Transaction was committed and the connection was released
+        });
+    });
+});
+```
+
+> Refer: https://github.com/mysqljs/mysql#transactions
+
+### rollback - Rollback the transaction
+
+This function will rollback a transaction in a certain connection and release that connection.
+
+```javascript
+Model.beginTransaction(function(err, conn) {
+    DO_SOMETHING(function() {
+        Model.rollback(conn, function(err) {
+            // Transaction was rolled-back and the connection was released
+        });
+    });
+});
+```
+
+> Refer: https://github.com/mysqljs/mysql#transactions

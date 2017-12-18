@@ -48,6 +48,11 @@ const record = model.build({ ... });
 record.insert(function(err, record) {
     console.log(err, record);
 });
+
+// or use a certain connection
+record.insert(conn, function(err, record) {
+    console.log(err, record);
+});
 ```
 
 ### Update
@@ -59,6 +64,11 @@ model.where({ ... }).findOne(function(err, record) {
     // assume we got a certain record
     record.column2 = 234;
     record.update(function(err, record) {
+        console.log(err, record);
+    });
+
+    // or use a certain connection
+    record.update(conn, function(err, record) {
         console.log(err, record);
     });
 });
@@ -74,6 +84,11 @@ model.where({ ... }).findOne(function(err, record) {
     record.delete(function(err) {
         console.log(err);
     });
+
+    // or use a certain connection
+    record.delete(conn, function(err) {
+        console.log(err);
+    });
 });
 ```
 
@@ -83,6 +98,11 @@ This is a convenient function. If your `Yukari` object is created via `.build()`
 
 ```js
 record.save(function(err, record) {
+    console.log(err, record);
+});
+
+// or use a certain connection
+record.save(conn, function(err, record) {
     console.log(err, record);
 });
 ```
