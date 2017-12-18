@@ -33,6 +33,7 @@ const options = {           // options for MySQL
     port: 3306,
     charset: "utf8mb4_bin",
     connectionLimit: 10,
+    showSql: true,
 
     cache: {
         // cache options, if have

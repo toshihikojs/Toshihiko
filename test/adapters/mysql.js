@@ -9,6 +9,7 @@
 const path = require("path");
 
 const async = require("async");
+const chalk = require("chalk");
 const decache = require("decache");
 const otrans = require("otrans");
 const runSync = require("sync-runner");
@@ -19,16 +20,40 @@ const common = require("../util/common");
 const MySQLAdapter = require("../../lib/adapters/mysql");
 
 describe("🐣 adapters/mysql", function() {
+    const _write = process.stdout.write;
+    let _last;
+    process.stdout.write = function() {
+        _last = arguments[0];
+        _write.apply(process.stdout, arguments);
+    };
+
     const correctOptions = {
         username: "root",
         password: "",
         database: "__toshihiko__",
         charset: "utf8mb4_general_ci",
-        showSql: true
+        showSql: function(sql) {
+            const temp = _last
+                .replace("\u001b[32m", "")
+                .replace("\u001b[0m", "")
+                .replace("\u001b[90m", "");
+            let i = 0;
+            sql = chalk.gray(`>> sql: ${sql}`);
+            while(temp[i] === " ") {
+                sql = ` ${sql}`;
+                i++;
+            }
+
+            if(temp[i] !== ">") {
+                sql = `  ${sql}`;
+            }
+
+            console.log(sql);
+        }
     };
 
     before(function(done) {
-        const adapter = new MySQLAdapter({}, require("../../util/common").extend(correctOptions, {
+        const adapter = new MySQLAdapter({}, Object.assign({}, correctOptions, {
             database: "mysql"
         }));
         adapter.execute("CREATE DATABASE IF NOT EXISTS `__toshihiko__`;", function(err) {
@@ -300,6 +325,23 @@ describe("🐣 adapters/mysql", function() {
                         });
                     });
                 });
+            });
+
+            describe("show sql", function() {
+                it("should use a certain logger", function(done) {
+                    let logged = false;
+                    const adapter = new MySQLAdapter({}, Object.assign({}, correctOptions, {
+                        database: "mysql",
+                        showSql: function(sql) {
+                            sql.should.equal("HELLO WORLD");
+                            logged = true;
+                        }
+                    }));
+                    adapter.execute("HELLO WORLD", function(err) {
+                        err.message.indexOf("HELLO WORLD").should.not.equal(-1);
+                        if(logged) done();
+                    });
+                }); 
             });
 
             require("./mysql_insert")(name, correctOptions);
