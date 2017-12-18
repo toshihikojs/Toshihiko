@@ -21,7 +21,7 @@ describe("🐣 toshihiko", function() {
         });
 
         it("should create with base adapter using module", function() {
-            const options = { foo: 1 };
+            const options = { foo: 1, showSql: true };
             const toshihiko = new Toshihiko(require("../lib/adapters/base"), options);
             toshihiko.options.should.equal(options);
             toshihiko.adapter.should.be.instanceof(require("../lib/adapters/base"));
