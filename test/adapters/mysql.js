@@ -8,6 +8,7 @@
 
 const path = require("path");
 
+const async = require("async");
 const decache = require("decache");
 const otrans = require("otrans");
 const runSync = require("sync-runner");
@@ -212,6 +213,91 @@ describe("🐣 adapters/mysql", function() {
                         should.ifError(err);
                         rows.serverStatus.should.equal(2);
                         done();
+                    });
+                });
+
+                it("should execute via a certain conn", function(done) {
+                    adapter.execute({
+                        query: function() {
+                            return arguments[arguments.length - 1](undefined, "hello");
+                        }
+                    }, "drop table", function(err, ret) {
+                        should.ifError(err);
+                        ret.should.equal("hello");
+                        done();
+                    });
+                });
+            });
+
+            describe(`${name} transaction`, function() {
+                const adapter = new MySQLAdapter({}, correctOptions);
+                let conn;
+
+                before(function(done) {
+                    adapter.execute("create table test(id int(11) not null)", function(err) {
+                        should.ifError(err);
+                        done();
+                    });
+                });
+
+                after(function(done) {
+                    adapter.execute("drop table test", function(err) {
+                        should.ifError(err);
+                        adapter.mysql.end();
+                        done();
+                    });
+                });
+
+                it("should beginTransaction", function(done) {
+                    adapter.beginTransaction(function(err, _conn) {
+                        should.ifError(err);
+                        _conn.constructor.name.should.equal("PoolConnection");
+                        conn = _conn;
+                        done();
+                    });
+                });
+
+                it("should not insert things", function(done) {
+                    async.eachLimit([ 1, 2, 3, 4, 5 ], 5, function(num, callback) {
+                        adapter.execute(conn, "INSERT INTO test(id) VALUES(?)", num, function(err) {
+                            should.ifError(err);
+                            callback();
+                        });
+                    }, function() {
+                        adapter.execute("SELECT COUNT(0) FROM test", function(err, ret) {
+                            ret[0]["COUNT(0)"].should.be.equal(0);
+                            done();
+                        });
+                    });
+                });
+
+                it("should commit", function(done) {
+                    adapter.commit(conn, function(err) {
+                        should.ifError(err);
+                        adapter.execute("SELECT COUNT(0) FROM test", function(err, ret) {
+                            ret[0]["COUNT(0)"].should.be.equal(5);
+                            done();
+                        });
+                    });
+                });
+
+                it("should rollback", function(done) {
+                    adapter.beginTransaction(function(err, conn) {
+                        should.ifError(err);
+                        async.eachLimit([ 10, 20, 30, 40, 50 ], 5, function(num, callback) {
+                            adapter.execute(conn, "INSERT INTO test(id) VALUES(?)", num, function(err) {
+                                should.ifError(err);
+                                callback();
+                            });
+                        }, function() {
+                            adapter.rollback(conn, function(err) {
+                                should.ifError(err);
+                                adapter.execute("SELECT COUNT(0) FROM test", function(err, ret) {
+                                    ret[0]["COUNT(0)"].should.be.equal(5);
+                                    done();
+                                });
+                            });
+                        });
                     });
                 });
             });

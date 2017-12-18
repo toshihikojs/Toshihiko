@@ -59,8 +59,11 @@ describe("🐣 adapters/base", function() {
         test("count", 1);
         test("updateByQuery", 1);
         test("deleteByQuery", 1);
-        test("insert", 2);
-        test("update", 3);
+        test("insert", 3);
+        test("update", 4);
+        test("beginTransaction", 0);
+        test("rollback", 1);
+        test("commit", 1);
         test("execute", 100);
     });
 });

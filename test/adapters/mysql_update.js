@@ -150,7 +150,7 @@ module.exports = function(name, options) {
                 callback();
             };
 
-            adapter.execute = function(sql, callback) {
+            adapter.execute = function(conn, sql, callback) {
                 sql.should.equal("SELECT `id` FROM `test1` WHERE (`id` < 3) ORDER BY `id` DESC LIMIT 5");
                 adapter.execute = $execute;
                 executeCalled++;
@@ -224,6 +224,15 @@ module.exports = function(name, options) {
                 });
             });
         });
+
+        it("via a certain connection", function(done) {
+            const query = new Query(model).conn(common.DUMMY_CONN_WITH_ERR);
+            query._updateData = { key1: "{{key1}}" };
+            adapter.updateByQuery(query, function(err) {
+                err.message.should.equal("dummy");
+                done();
+            });
+        });
     });
 
     describe(`${name} update`, function() {
@@ -278,14 +287,14 @@ module.exports = function(name, options) {
                     callback();
                 };
 
-                adapter.execute = function(sql, callback) {
+                adapter.execute = function(conn, sql, callback) {
                     sql.should.equal("SELECT `id` FROM `test1` WHERE (`id` = 4) LIMIT 0, 1");
                     adapter.execute = $execute;
                     executeCalled++;
-                    return $execute.call(adapter, sql, callback);
+                    return $execute.call(adapter, null, sql, callback);
                 };
 
-                adapter.update(model, { key1: 4 }, [{
+                adapter.update(model, null, { key1: 4 }, [{
                     field: model.fieldNamesMap.key2,
                     value: 0.5
                 }], function(err, extra) {
@@ -296,7 +305,7 @@ module.exports = function(name, options) {
             });
 
             it("should really delete cache", function(done) {
-                adapter.update(model, { key1: 4 }, [
+                adapter.update(model, null, { key1: 4 }, [
                     { field: model.fieldNamesMap.key1, value: 100 },
                     { field: model.fieldNamesMap.key2, value: 100.5 },
                     { field: model.fieldNamesMap.key3, value: { baz: "bbb" } },
@@ -330,7 +339,7 @@ module.exports = function(name, options) {
             const model = toshihiko.define("test1", common.COMMON_SCHEMA);
 
             it("should update directly", function(done) {
-                adapter.update(model, { key1: 100 }, [
+                adapter.update(model, null, { key1: 100 }, [
                     { field: model.fieldNamesMap.key1, value: 4 },
                     { field: model.fieldNamesMap.key2, value: 0.5 },
                     { field: model.fieldNamesMap.key3, value: { foo: "bar" } },
@@ -355,7 +364,7 @@ module.exports = function(name, options) {
             });
 
             it("should be out-dated", function(done) {
-                adapter.update(model, { key1: 100 }, [{
+                adapter.update(model, null, { key1: 100 }, [{
                     field: model.fieldNamesMap.key1,
                     value: 4
                 }], function(err, extra) {
@@ -368,10 +377,10 @@ module.exports = function(name, options) {
 
         describe("invalid parameters", function() {
             it("should get error", function(done) {
-                adapter.update(model, {}, null, function(err) {
+                adapter.update(model, null, {}, null, function(err) {
                     err.message.should.equal("Invalid parameters.");
 
-                    adapter.update(model, null, {}, function(err) {
+                    adapter.update(model, null, null, {}, function(err) {
                         err.message.should.equal("Invalid parameters.");
                         done();
                     });
@@ -379,17 +388,29 @@ module.exports = function(name, options) {
             });
 
             it("yukari should broken", function(done) {
-                adapter.update(model, {}, [], function(err) {
+                adapter.update(model, null, {}, [], function(err) {
                     err.message.should.equal("Broken yukari object.");
                         done();
                 });
             });
 
             it("update object should broken", function(done) {
-                adapter.update(model, { key1: 1 }, [], function(err) {
+                adapter.update(model, null, { key1: 1 }, [], function(err) {
                     err.message.should.equal("Broken update data information.");
                         done();
                 });
+            });
+        });
+
+        it("via a certain connection", function(done) {
+            adapter.update(model, common.DUMMY_CONN_WITH_ERR, {
+                key1: 100
+            }, [{
+                field: model.fieldNamesMap.key1,
+                value: 100
+            }], function(err) {
+                err.message.should.equal("dummy");
+                done();
             });
         });
     });
@@ -415,7 +436,7 @@ module.exports = function(name, options) {
             async.waterfall([
                 function(callback) {
                     hack.hackSyncErr(adapter, "makeSql");
-                    adapter.update(model, { key1: 1 }, [{ field: model.schema[2], data: null }], function(err) {
+                    adapter.update(model, null, { key1: 1 }, [{ field: model.schema[2], data: null }], function(err) {
                         err.message.should.equal("makeSql predefinition 1");
                         callback();
                     });

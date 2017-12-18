@@ -48,7 +48,7 @@ module.exports = function(model) {
             const yukari = new Yukari(model, "new");
             yukari.buildNewRow(row);
             const insert = yukari.$adapter.insert;
-            yukari.$adapter.insert = function(_model, data, callback) {
+            yukari.$adapter.insert = function(_model, conn, data, callback) {
                 yukari.$adapter.insert = insert;
                 model.should.equal(_model);
                 data.should.match([{

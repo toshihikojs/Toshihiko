@@ -8,6 +8,7 @@
 
 const should = require("should");
 
+const common = require("./util/common");
 const Query = require("../lib/query");
 const Toshihiko = require("../lib/toshihiko");
 const Yukari = require("../lib/yukari");
@@ -182,6 +183,15 @@ describe("🐣 query", function() {
                 e.should.be.instanceof(Error);
                 done();
             }
+        });
+    });
+
+    describe("👙  conn", function() {
+        const query = new Query(model);
+
+        it("set conn", function() {
+            query.conn(common.DUMMY_CONN);
+            query._conn.should.be.equal(common.DUMMY_CONN);
         });
     });
 
@@ -537,7 +547,7 @@ describe("🐣 query", function() {
 
         it("should execute", function(done) {
             const execute = toshihiko.adapter.execute;
-            toshihiko.adapter.execute = function(sql, callback) {
+            toshihiko.adapter.execute = function(conn, sql, callback) {
                 sql.should.equal("OJOJOJ");
                 callback(undefined, { foo: "bar" }, "EXTRA");
             };

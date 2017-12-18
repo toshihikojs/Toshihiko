@@ -252,6 +252,33 @@ The only argument you should pass is a single index key name **(NOT A COLUMN NAM
 eg. If you've created an index key named `this_is_an_index` and you want to forcely use this index while querying, you
 only need to pass the key name `this_is_an_index` into `.index()`.
 
+## Conn
+
+This will be useful in `Model.conn` or `Query.conn`.
+
+Force using a connection in this query. Usually be used in transaction.
+
+```javascript
+.conn(conn);
+```
+
+E.g.
+
+```javascript
+Model.beginTransaction(function(err, conn) {
+    Model.where({ foo: 1 }).conn(conn).findOne(function(err, foo) {
+        foo.foo = 2;
+        foo.update(conn, function(err) {
+            Model.commit(conn, function(err) {
+                //
+            });
+        });
+    });
+});
+```
+
+> Refer: [`Model::beginTransaction()`](./model/usage#beginTransaction).
+
 ## Crowd Update
 
 This will be useful in `Model.update(data, callback)`.
