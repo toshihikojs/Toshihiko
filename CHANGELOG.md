@@ -1,3 +1,14 @@
+<a name="1.0.0-alpha.9"></a>
+# [1.0.0-alpha.9](https://github.com/XadillaX/Toshihiko/compare/1.0.0-alpha.8...1.0.0-alpha.9) (2018-03-09)
+
+
+### Bug Fixes
+
+* **package:** update lodash to version 4.17.5 ([#167](https://github.com/XadillaX/Toshihiko/issues/167)) ([0a1bb39](https://github.com/XadillaX/Toshihiko/commit/0a1bb39))
+* package.json to reduce vulnerabilities ([#168](https://github.com/XadillaX/Toshihiko/issues/168)) ([d91c7ea](https://github.com/XadillaX/Toshihiko/commit/d91c7ea))
+
+
+
 <a name="1.0.0-alpha.8"></a>
 # [1.0.0-alpha.8](https://github.com/XadillaX/Toshihiko/compare/1.0.0-alpha.7...1.0.0-alpha.8) (2017-12-18)
 
