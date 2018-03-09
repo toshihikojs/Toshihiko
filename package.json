@@ -28,7 +28,7 @@
     "ghooks": "2.0.2",
     "istanbul": "1.0.0-alpha.1",
     "jsxhint": "0.15.1",
-    "mocha": "3.4.2",
+    "mocha": "4.1.0",
     "mockjs": "^1.0.1-beta3",
     "mysql": "^2.15.0",
     "mysql2": "^1.5.1",
