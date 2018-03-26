@@ -20,15 +20,15 @@ module.exports = function(name, options) {
             const toshihiko = new Toshihiko("mysql", options);
             const adapter = toshihiko.adapter;
             const model = toshihiko.define("test1", common.COMMON_SCHEMA);
-    
+
             after(function() {
                 adapter.mysql.end();
             });
-    
+
             it("should insert 1", function(done) {
                 const now = new Date();
                 now.setMilliseconds(0);
-    
+
                 const hacked = hack.whereOnce(model, { key1: 1 });
                 adapter.insert(model, null, Yukari.extractAdapterData(model, {
                     key2: 0.5,
@@ -54,20 +54,20 @@ module.exports = function(name, options) {
                 });
             });
         });
-    
+
         describe("ai is not pk", function() {
             const toshihiko = new Toshihiko("mysql", options);
             const adapter = toshihiko.adapter;
             const model = toshihiko.define("test1", common.COMMON_SCHEMA_AI_IS_NOT_PRIMARY);
-    
+
             after(function() {
                 adapter.mysql.end();
             });
-    
+
             it("should insert 1", function(done) {
                 const now = new Date();
                 now.setMilliseconds(0);
-    
+
                 const hacked = hack.whereOnce(model, { key4: "dummy primary" });
                 adapter.insert(model, null, Yukari.extractAdapterData(model, {
                     key2: 0.5,
@@ -86,26 +86,26 @@ module.exports = function(name, options) {
                         key5: now,
                         key6: { dec: 610074841 }
                     });
-    
+
                     hacked.called.should.equal(1);
                     done();
                 });
             });
         });
-    
+
         describe("multi-primary-keys", function() {
             const toshihiko = new Toshihiko("mysql", options);
             const adapter = toshihiko.adapter;
             const model = toshihiko.define("test1", common.COMMON_SCHEMA_MULTI_PRIMARY);
-    
+
             after(function() {
                 adapter.mysql.end();
             });
-    
+
             it("should insert 1", function(done) {
                 const now = new Date();
                 now.setMilliseconds(0);
-    
+
                 const hacked = hack.whereOnce(model, { key1: 3, key4: "dummy multi primary" });
                 adapter.insert(model, null, Yukari.extractAdapterData(model, {
                     key2: 0.5,
@@ -124,26 +124,26 @@ module.exports = function(name, options) {
                         key5: now,
                         key6: { dec: 8644325 }
                     });
-    
+
                     hacked.called.should.equal(1);
                     done();
                 });
             });
         });
-    
+
         describe("no primary key", function() {
             const toshihiko = new Toshihiko("mysql", options);
             const adapter = toshihiko.adapter;
             const model = toshihiko.define("test1", common.COMMON_SCHEMA_NO_PRIMARY);
-    
+
             after(function() {
                 adapter.mysql.end();
             });
-    
+
             it("should insert 1", function(done) {
                 const now = new Date();
                 now.setMilliseconds(0);
-    
+
                 const hacked = hack.whereOnce(model, {
                     key1: 4,
                     key2: 0.5,
@@ -169,26 +169,26 @@ module.exports = function(name, options) {
                         key5: now,
                         key6: { dec: 8644325 }
                     });
-    
+
                     hacked.called.should.equal(1);
                     done();
                 });
             });
         });
-    
+
         describe("no ai key", function() {
             const toshihiko = new Toshihiko("mysql", options);
             const adapter = toshihiko.adapter;
             const model = toshihiko.define("test2", common.NO_AI_SCHEMA);
-    
+
             after(function() {
                 adapter.mysql.end();
             });
-    
+
             it("should insert 1", function(done) {
                 const now = new Date();
                 now.setMilliseconds(0);
-    
+
                 const hacked = hack.whereOnce(model, { key1: 1 });
                 adapter.insert(model, null, Yukari.extractAdapterData(model, {
                     key1: 1,
@@ -200,26 +200,26 @@ module.exports = function(name, options) {
                         key1: 1,
                         key2: 0.5
                     });
-    
+
                     hacked.called.should.equal(1);
                     done();
                 });
             });
         });
-    
+
         describe("no ai key with no primary key", function() {
             const toshihiko = new Toshihiko("mysql", options);
             const adapter = toshihiko.adapter;
             const model = toshihiko.define("test2", common.NO_AI_SCHEMA_WITH_NO_PRIMARY);
-    
+
             after(function() {
                 adapter.mysql.end();
             });
-    
+
             it("should insert 1", function(done) {
                 const now = new Date();
                 now.setMilliseconds(0);
-    
+
                 const hacked = hack.whereOnce(model, { key1: 2, key2: 1 });
                 adapter.insert(model, null, Yukari.extractAdapterData(model, {
                     key1: 2,
@@ -231,13 +231,43 @@ module.exports = function(name, options) {
                         key1: 2,
                         key2: 1
                     });
-    
+
                     hacked.called.should.equal(1);
                     done();
                 });
             });
         });
-    
+
+        describe("insert use conn", function() {
+            const toshihiko = new Toshihiko("mysql", options);
+            const adapter = toshihiko.adapter;
+            const model = toshihiko.define("test2", common.NO_AI_SCHEMA_WITH_NO_PRIMARY);
+
+            after(function() {
+                adapter.mysql.end();
+            });
+
+            it("should model use conn", function(done) {
+                const conn = { conn: "conn" };
+                const hacked = hack.connOnce(model, conn);
+
+                adapter.insert(model, conn, Yukari.extractAdapterData(model, {
+                    key1: 3,
+                    key2: 2,
+                }), function(err, _row) {
+                    should.ifError(err);
+                    const row = require("../../util/common").extend({}, _row);
+                    row.should.match({
+                        key1: 3,
+                        key2: 2
+                    });
+
+                    hacked.called.should.equal(1);
+                    done();
+                });
+            });
+        });
+
         describe(`${name} fail`, function() {
             const toshihiko = new Toshihiko("mysql", options);
             const adapter = toshihiko.adapter;
@@ -248,7 +278,7 @@ module.exports = function(name, options) {
                     options: { prefix: "fail_" }
                 }
             });
-        
+
             after(function() {
                 model.cache.memcached.flush(function() {
                     adapter.mysql.end();
