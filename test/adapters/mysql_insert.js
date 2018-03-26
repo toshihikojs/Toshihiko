@@ -243,12 +243,21 @@ module.exports = function(name, options) {
             const adapter = toshihiko.adapter;
             const model = toshihiko.define("test2", common.NO_AI_SCHEMA_WITH_NO_PRIMARY);
 
+            let conn;
+
+            before(function(done) {
+                adapter.mysql.getConnection(function(err, _conn) {
+                    should.ifError(err);
+                    conn = _conn;
+                    done();
+                });
+            });
+
             after(function() {
                 adapter.mysql.end();
             });
 
             it("should model use conn", function(done) {
-                const conn = { conn: "conn" };
                 const hacked = hack.connOnce(model, conn);
 
                 adapter.insert(model, conn, Yukari.extractAdapterData(model, {
