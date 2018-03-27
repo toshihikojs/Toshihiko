@@ -341,7 +341,40 @@ describe("🐣 adapters/mysql", function() {
                         err.message.indexOf("HELLO WORLD").should.not.equal(-1);
                         if(logged) done();
                     });
-                }); 
+                });
+            });
+
+            describe("query to options", function() {
+                it("conn should be equal", function(done) {
+                    const conn = { foo: "happy" };
+                    const options = { options: "options" };
+                    const query = {
+                        _fields: "fields",
+                        _where: "where",
+                        _order: "order",
+                        _limit: "limit",
+                        _updateData: "updateData",
+                        _index: "index",
+                        _conn: conn
+                    };
+
+                    const adapter = new MySQLAdapter({}, correctOptions);
+                    const _options = adapter.queryToOptions(query, options);
+
+                    _options.should.deepEqual({
+                        fields: "fields",
+                        where: "where",
+                        order: "order",
+                        limit: "limit",
+                        update: "updateData",
+                        index: "index",
+                        conn: conn,
+                        options: "options"
+                    });
+
+                    _options.conn.should.equal(conn);
+                    done();
+                });
             });
 
             require("./mysql_insert")(name, correctOptions);
