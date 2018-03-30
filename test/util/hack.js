@@ -24,6 +24,20 @@ exports.whereOnce = function(parent, assume) {
     return called;
 };
 
+exports.connOnce = function(parent, assume) {
+    const $conn = parent.conn.bind(parent);
+    const called = { called: 0 };
+
+    parent.conn = function(conn) {
+        conn.should.equal(assume);
+        parent.conn = $conn;
+        called.called++;
+        return $conn(conn);
+    };
+
+    return called;
+};
+
 exports.hackOnce = function(obj, name) {
     const old = obj[name];
     const called = { called: 0 };
