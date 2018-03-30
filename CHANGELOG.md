@@ -1,3 +1,16 @@
+<a name="1.0.0-alpha.10"></a>
+# [1.0.0-alpha.10](https://github.com/XadillaX/Toshihiko/compare/1.0.0-alpha.8...1.0.0-alpha.10) (2018-03-30)
+
+
+### Bug Fixes
+
+* package.json to reduce vulnerabilities ([#168](https://github.com/XadillaX/Toshihiko/issues/168)) ([d91c7ea](https://github.com/XadillaX/Toshihiko/commit/d91c7ea))
+* **lib/adapters/mysql:** fix conn error ([771dade](https://github.com/XadillaX/Toshihiko/commit/771dade))
+* **lib/adapters/mysql:** fix transaction insert error ([bce7cad](https://github.com/XadillaX/Toshihiko/commit/bce7cad))
+* **package:** update lodash to version 4.17.5 ([#167](https://github.com/XadillaX/Toshihiko/issues/167)) ([0a1bb39](https://github.com/XadillaX/Toshihiko/commit/0a1bb39))
+
+
+
 <a name="1.0.0-alpha.9"></a>
 # [1.0.0-alpha.9](https://github.com/XadillaX/Toshihiko/compare/1.0.0-alpha.8...1.0.0-alpha.9) (2018-03-09)
 
