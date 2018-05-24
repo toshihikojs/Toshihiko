@@ -25,7 +25,7 @@
     "coveralls": "3.0.1",
     "cz-conventional-changelog": "2.1.0",
     "decache": "^4.3.0",
-    "ghooks": "2.0.2",
+    "ghooks": "2.0.3",
     "istanbul": "1.0.0-alpha.1",
     "jsxhint": "0.15.1",
     "mocha": "5.1.0",
