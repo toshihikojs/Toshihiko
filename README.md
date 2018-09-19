@@ -8,6 +8,7 @@
 [![Dependency Status](https://david-dm.org/XadillaX/Toshihiko.svg)](https://david-dm.org/XadillaX/Toshihiko)
 [![Greenkeeper badge](https://badges.greenkeeper.io/XadillaX/Toshihiko.svg)](https://greenkeeper.io/)
 [![Star at GitHub](https://img.shields.io/github/stars/XadillaX/toshihiko.svg?style=social&label=Star)](https://github.com/xadillax/toshihiko)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2FXadillaX%2FToshihiko.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2FXadillaX%2FToshihiko?ref=badge_shield)
 
 Yet another simple ORM for Node.js.
 
@@ -36,3 +37,7 @@ You're welcome to make Pull Request! Please read [CONTRIBUTING.md](https://githu
 |![luicfer](https://avatars1.githubusercontent.com/u/8154651?v=3&s=60)|[@luicfer](https://github.com/luicfer)|
 |![mapleincode](https://avatars0.githubusercontent.com/u/8831159?v=3&s=60)|[@mapleincode](https://github.com/mapleincode)|
 |![plusmancn](https://avatars3.githubusercontent.com/u/4994682?v=3&s=60)|[@plusmancn](https://github.com/plusmancn)|
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2FXadillaX%2FToshihiko.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2FXadillaX%2FToshihiko?ref=badge_large)
