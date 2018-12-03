@@ -9,6 +9,7 @@
 [![Greenkeeper badge](https://badges.greenkeeper.io/XadillaX/Toshihiko.svg)](https://greenkeeper.io/)
 [![Star at GitHub](https://img.shields.io/github/stars/XadillaX/toshihiko.svg?style=social&label=Star)](https://github.com/xadillax/toshihiko)
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2FXadillaX%2FToshihiko.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2FXadillaX%2FToshihiko?ref=badge_shield)
+[![Reviewed by Hound](https://img.shields.io/badge/Reviewed_by-Hound-8E64B0.svg)](https://houndci.com)
 
 Yet another simple ORM for Node.js.
 
