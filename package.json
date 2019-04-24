@@ -21,7 +21,7 @@
   },
   "devDependencies": {
     "chalk": "^2.3.0",
-    "conventional-changelog-cli": "2.0.12",
+    "conventional-changelog-cli": "2.0.17",
     "coveralls": "3.0.1",
     "cz-conventional-changelog": "2.1.0",
     "decache": "^4.3.0",
