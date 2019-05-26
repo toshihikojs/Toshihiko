@@ -7,7 +7,7 @@
     "test": "test"
   },
   "dependencies": {
-    "async": "2.6.1",
+    "async": "3.0.1",
     "bluebird": "^3.5.1",
     "debug": "^3.1.0",
     "eventemitter2": "^5.0.0",
