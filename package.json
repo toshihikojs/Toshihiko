@@ -12,7 +12,7 @@
     "debug": "^3.1.0",
     "eventemitter2": "^5.0.0",
     "fbbk-json": "^1.1.0",
-    "lodash": "4.17.11",
+    "lodash": "4.17.12",
     "moment": "^2.20.0",
     "otrans": "^1.0.1",
     "scarlet-task": "^1.0.0",
