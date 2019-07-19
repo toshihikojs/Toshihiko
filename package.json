@@ -23,7 +23,7 @@
     "chalk": "^2.3.0",
     "conventional-changelog-cli": "2.0.12",
     "coveralls": "3.0.1",
-    "cz-conventional-changelog": "2.1.0",
+    "cz-conventional-changelog": "3.0.0",
     "decache": "^4.3.0",
     "ghooks": "2.0.4",
     "istanbul": "1.0.0-alpha.1",
