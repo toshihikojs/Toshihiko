@@ -9,8 +9,8 @@
   "dependencies": {
     "async": "2.6.1",
     "bluebird": "^3.5.1",
+    "eventemitter2": "^6.0.0",
     "debug": "^4.1.1",
-    "eventemitter2": "^5.0.0",
     "fbbk-json": "^1.1.0",
     "lodash": "4.17.12",
     "moment": "^2.20.0",
