@@ -21,10 +21,10 @@
     "snyk": "^1.316.1"
   },
   "devDependencies": {
+    "coveralls": "3.0.7",
     "cz-conventional-changelog": "3.0.0",
     "chalk": "^3.0.0",
     "conventional-changelog-cli": "2.0.17",
-    "coveralls": "3.0.3",
     "decache": "^4.3.0",
     "ghooks": "2.0.4",
     "istanbul": "1.0.0-alpha.1",
