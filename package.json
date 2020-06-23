@@ -9,19 +9,20 @@
   "dependencies": {
     "async": "2.6.1",
     "bluebird": "^3.5.1",
-    "debug": "^3.1.0",
-    "eventemitter2": "^5.0.0",
+    "eventemitter2": "^6.0.0",
+    "debug": "^4.1.1",
     "fbbk-json": "^1.1.0",
     "lodash": "4.17.12",
     "moment": "^2.20.0",
     "otrans": "^1.0.1",
     "scarlet-task": "^1.0.0",
     "sqlstring": "^2.3.0",
-    "toshihiko-mysqlparser": "^1.0.0"
+    "toshihiko-mysqlparser": "^1.0.0",
+    "snyk": "^1.316.1"
   },
   "devDependencies": {
     "chalk": "^3.0.0",
-    "conventional-changelog-cli": "2.0.12",
+    "conventional-changelog-cli": "2.0.17",
     "coveralls": "3.0.3",
     "cz-conventional-changelog": "2.1.0",
     "decache": "^4.3.0",
@@ -42,7 +43,9 @@
     "lint": "./node_modules/.bin/jsxhint .",
     "validate": "npm ls",
     "commit-msg": "./node_modules/.bin/validate-commit-msg",
-    "changelog": "./node_modules/.bin/conventional-changelog -p angular -i CHANGELOG.md -s"
+    "changelog": "./node_modules/.bin/conventional-changelog -p angular -i CHANGELOG.md -s",
+    "snyk-protect": "snyk protect",
+    "prepublish": "npm run snyk-protect"
   },
   "repository": {
     "type": "git",
@@ -75,5 +78,6 @@
       "commit-msg": "npm run commit-msg",
       "pre-push": "npm test"
     }
-  }
+  },
+  "snyk": true
 }
