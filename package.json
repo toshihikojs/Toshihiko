@@ -21,7 +21,7 @@
     "snyk": "^1.316.1"
   },
   "devDependencies": {
-    "chalk": "^2.3.0",
+    "chalk": "^3.0.0",
     "conventional-changelog-cli": "2.0.17",
     "coveralls": "3.0.3",
     "cz-conventional-changelog": "2.1.0",
