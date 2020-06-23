@@ -9,10 +9,10 @@
   "dependencies": {
     "async": "2.6.1",
     "bluebird": "^3.5.1",
-    "debug": "^3.1.0",
+    "debug": "^4.1.1",
     "eventemitter2": "^5.0.0",
     "fbbk-json": "^1.1.0",
-    "lodash": "4.17.11",
+    "lodash": "4.17.12",
     "moment": "^2.20.0",
     "otrans": "^1.0.1",
     "scarlet-task": "^1.0.0",
@@ -22,7 +22,7 @@
   "devDependencies": {
     "chalk": "^2.3.0",
     "conventional-changelog-cli": "2.0.17",
-    "coveralls": "3.0.1",
+    "coveralls": "3.0.3",
     "cz-conventional-changelog": "2.1.0",
     "decache": "^4.3.0",
     "ghooks": "2.0.4",
