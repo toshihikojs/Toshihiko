@@ -1,3 +1,31 @@
+# [1.0.0](https://github.com/XadillaX/Toshihiko/compare/1.0.0-alpha.10...1.0.0) (2020-06-30)
+
+
+### Bug Fixes
+
+* **lib/query.js:** fix model.update null ([1693adc](https://github.com/XadillaX/Toshihiko/commit/1693adc2c555eb6a475ab2e53e9c952e7946208e))
+* **package:** update async to version 2.6.1 ([#189](https://github.com/XadillaX/Toshihiko/issues/189)) ([dff4d13](https://github.com/XadillaX/Toshihiko/commit/dff4d13c2e3780c237fa09bc923f69e57f0e8fa5))
+* **package:** update async to version 3.0.1 ([#209](https://github.com/XadillaX/Toshihiko/issues/209)) ([16a43ab](https://github.com/XadillaX/Toshihiko/commit/16a43ab11422f580e9c538d3ca20a2c7f1a05364))
+* **package:** update debug to version 4.1.1 ([#202](https://github.com/XadillaX/Toshihiko/issues/202)) ([5321949](https://github.com/XadillaX/Toshihiko/commit/53219494e7325b4a666890d52bee52bdc3b26481))
+* **package:** update eventemitter2 to version 6.0.0 ([#218](https://github.com/XadillaX/Toshihiko/issues/218)) ([b836c38](https://github.com/XadillaX/Toshihiko/commit/b836c38df9e735bb468cb2742fbf33c9f83007e1))
+* **package:** update lodash to version 4.17.12 ([#211](https://github.com/XadillaX/Toshihiko/issues/211)) ([380eaa9](https://github.com/XadillaX/Toshihiko/commit/380eaa9727beeb90baa4e28fcd275bebab2d85c9))
+* .snyk & package.json to reduce vulnerabilities ([#210](https://github.com/XadillaX/Toshihiko/issues/210)) ([4d4959c](https://github.com/XadillaX/Toshihiko/commit/4d4959cf9b9c6adf0fc4c83cbc76903bf9b513dd))
+* package.json to reduce vulnerabilities ([#203](https://github.com/XadillaX/Toshihiko/issues/203)) ([14e7910](https://github.com/XadillaX/Toshihiko/commit/14e79108fdc44703182a37e90c481b2b1420454f))
+* test cases ([#221](https://github.com/XadillaX/Toshihiko/issues/221)) ([5fa5005](https://github.com/XadillaX/Toshihiko/commit/5fa5005e9cfc9ec7f215fe424d473fc88f8a5bff))
+* update null should depend allow null ([8945d8e](https://github.com/XadillaX/Toshihiko/commit/8945d8ea986e1f6efca60fd94c804d7d44cce8d4))
+
+
+
+# [0.9.0](https://github.com/XadillaX/Toshihiko/compare/0.8.4...0.9.0) (2016-09-22)
+
+
+### Features
+
+* 添加 force index 支持 ([d63146d](https://github.com/XadillaX/Toshihiko/commit/d63146d2db3164ca08e09906b8057a868c391473))
+* 移除模板字符串 ([db3329d](https://github.com/XadillaX/Toshihiko/commit/db3329dd3a55ff91c731ef678b3541439fb2b681))
+
+
+
 <a name="1.0.0-alpha.10"></a>
 # [1.0.0-alpha.10](https://github.com/XadillaX/Toshihiko/compare/1.0.0-alpha.8...1.0.0-alpha.10) (2018-03-30)
 
