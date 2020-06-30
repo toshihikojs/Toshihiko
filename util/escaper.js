@@ -1,17 +1,19 @@
 /**
- * XadillaX created at 2014-09-09 16:25
+ * XadillaX created at 2016-08-12 12:08:43 With ♥
  *
- * Copyright (c) 2015 Souche.com, all rights
+ * Copyright (c) 2018 XadillaX, all rights
  * reserved.
  */
 "use strict";
 
+const Escaper = module.exports = {};
+
 /**
- * escape sql
- * @param str
- * @returns {*}
+ * escape SQL string
+ * @param {String} str the sql string
+ * @returns {String} the escaped string
  */
-exports.escape = function(str) {
+Escaper.escape = function(str) {
     if(typeof str !== "string") {
         return str;
     }
@@ -35,11 +37,11 @@ exports.escape = function(str) {
 };
 
 /**
- * escape like
- * @param str
- * @returns {*}
+ * escape SQL string for LIKE
+ * @param {String} str the sql string
+ * @returns {String} the escaped string
  */
-exports.escapeLike = function(str) {
+Escaper.escapeLike = function(str) {
     return str.split("").reduce(function(str, ch) {
         if(ch === "_" || ch === "%") {
             str += "\\";

@@ -1,0 +1,26 @@
+site_name: Toshihiko | Yet another simple Node.js ORM
+repo_url: https://github.com/XadillaX/Toshihiko
+site_favicon: favicon.ico
+site_url: http://docs.toshihikojs.org
+theme: readthedocs
+extra_css:
+  - css/custom.css
+  - css/hljs.css
+pages:
+  - Home: index.md
+  - Documentation:
+    - Getting Started: docs/getting-started.md
+    - Model:
+      - Definition: docs/model/definition.md
+      - Usage: docs/model/usage.md
+    - Querying: docs/querying.md
+    - Instance (Yukari): docs/yukari.md
+    - Data Types: docs/type.md
+  - API:
+    - Toshihiko: api/toshihiko.md
+    - Model: api/model.md
+    - Yukari: api/yukari.md
+    - Data Types: api/type.md
+  - Misc:
+    - Changelog: misc/changelog.md
+    - Imprint: misc/imprint.md

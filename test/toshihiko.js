@@ -1,93 +1,118 @@
 /**
- * XadillaX created at 2015-09-06 13:56:52 With ♥
+ * XadillaX created at 2016-08-09 10:05:39 With ♥
  *
- * Copyright (c) 2015 Souche.com, all rights
+ * Copyright (c) 2018 XadillaX, all rights
  * reserved.
  */
-var should = require("should");
-should.config.checkProtoEql = false;
+"use strict";
 
-var Toshihiko = require("../lib/toshihiko");
-var Type = require("../lib/field_type");
+const path = require("path");
 
-var toshihiko = new Toshihiko("test", "root", "");
+const hack = require("./util/hack");
+const Toshihiko = require("../lib/toshihiko");
 
-describe("toshihiko", function() {
-    before(function(done) {
-        var toshihiko = new Toshihiko("", "root", "");
-        toshihiko.execute("CREATE DATABASE IF NOT EXISTS `test` DEFAULT CHARSET utf8 COLLATE utf8_general_ci;", done);
-    });
-
-    after(function(done) {
-        toshihiko.execute("DROP DATABASE `test`;", done);
-    });
-
-    describe("#execute", function() {
-        it("crete table", function(done) {
-            var sql = "CREATE TABLE IF NOT EXISTS `test_ddl` ( `id` int(11) unsigned NOT NULL AUTO_INCREMENT, `ls` int(11) NOT NULL,PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8;";
-            toshihiko.execute(sql, function(err) {
-                should(err).equal(null);
-                done();
-            });
+describe("🐣 toshihiko", function() {
+    describe("create", function() {
+        it("should create with base adapter", function() {
+            const options = { foo: 1 };
+            const toshihiko = new Toshihiko("base", options);
+            toshihiko.options.should.equal(options);
+            toshihiko.adapter.should.be.instanceof(require("../lib/adapters/base"));
         });
-        it("insert", function(done) {
-            var sql = "insert into test_ddl values(0,1)";
-            toshihiko.execute(sql, function(err) {
-                should(err).equal(null);
-                done();
-            });
-        });
-        it("select rows", function(done) {
-            var sql = "select * from test_ddl";
-            toshihiko.execute(sql, function(err, data) {
-                should(err).equal(null);
-                data.should.be.an.instanceOf(Array);
-                data.should.have.length(1);
-                data.should.be.eql([{
-                    id: 1,
-                    ls: 1
-                }]);
-                done();
-            });
-        });
-        it("delete table", function(done) {
-            var sql = "drop table test_ddl";
-            toshihiko.execute(sql, function(err) {
-                should(err).equal(null);
-                done();
-            });
+
+        it("should create with base adapter using module", function() {
+            const options = { foo: 1, showSql: true };
+            const toshihiko = new Toshihiko(require("../lib/adapters/base"), options);
+            toshihiko.options.should.equal(options);
+            toshihiko.adapter.should.be.instanceof(require("../lib/adapters/base"));
         });
     });
-    describe("#definde", function() {
-        it("should return model object", function() {
-            var test = toshihiko.define("test", [
-                {
-                    name: "key1",
-                    column: "key_one",
-                    primaryKey: true,
-                    type: Type.Integer
-                },
-                {
-                    name: "key2",
-                    type: Type.String,
-                    defaultValue: "Ha~"
-                },
-                {
-                    name: "key3",
-                    type: Type.Json,
-                    defaultValue: []
-                },
-                {
-                    name: "key4",
-                    validators: [
-                        function(v) {
-                            if (v > 100) return "`key4` can't be greater than 100";
-                        }
-                    ]
-                }
-            ]);
-            return test.should.be.ok;
+
+    describe("execute", function() {
+        it("should call adapter's execute", function(done) {
+            const options = {};
+            const Adapter = function(toshihiko, _options) {
+                this.toshihiko = toshihiko;
+                _options.should.equal(options);
+            };
+
+            Adapter.prototype.execute = function(foo, bar) {
+                foo.should.equal("fooooo");
+                bar.should.equal("barrrr");
+                done();
+            };
+            const toshihiko = new Toshihiko(Adapter, options);
+            toshihiko.adapter.toshihiko.should.equal(toshihiko);
+            toshihiko.execute("fooooo", "barrrr");
         });
 
+        describe("promise", function() {
+            const toshihiko = new Toshihiko("base");
+
+            it("should resolve", function() {
+                hack.hackAsyncReturn(toshihiko.adapter, "execute", [ undefined, [ "ok" ], "again" ]);
+                return toshihiko.execute(1, 2, 3).should.eventually.deepEqual([ "ok" ]);
+            });
+
+            it("should reject", function() {
+                hack.hackAsyncErr(toshihiko.adapter, "execute");
+                return toshihiko.execute(4, function(err) {
+                    err.message.should.equal("execute predefinition 1");
+                }).should.be.rejectedWith("execute predefinition 1");
+            });
+        });
+    });
+
+    describe("define", function() {
+        const Cache = require("./util/cache").Cache;
+        const toshihiko = new Toshihiko("base");
+
+        it("should define a model", function() {
+            const model = toshihiko.define("name", [ { name: "foo" } ], { cache: { module: require("./util/cache") } });
+            model.name.should.equal("name");
+            model.schema.should.be.instanceof(Array);
+            model.schema.length.should.equal(1);
+            model.cache.should.be.instanceof(Cache);
+            model.parent.should.equal(toshihiko);
+        });
+    });
+
+    describe("👙 createCache", function() {
+        const Cache = require("./util/cache").Cache;
+
+        it("pass cache instance", function() {
+            const cache = {
+                deleteData: function() {},
+                deleteKeys: function() {},
+                setData: function() {},
+                getData: function() {}
+            };
+
+            Toshihiko.createCache(cache).should.equal(cache);
+        });
+
+        it("pass cache path", function() {
+            const param = { path: path.resolve(__dirname, "./util/cache"), bar: "barrrr", foo: "fooooo" };
+            const cache = Toshihiko.createCache(param);
+            cache.should.be.instanceof(Cache);
+            cache.foo.should.equal("fooooo");
+            cache.bar.should.equal("barrrr");
+        });
+
+        it("pass cache create", function() {
+            const param = { module: require("./util/cache"), bar: "barrrr", foo: "fooooo" };
+            const cache = Toshihiko.createCache(param);
+            cache.should.be.instanceof(Cache);
+            cache.foo.should.equal("fooooo");
+            cache.bar.should.equal("barrrr");
+        });
+
+        it("pass cache name", function() {
+            const param = { name: "memcached", servers: [], options: {} };
+            const cache = Toshihiko.createCache(param);
+            cache.should.be.instanceof(require("toshihiko-memcached/lib/memcached"));
+            cache.servers.should.equal(param.servers);
+            cache.options.should.equal(param.options);
+        });
     });
 });

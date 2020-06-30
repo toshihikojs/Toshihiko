@@ -1,5 +1,6 @@
 TIMEOUT = 3000
 MOCHA = ./node_modules/.bin/_mocha
+MOCHA_OPTIONS = -t $(TIMEOUT) --recursive -r ./test/util/common.js --exit
 ISTANBUL = ./node_modules/.bin/istanbul
 COVERALLS = ./node_modules/coveralls/bin/coveralls.js
 
@@ -9,22 +10,26 @@ clean:
 install:
 	@npm install -d --registry=http://registry.npm.taobao.org/
 
-test: install
-	@NODE_ENV=test $(MOCHA) -t $(TIMEOUT)
+debug-test:
+	@NODE_ENV=test DEBUG=toshihiko:* $(MOCHA) -t $(TIMEOUT) --recursive
+
+test:
+	@NODE_ENV=test $(MOCHA) $(MOCHA_OPTIONS)
+
+coverage:
+	@NODE_ENV=test $(ISTANBUL) cover $(MOCHA) -- $(MOCHA_OPTIONS)
 
 before-test-travis: install
-	@mysql -e 'create database myapp_test;' & \
-		memcached -p 11211 -d & \
-  		memcached -p 11212 -d & \
-  		memcached -p 11213 -d
+	@mysql -e 'create database toshihiko;' & \
+		memcached -p 11211 -d
 
 test-coveralls: install
 	NODE_ENV=test $(ISTANBUL) cover $(MOCHA) \
 		--report lcovonly \
 		-- \
-		-t $(TIMEOUT) \
+		$(MOCHA_OPTIONS) \
 		-R spec && cat ./coverage/lcov.info | \
 		\
 		$(COVERALLS) && rm -rf ./coverage 
 
-.PHONY: test
+.PHONY: test coverage

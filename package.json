@@ -1,34 +1,41 @@
 {
   "name": "toshihiko",
-  "version": "0.9.1",
+  "version": "1.0.0-alpha.10",
   "description": "Yet another simple ORM for node.js.",
   "main": "index.js",
   "directories": {
     "test": "test"
   },
   "dependencies": {
-    "async": "2.0.1",
-    "bluebird": "3.4.1",
-    "colors": "1.1.2",
-    "fbbk-json": "1.0.0",
-    "lodash": "4.14.1",
-    "moment": "2.14.1",
-    "mysql2": "^1.1.0",
-    "scarlet-task": "1.0.0",
-    "toshihiko-memcached": "1.0.1"
+    "async": "^1.0.0",
+    "bluebird": "^3.5.1",
+    "eventemitter2": "^6.0.0",
+    "debug": "^4.1.1",
+    "fbbk-json": "^1.1.0",
+    "lodash": "4.17.12",
+    "moment": "^2.20.0",
+    "otrans": "^1.0.1",
+    "scarlet-task": "^1.0.0",
+    "sqlstring": "^2.3.0",
+    "toshihiko-mysqlparser": "^1.0.0"
   },
   "devDependencies": {
-    "chinese-random-skill": "0.0.3-rdm",
-    "cliparoo": "1.1.1",
-    "conventional-changelog-cli": "1.2.0",
-    "coveralls": "2.11.12",
-    "cz-conventional-changelog": "1.1.7",
-    "ghooks": "1.3.2",
-    "istanbul": "1.0.0-alpha.2",
+    "coveralls": "3.0.7",
+    "cz-conventional-changelog": "3.0.0",
+    "chalk": "^3.0.0",
+    "conventional-changelog-cli": "2.0.17",
+    "decache": "^4.3.0",
+    "ghooks": "2.0.4",
+    "istanbul": "1.0.0-alpha.1",
     "jsxhint": "0.15.1",
-    "mocha": "3.0.2",
-    "should": "10.0.0",
-    "validate-commit-msg": "2.6.1"
+    "mocha": "5.1.0",
+    "mockjs": "^1.0.1-beta3",
+    "mysql": "^2.15.0",
+    "mysql2": "^2.0.0",
+    "should": "13.2.2",
+    "sync-runner": "^0.1.9",
+    "toshihiko-memcached": "^1.0.1",
+    "validate-commit-msg": "2.14.0"
   },
   "scripts": {
     "test": "make test",
@@ -42,9 +49,9 @@
     "url": "https://github.com/XadillaX/Toshihiko.git"
   },
   "keywords": [
-    "ORM",
-    "MySQL",
-    "Cache"
+    "orm",
+    "mysql",
+    "cache"
   ],
   "author": [
     "XadillaX <i@2333.moe>",
@@ -56,12 +63,15 @@
     "url": "https://github.com/XadillaX/Toshihiko/issues"
   },
   "homepage": "https://github.com/XadillaX/Toshihiko",
+  "engines": {
+    "node": ">=4.0"
+  },
   "config": {
     "commitizen": {
       "path": "./node_modules/cz-conventional-changelog"
     },
     "ghooks": {
-      "pre-commit": "npm run lint && npm run validate",
+      "pre-commit": "npm run lint && npm run validate && rm docs/misc/changelog.md && cp CHANGELOG.md docs/misc/changelog.md && git add docs/misc/changelog.md",
       "commit-msg": "npm run commit-msg",
       "pre-push": "npm test"
     }

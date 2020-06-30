@@ -1,153 +1,563 @@
 /**
- * XadillaX created at 2015-09-06 13:56:52 With ♥
+ * XadillaX created at 2016-08-11 16:34:12 With ♥
  *
- * Copyright (c) 2015 Souche.com, all rights
+ * Copyright (c) 2018 XadillaX, all rights
  * reserved.
  */
-require("should");
+"use strict";
 
-var T = require("../");
+const should = require("should");
 
-var toshihiko = new T.Toshihiko("test", "root", "", {});
+const common = require("./util/common");
+const Query = require("../lib/query");
+const Toshihiko = require("../lib/toshihiko");
+const Yukari = require("../lib/yukari");
 
-var Model = null;
-describe("query object", function () {
-    before(function (done) {
-        Model = toshihiko.define("test", [
-            { name: "key1", column: "id", primaryKey: true, type: T.Type.Integer },
-            {
-                name: "key2",
-                type: T.Type.Float,
-                defaultValue: 0.44,
-                validators: [
-                    function(v) {
-                        if(v > 100) return "`key2` can't be greater than 100";
-                    }
-                ]
-            },
-            { name: "key3", type: T.Type.Json, defaultValue: {} },
-            { name: "key4", type: T.Type.String, defaultValue:"Ha!", allowNull: true }
-        ]);
+describe("🐣 query", function() {
+    const toshihiko = new Toshihiko("base");
+    const model = toshihiko.define("model", [ { name: "key1", primaryKey: true } ]);
 
-        done();
+    it("should create instance", function() {
+        const query = new Query(model);
+
+        query.field.should.equal(query.fields);
+        query.orderBy.should.equal(query.order);
+
+        query._fields.should.deepEqual([ "key1" ]);
+        query._limit.should.deepEqual([]);
+        query._order.should.deepEqual([]);
+        query._updateData.should.deepEqual({});
+        query._where.should.deepEqual({});
+
+        query.toshihiko.should.equal(toshihiko);
+        query.adapter.should.equal(toshihiko.adapter);
+        query.model.should.equal(model);
+        should(query.cache).equal(null);
     });
 
-    describe("generate sql", function() {
-        it("should generate a query that support NULL", function() {
-            var sql = Model.where({
-                key1: {
-                    $or: {
-                        $eq: null,
-                        $neq: null
-                    }
-                },
-                key2: null,
-                key4: {
-                    $neq: null
+    describe("👙 where", function() {
+        it("should call where correctly", function() {
+            const query = new Query(model);
+            let cond = {};
+            let res = query.where(cond);
+
+            res.should.equal(query);
+            res._where.should.equal(cond);
+        });
+
+        it("should get an error", function(done) {
+            const query = new Query(model);
+
+            try {
+                query.where(1);
+            } catch(e) {
+                e.should.be.instanceof(Error);
+                done();
+            }
+        });
+    });
+
+    describe("👙 fields", function() {
+        const query = new Query(model);
+        it("pass string", function() {
+            let ret;
+
+            ret = query.fields("a,b,foo");
+            ret.should.equal(query);
+            ret._fields.should.deepEqual([ "a", "b", "foo" ]);
+
+            ret = query.fields("a, b      ,    foo, , ");
+            ret.should.equal(query);
+            ret._fields.should.deepEqual([ "a", "b", "foo" ]);
+        });
+
+        it("pass array", function() {
+            let ret;
+
+            ret = query.fields([ "a", "b", "foo" ]);
+            ret.should.equal(query);
+            ret._fields.should.deepEqual([ "a", "b", "foo" ]);
+        });
+
+        it("should get an error", function(done) {
+            try {
+                query.fields(1);
+            } catch(e) {
+                e.should.be.instanceof(Error);
+                done();
+            }
+        });
+    });
+
+    describe("👙 limit", function() {
+        const query = new Query(model);
+
+        it("pass string", function() {
+            let ret;
+
+            ret = query.limit("1,2");
+            ret.should.equal(query);
+            ret._limit.should.deepEqual([ 1, 2 ]);
+
+            ret = query.limit("   1,2    ,3,");
+            ret.should.equal(query);
+            ret._limit.should.deepEqual([ 1, 2 ]);
+
+            ret = query.limit("1,dsaflkj");
+            ret.should.equal(query);
+            ret._limit.should.deepEqual([ 1, 0 ]);
+
+            ret = query.limit("1");
+            ret.should.equal(query);
+            ret._limit.should.deepEqual([ 1 ]);
+
+            ret = query.limit("");
+            ret.should.equal(query);
+            ret._limit.should.deepEqual([]);
+
+            ret = query.limit("dfa");
+            ret.should.equal(query);
+            ret._limit.should.deepEqual([ 0 ]);
+        });
+
+        it("pass array", function() {
+            let ret;
+
+            ret = query.limit([ "1", 2 ]);
+            ret.should.equal(query);
+            ret._limit.should.deepEqual([ 1, 2 ]);
+
+            ret = query.limit([ 1, 2, "3" ]);
+            ret.should.equal(query);
+            ret._limit.should.deepEqual([ 1, 2 ]);
+
+            ret = query.limit([ 1, "dsafklj" ]);
+            ret.should.equal(query);
+            ret._limit.should.deepEqual([ 1, 0 ]);
+
+            ret = query.limit([ 1 ]);
+            ret.should.equal(query);
+            ret._limit.should.deepEqual([ 1 ]);
+
+            ret = query.limit([]);
+            ret.should.equal(query);
+            ret._limit.should.deepEqual([]);
+
+            ret = query.limit([ "dfs" ]);
+            ret.should.equal(query);
+            ret._limit.should.deepEqual([ 0 ]);
+        });
+
+        it("pass number", function() {
+            let ret;
+
+            ret = query.limit(123);
+            ret.should.equal(query);
+            ret._limit.should.deepEqual([ 123 ]);
+
+            ret = query.limit(-1);
+            ret.should.equal(query);
+            ret._limit.should.deepEqual([ -1 ]);
+        });
+
+        it("pass two arguments", function() {
+            let ret;
+
+            ret = query.limit("1", 2);
+            ret.should.equal(query);
+            ret._limit.should.deepEqual([ 1, 2 ]);
+
+            ret = query.limit(1, 2, "3");
+            ret.should.equal(query);
+            ret._limit.should.deepEqual([ 1, 2 ]);
+
+            ret = query.limit(1, "dsafklj");
+            ret.should.equal(query);
+            ret._limit.should.deepEqual([ 1, 0 ]);
+        });
+
+        it("should got an error", function(done) {
+            try {
+                query.limit(true);
+            } catch(e) {
+                e.should.be.instanceof(Error);
+                done();
+            }
+        });
+    });
+
+    describe("👙  conn", function() {
+        const query = new Query(model);
+
+        it("set conn", function() {
+            query.conn(common.DUMMY_CONN);
+            query._conn.should.be.equal(common.DUMMY_CONN);
+        });
+    });
+
+    describe("👙 order", function() {
+        const query = new Query(model);
+
+        it("pass string", function() {
+            let ret;
+
+            ret = query.order("   foo, bar aSc    , baz     desc");
+            ret.should.equal(query);
+            ret._order.should.deepEqual([
+                { foo: 1 },
+                { bar: 1 },
+                { baz: -1 }
+            ]);
+
+            ret = query.order("  ");
+            ret.should.equal(query);
+            ret._order.should.deepEqual([]);
+        });
+
+        it("pass array", function() {
+            let ret;
+
+            ret = query.order([ "foo", "bar DeSc", { baz: "aSc" }, { ooo: -1 } ]);
+            ret.should.equal(query);
+            ret._order.should.deepEqual([
+                { foo: 1 },
+                { bar: -1 },
+                { baz: 1 },
+                { ooo: -1 }
+            ]);
+        });
+
+        it("pass object", function() {
+            let ret;
+
+            ret = query.order({
+                foo: 1,
+                bar: "DesC",
+                baz: "aSc",
+                ooo: -1
+            });
+            ret.should.equal(query);
+            ret._order.should.deepEqual([
+                { foo: 1 },
+                { bar: -1 },
+                { baz: 1 },
+                { ooo: -1 }
+            ]);
+        });
+    });
+
+    describe("👙 index", function() {
+        const query = new Query(model);
+
+        it("should pass index", function() {
+            let ret;
+            const obj = {};
+            ret = query.index(obj);
+            ret.should.equal(query);
+            ret._index.should.equal(obj);
+        });
+    });
+
+    describe("👙 find", function() {
+        const query = new Query(model);
+
+        it("should pass right parameters", function(done) {
+            const find = toshihiko.adapter.find;
+            toshihiko.adapter.find = function(_query, callback, options) {
+                query.should.equal(_query);
+                options.should.deepEqual({
+                    single: false,
+                    noCache: false
+                });
+                toshihiko.adapter.find = find;
+                process.nextTick(callback);
+            };
+            query.find(function() {
+                done();
+            });
+        });
+
+        it("should get yukari", function(done) {
+            const find = toshihiko.adapter.find;
+            toshihiko.adapter.find = function(_query, callback) {
+                return callback(undefined, [ { key1: "13" } ]);
+            };
+            query.find(function(err, rows) {
+                should.ifError(err);
+                toshihiko.adapter.find = find;
+                rows.length.should.equal(1);
+                const row = rows[0];
+                row.should.be.instanceof(Yukari);
+                row.key1.should.equal("13");
+                done();
+            });
+        });
+
+        it("should get JSON", function(done) {
+            const find = toshihiko.adapter.find;
+            toshihiko.adapter.find = function(_query, callback) {
+                return callback(undefined, [ { key1: "13" } ]);
+            };
+            query.find(function(err, rows) {
+                should.ifError(err);
+                toshihiko.adapter.find = find;
+                rows.length.should.equal(1);
+                const row = rows[0];
+                row.should.not.be.instanceof(Yukari);
+                row.should.match({ key1: "13" });
+                done();
+            }, true);
+        });
+
+        it("should get single", function(done) {
+            const find = toshihiko.adapter.find;
+            toshihiko.adapter.find = function(_query, callback) {
+                return callback(undefined, { key1: "13" });
+            };
+            query.find(function(err, row) {
+                should.ifError(err);
+                toshihiko.adapter.find = find;
+                row.should.not.be.instanceof(Yukari);
+                row.should.match({ key1: "13" });
+                done();
+            }, true, { single: true });
+        });
+
+        it("with no callback", function() {
+            const find = toshihiko.adapter.find;
+            toshihiko.adapter.find = function(_query, callback, options) {
+                toshihiko.adapter.find = find;
+                return callback(undefined, options.single ? { key1: "13" } : [{ key1: "13" }]);
+            };
+            return query.find(undefined, undefined, { single: true }).should.eventually.match({ key1: "13" });
+        });
+    });
+
+    describe("👙 findOne", function() {
+        const query = new Query(model);
+
+        it("should get Yukari", function(done) {
+            const find = toshihiko.adapter.find;
+            toshihiko.adapter.find = function(_query, callback) {
+                return callback(undefined, { key1: "13" });
+            };
+            query.findOne(function(err, row) {
+                should.ifError(err);
+                toshihiko.adapter.find = find;
+                row.should.be.instanceof(Yukari);
+                row.should.match({ key1: "13" });
+                done();
+            });
+        });
+
+        it("should get JSON", function(done) {
+            const find = toshihiko.adapter.find;
+            toshihiko.adapter.find = function(_query, callback) {
+                return callback(undefined, { key1: "13" });
+            };
+            query.findOne(function(err, row) {
+                should.ifError(err);
+                toshihiko.adapter.find = find;
+                row.should.not.be.instanceof(Yukari);
+                row.should.match({ key1: "13" });
+                done();
+            }, true);
+        });
+    });
+
+    describe("👙 findById", function() {
+        it("should get with cache", function(done) {
+            const find = toshihiko.adapter.find;
+            toshihiko.adapter.find = function() {};
+
+            const model = toshihiko.define("model", [
+                { name: "key1" },
+                { name: "key2", primaryKey: true },
+                { name: "key3", primaryKey: true }
+            ], {
+                cache: {
+                    getData: function(database, table, id, callback) {
+                        database.should.equal("");
+                        table.should.equal("model");
+                        id.should.deepEqual({ key2: "1", key3: "2" });
+                        callback(undefined, [ { key1: "3", key2: "1", key3: "2" } ]);
+                    },
+                    setData: function() {},
+                    deleteData: function() {},
+                    deleteKeys: function() {}
                 }
-            }).makeSQL("find");
-
-            var answer = "SELECT `id`, `key2`, `key3`, `key4` FROM `test` WHERE (((`id` IS NULL OR `id` IS NOT NULL)) AND `key2` IS NULL AND (`key4` IS NOT NULL))";
-            answer.should.be.eql(sql);
+            });
+            (new Query(model)).findById({ key2: "1", key3: "2" }, function(err, yukari) {
+                should.ifError(err);
+                yukari.should.be.instanceof(Yukari);
+                yukari.should.match({ key1: "3", key2: "1", key3: "2" });
+                toshihiko.adapter.find = find;
+                done();
+            });
         });
 
-        it("should generate a query include IN and LIKE", function() {
-            var sql = Model.where({
-                key4: {
-                    $or: {
-                        $in: [ "1", "2", "3" ],
-                        $like: "%132%"
-                    }
-                },
-                key1: { $in: [ 1, 2, 3 ] }
-            }).makeSQL("find");
+        it("should get without cache because of fallback", function(done) {
+            const find = toshihiko.adapter.find;
+            toshihiko.adapter.find = function(query, callback, options) {
+                options.single.should.equal(true);
+                options.noCache.should.equal(false);
+                query._fields.should.deepEqual([ "key1", "key2", "key3" ]);
+                query._where.should.deepEqual({ key2: "1", key3: "2" });
+                return callback(undefined, { key1: "3", key2: "1", key3: "2" });
+            };
 
-            var answer = "SELECT `id`, `key2`, `key3`, `key4` FROM `test` WHERE (((`key4` IN (\"1\", \"2\", \"3\") OR `key4` LIKE \"%132%\")) AND (`id` IN (1, 2, 3)))";
-
-            answer.should.be.eql(sql);
+            const model = toshihiko.define("model", [
+                { name: "key1" },
+                { name: "key2", primaryKey: true },
+                { name: "key3", primaryKey: true }
+            ], {
+                cache: {
+                    getData: function(database, table, id, callback) {
+                        callback(new Error("err"));
+                    },
+                    setData: function() {},
+                    deleteData: function() {},
+                    deleteKeys: function() {}
+                }
+            });
+            (new Query(model)).findById({ key2: "1", key3: "2" }, function(err, yukari) {
+                should.ifError(err);
+                yukari.should.be.instanceof(Yukari);
+                yukari.should.match({ key1: "3", key2: "1", key3: "2" });
+                toshihiko.adapter.find = find;
+                done();
+            });
         });
 
-        it("should generate a query from the order of the array", function() {
-            var sql = Model.where([
-                { key2: { $gt: 0.1 } },
-                { key4: "Ha!" },
-                { key3: {} },
-                { key1: 666 }
-            ]).makeSQL("find");
+        it("should get without cache", function(done) {
+            const find = toshihiko.adapter.find;
+            toshihiko.adapter.find = function(query, callback, options) {
+                options.single.should.equal(true);
+                options.noCache.should.equal(false);
+                query._fields.should.deepEqual([ "key1", "key2", "key3" ]);
+                query._where.should.deepEqual({ key2: "1", key3: "2" });
+                return callback(undefined, { key1: "3", key2: "1", key3: "2" });
+            };
 
-            var answer = "SELECT `id`, `key2`, `key3`, `key4` FROM `test` WHERE (((`key2` > 0.1)) AND (`key4` = \"Ha!\") AND (`key3` = \"{}\") AND (`id` = 666))";
-
-            answer.should.be.eql(sql);
+            const model = toshihiko.define("model", [
+                { name: "key1" },
+                { name: "key2", primaryKey: true },
+                { name: "key3", primaryKey: true }
+            ]);
+            (new Query(model)).findById({ key2: "1", key3: "2" }, function(err, yukari) {
+                should.ifError(err);
+                yukari.should.be.instanceof(Yukari);
+                yukari.should.match({ key1: "3", key2: "1", key3: "2" });
+                toshihiko.adapter.find = find;
+                done();
+            });
         });
 
-        it("should generate a query the mixed type condition", function() {
-            var sql = Model.where({
-                key2: { $gt: 0.1 },
-                key4: "Ha!",
-                $or: [
-                    { key3: {} },
-                    { key1: 666 }
-                ]
-            }).makeSQL("find");
+        it("single id", function(done) {
+            const find = toshihiko.adapter.find;
+            toshihiko.adapter.find = function(query, callback, options) {
+                options.single.should.equal(true);
+                options.noCache.should.equal(false);
+                query._fields.should.deepEqual([ "key1" ]);
+                query._where.should.deepEqual({ key1: "1" });
+                return callback(undefined, { key1: "1" });
+            };
+            (new Query(model)).findById("1", function(err, yukari) {
+                should.ifError(err);
+                yukari.should.be.instanceof(Yukari);
+                yukari.should.match({ key1: "1" });
+                toshihiko.adapter.find = find;
+                done();
+            });
+        });
 
-            var answer = "SELECT `id`, `key2`, `key3`, `key4` FROM `test` WHERE ((`key2` > 0.1) AND `key4` = \"Ha!\" AND ((`key3` = \"{}\") OR (`id` = 666)))";
-
-            answer.should.be.eql(sql);
+        it("invalid Ids object", function(done) {
+            const model = toshihiko.define("model", [
+                { name: "key1" },
+                { name: "key2", primaryKey: true },
+                { name: "key3", primaryKey: true }
+            ]);
+            (new Query(model)).findById("1", function(err) {
+                err.message.should.equal("you should pass a valid IDs object");
+                done();
+            });
         });
     });
 
-    it("should generate a query without error (feime posts)", function() {
-        var Model = toshihiko.define("posts", [
-            { name: "postId", type: T.Type.Integer, primaryKey: true },
-            { name: "userId", type: T.Type.Integer },
-            { name: "sex", type: T.Type.String, defaultValue: "female" },
-            { name: "area", type: T.Type.String },
-            { name: "smallIndustry", type: T.Type.String },
-            { name: "bigIndustry", type: T.Type.String },
-            { name: "content", type: T.Type.String },
-            { name: "imageId", type: T.Type.Integer, allowNull: true },
-            { name: "status", type: T.Type.Integer },
-            { name: "postedAt", type: T.Type.Integer },
-            { name: "endedAt", type: T.Type.Integer },
-            { name: "extra", type: T.Type.Json },
-            { name: "ups", type: T.Type.Integer },
-            { name: "downs", type: T.Type.Integer },
-            { name: "top", type: T.Type.Integer, defaultValue: 0 },
-            { name: "replies", type: T.Type.Integer, defaultValue: 0 }
-        ]);
+    describe("👙 count", function() {
+        const query = new Query(model);
 
-        var condition = { "$or": [
-            { status: 32, bigIndustry: "", smallIndustry: "" },
-            { status: 32, bigIndustry: "民航特业", smallIndustry: "" },
-            { status: {
-                $neq: [ 2, 4 ]
-            }, bigIndustry: "民航特业", smallIndustry: "空管" }
-        ]};
-
-        var sql = Model.where(condition).makeSQL("find");
-        var answer = "SELECT `postId`, `userId`, `sex`, `area`, `smallIndustry`, `bigIndustry`, `content`, `imageId`, " +
-            "`status`, `postedAt`, `endedAt`, `extra`, `ups`, `downs`, `top`, `replies` FROM `posts` WHERE (((" +
-            "`status` = 32 AND `bigIndustry` = \"\" AND `smallIndustry` = \"\") OR (`status` = 32 AND `bigIndustry` = " +
-            "\"民航特业\" AND `smallIndustry` = \"\") OR ((`status` != 2 AND `status` != 4) AND `bigIndustry` = " +
-            "\"民航特业\" AND `smallIndustry` = \"空管\")))";
-
-        answer.should.be.eql(sql);
+        it("should call count", function(done) {
+            const count = toshihiko.adapter.count;
+            toshihiko.adapter.count = function(_query, callback) {
+                _query.should.equal(query);
+                callback(undefined, 1, {});
+            };
+            query.count(function(err, result, extra) {
+                should.ifError(err);
+                result.should.equal(1);
+                extra.should.deepEqual({});
+                toshihiko.adapter.count = count;
+                done();
+            });
+        });
     });
 
-    describe("should generate SQL with fields", function() {
-        it("#array", function() {
-            var sql = Model.where({ key4: "foo" }).field([ "key1", "key2" ]).makeSQL("find");
-            sql.should.be.eql("SELECT `id`, `key2` FROM `test` WHERE (`key4` = \"foo\")");
-        });
+    describe("👙 update", function() {
+        const query = new Query(model);
 
-        it("#string", function() {
-            var sql = Model.where({ key4: "foo" }).field("key1").makeSQL("find");
-            sql.should.be.eql("SELECT `id` FROM `test` WHERE (`key4` = \"foo\")");
+        it("should update", function(done) {
+            const updateByQuery = toshihiko.adapter.updateByQuery;
+            toshihiko.adapter.updateByQuery = function(_query, callback) {
+                _query.should.equal(query);
+                query._updateData.should.deepEqual({ key1: "2" });
+                callback(undefined, {}, "EXTRA");
+            };
+            query.where({ key1: "1" }).update({ key1: "2" }, function(err, result, extra) {
+                should.ifError(err);
+                result.should.deepEqual({});
+                extra.should.equal("EXTRA");
+                toshihiko.adapter.updateByQuery = updateByQuery;
+                done();
+            });
         });
+    });
 
-        it("#string with ,", function() {
-            var sql = Model.where({ key4: "foo" }).field("key1, key2").makeSQL("find");
-            sql.should.be.eql("SELECT `id`, `key2` FROM `test` WHERE (`key4` = \"foo\")");
+    describe("👙 delete", function() {
+        const query = new Query(model);
+
+        it("should delete", function(done) {
+            const deleteByQuery = toshihiko.adapter.deleteByQuery;
+            toshihiko.adapter.deleteByQuery = function(_query, callback) {
+                _query.should.equal(query);
+                callback(undefined, {}, "EXTRA");
+            };
+            query.where({ key1: "1" }).delete(function(err, result, extra) {
+                should.ifError(err);
+                result.should.deepEqual({});
+                extra.should.equal("EXTRA");
+                toshihiko.adapter.deleteByQuery = deleteByQuery;
+                done();
+            });
+        });
+    });
+
+    describe("👙 execute", function() {
+        const query = new Query(model);
+
+        it("should execute", function(done) {
+            const execute = toshihiko.adapter.execute;
+            toshihiko.adapter.execute = function(conn, sql, callback) {
+                sql.should.equal("OJOJOJ");
+                callback(undefined, { foo: "bar" }, "EXTRA");
+            };
+            query.execute("OJOJOJ", function(err, result, extra) {
+                should.ifError(err);
+                result.should.deepEqual({ foo: "bar" });
+                extra.should.equal("EXTRA");
+                toshihiko.adapter.execute = execute;
+                done();
+            });
         });
     });
 });

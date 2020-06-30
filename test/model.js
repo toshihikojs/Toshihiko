@@ -1,232 +1,268 @@
 /**
- * XadillaX created at 2015-03-24 12:33:42
+ * XadillaX created at 2016-10-08 15:47:54 With ♥
  *
- * Copyright (c) 2015 Souche.com, all rights
- * reserved
+ * Copyright (c) 2018 XadillaX, all rights
+ * reserved.
  */
-var async = require("async");
-var should = require("should");
-var 鬼 = require("lodash");
+"use strict";
 
-var T = require("../");
+const should = require("should");
 
-var toshihiko = new T.Toshihiko("myapp_test", "root", "", {
-    cache : {
-        name: "memcached",
-        servers: [ "localhost:11211", "localhost:11212", "localhost:11213" ],
-        options: { prefix: "siyuezhazha_" }
-    }
-});
+const hack = require("./util/hack");
+const Model = require("../lib/model");
+const Query = require("../lib/query");
+const Toshihiko = require("../lib/toshihiko");
+const Yukari = require("../lib/yukari");
 
-var Model = null;
-describe("model", function () {
-    before(function () {
-        Model = toshihiko.define("test", [
-            { name: "key1", column: "id", primaryKey: true, type: T.Type.Integer },
-            {
-                name: "key2",
-                type: T.Type.Float, 
-                defaultValue: 0.44, 
-                validators: [
-                    function(v) {
-                        if(v > 100) return "`key2` can't be greater than 100";
-                    }
-                ]
-            },
-            { name: "key3", type: T.Type.Json, defaultValue: {} },
-            { name: "key4", type: T.Type.String, defaultValue:"Ha!" },
-            { name: "key5", type: T.Type.String, defaultValue:"Hello World", allowNull: true }
-        ]);
-    });
+describe("🐣 model", function() {
+    const toshihiko = new Toshihiko("base");
+    const model = new Model("name", toshihiko, [ { name: "key1" } ]);
 
-    before(function (done) {
-        var sql = "CREATE TABLE `test` (" +
-            "`id` int(11) unsigned NOT NULL AUTO_INCREMENT," +
-            "`key2` float NOT NULL," +
-            "`key3` varchar(200) NOT NULL DEFAULT ''," +
-            "`key4` varchar(200) NOT NULL DEFAULT ''," +
-            "`key5` varchar(200) NULL DEFAULT ''," +
-            "PRIMARY KEY (`id`)," +
-            "KEY `test_key` (`key2`, `key3`)" +
-            ") ENGINE=InnoDB DEFAULT CHARSET=utf8;";
-        toshihiko.execute(sql, done);
-    });
-
-    after(function(done) {
-        Model.delete();
-        toshihiko.execute("DROP TABLE `test`;", done);
-    });
-
-    describe("insert", function () {
-        it("insert 10 row", function (done) {
-            var arr = [];
-            var i = 10;
-            while(i--) arr.push(i);
-            async.parallel(arr.map(function (it) {
-                return function(cb) {
-                    var yukari = Model.build({
-                        key2    : it + 0.1,
-                        key3    : { it: it % 2 },
-                        key4    : "哈哈" + it % 3,
-                        key5    : "Hello World" + it % 4
-                    });
-
-                    yukari.insert(function (err) {
-                        should(err).equal(undefined);
-                        cb(null, it);
-                    });
-                };
-            }), function(err,data) {
-                data.should.eql(arr);
-                should(err).not.be.ok;
-                done();
+    describe("define", function() {
+        it("should define with cache", function() {
+            const model = new Model("name", toshihiko, [
+                { name: "key1" }
+            ], {
+                cache: {
+                    module: require("./util/cache")
+                }
             });
-        });
-    });
 
-    describe("query", function () {
-        it("index", function(done) {
-            Model.index("test_key").find(function(err, data) {
-                should(err).not.be.ok;
-                data.length.should.eql(10);
-                done();
+            model.should.match({
+                ai: null,
+                primaryKeys: [],
+                name: "name",
+                schema: [{
+                    name: "key1",
+                    column: "key1",
+                    primaryKey: false
+                }],
+                cache: {
+                    foo: undefined,
+                    bar: undefined
+                }
             });
         });
 
-        it("limit", function(done) {
-            Model.limit("0,5").find(function(err, data) {
-                should(err).not.be.ok;
-                data.length.should.eql(5);
-                done();
-            },true);
+        it("should define with parent's cache", function() {
+            const toshihiko = new Toshihiko("base", {
+                cache: {
+                    module: require("./util/cache"),
+                    foo: 1,
+                    bar: 2
+                }
+            });
+            const model = new Model("name", toshihiko, [
+                { name: "key1" }
+            ]);
+
+            model.should.match({
+                ai: null,
+                primaryKeys: [],
+                name: "name",
+                schema: [{
+                    name: "key1",
+                    column: "key1",
+                    primaryKey: false
+                }],
+                cache: {
+                    foo: 1,
+                    bar: 2
+                }
+            });
         });
+
+        it("should define without", function() {
+            const toshihiko = new Toshihiko("base", {
+                cache: {
+                    module: require("./util/cache"),
+                    foo: 1,
+                    bar: 2
+                }
+            });
+            const model = new Model("name", toshihiko, [
+                { name: "key1" }
+            ]);
+
+            model.should.match({
+                ai: null,
+                primaryKeys: [],
+                name: "name",
+                schema: [{
+                    name: "key1",
+                    column: "key1",
+                    primaryKey: false
+                }],
+                cache: {
+                    foo: 1,
+                    bar: 2
+                }
+            });
+
+            model.toshihiko.should.equal(toshihiko);
+        });
+
+        it("should have getters", function() {
+            model._fields.should.equal(model.schema);
+        });
+    });
+
+    it("should build", function() {
+        const yukari = new Yukari(model, "new");
+        yukari.buildNewRow({ key1: 0 });
+        yukari.should.deepEqual(model.build({ key1: 0 }));
+    });
+
+    describe("queries", function() {
+        function test(name, argu) {
+            it(name, function() {
+                const query = new Query(model);
+                model[name].apply(model, argu).should.deepEqual(query[name].apply(query, argu));
+            });
+        }
+
+        test("where", [{ foo: "bar" }]);
+        test("fields", [ "key1" ]);
+        test("field", [ "key1" ]);
+        test("limit", [ 1, 2 ]);
+        test("limit", [ 1 ]);
+        test("order", [{ key1: 1 }]);
+        test("orderBy", [{ key1: -1 }]);
+        test("index", [ "idx" ]);
 
         it("count", function(done) {
-            Model.count(function(err, count) {
-                should(err).not.be.ok;
-                count.should.eql(10);
+            model.count(function(err) {
+                err.message.should.equal("this adapter's count function is not implemented yet.");
                 done();
             });
-        });
-
-        it("findOne", function(done) {
-            Model.where({ key1: 1 }).findOne(function(err, data) {
-                should(err).not.be.ok;
-                data.should.have.ownProperty("key1").eql(1);
-                done();
-            },true);
         });
 
         it("find", function(done) {
-            Model.where({ key1: { $gt: 8 }}).find(function(err, data) {
-                should(err).not.be.ok;
-                data.length.should.eql(2);
-                data.forEach(function (it) {
-                    it.should.have.keys("key2", "key1", "key3", "key4", "key5");
-                });
+            model.find(function(err) {
+                err.message.should.equal("this adapter's find function is not implemented yet.");
                 done();
-            },true);
-        });
-
-        it("order", function(done) {
-            Model.orderBy("key1 desc").find(function(err, data) {
-                should(err).not.be.ok;
-                data.should.be.Array;
-                data.forEach(function(it, i) {
-                    if(i !== 10 - 1) it.should.hasOwnProperty("key1").above(data[i + 1].key1);
-                    it.$fromCache.should.be.true;
-                });
-                done();
-            });
+            }, true, true);
         });
 
         it("findById", function(done) {
-            Model.findById(3, function(err, data) {
-                should(err).not.be.ok;
-                data.should.hasOwnProperty("key1").eql(3);
-                done();
-            },true);
-        });
-
-        it("findById return null", function(done) {
-            Model.findById(100, function(err, data) {
-                should(err).not.be.ok;
-                should.not.exist(data);
-                done();
-            });
-        });
-
-        it("inject", function(done) {
-            Model.where({ key1: "1) union select 1, user(), 3#" }).find(function(err, rows, sql) {
-                rows.length.should.be.eql(1);
-                rows[0].key1.should.be.eql(1);
-                鬼.endsWith(sql, "(`id` = 1)").should.be.true;
-                done();
-            });
-        });
-    });
-
-    describe("update", function() {
-        it("update", function(done) {
-            var nData = {
-                key2    : 1,
-                key3    : { it: 1 },
-                key4    : "new data",
-                key1    : 99,
-                key5    : "hello"
-            };
-
-            Model.where({ key1: 1 }).update(nData, function(err, data) {
-                should(err).be.eql(undefined);
-                data.affectedRows.should.be.eql(1);
-
-                Model.findById(99, function(err, data) {
-                    should(err).not.be.ok;
-                    data.key3.should.be.eql({ it: 1 });
-                    done();
-                });
-            });
-        });
-
-        it("update null value", function(done) {
-            var nData = {
-                key5: null,
-                key1: 98
-            };
-            Model.where({ key1: 99 }).update(nData, function(err, data) {
-                should(err).be.eql(undefined);
-                data.affectedRows.should.be.eql(1);
-
-                Model.findById(98, function(err, data) {
-                    should.ifError(err);
-                    should(data.key5).be.eql(null);
-                    done();
-                });
-            });
-        });
-        it("update null value without allowNull", function(done) {
-            var nData = {
-                key4: null
-            };
-            Model.where({ key1: 98 }).update(nData, function(err, data) {
-                should(err).be.eql(undefined);
-                data.affectedRows.should.be.eql(1);
-
-                Model.findById(98, function(err, data) {
-                    should.ifError(err);
-                    should(data.key4).be.eql("");
-                    done();
-                });
-            });
-        });
-    });
-
-    describe("delete", function() {
-        it("delete", function(done) {
-            Model.where({ key1: 1 }).delete(function(err/**,data*/) {
-                should(err).be.eql(undefined);
+            model.findById("123", function(err) {
+                err.message.should.equal("you should pass a valid IDs object");
                 done();
             }, true);
+        });
+
+        it("findOne", function(done) {
+            model.findOne(function(err) {
+                err.message.should.equal("this adapter's find function is not implemented yet.");
+                done();
+            }, true);
+        });
+
+        it("update", function(done) {
+            model.update({ foo: "bar" }, function(err) {
+                err.message.should.equal("this adapter's updateByQuery function is not implemented yet.");
+                done();
+            });
+        });
+
+        it("delete", function(done) {
+            model.delete(function(err) {
+                err.message.should.equal("this adapter's deleteByQuery function is not implemented yet.");
+                done();
+            });
+        });
+
+        it("execute", function(done) {
+            model.execute(function(err) {
+                err.message.should.equal("this adapter's execute function is not implemented yet.");
+                done();
+            });
+        });
+    });
+
+    describe("convertColumnToName", function() {
+        const model = new Model("name", toshihiko, require("./util/common.js").COMMON_SCHEMA);
+
+        it("pass string parameter", function() {
+            model.convertColumnToName("id").should.equal("key1");
+        });
+
+        it("pass array parameter", function() {
+            model.convertColumnToName([ "id", "key2" ]).should.deepEqual([ "key1", "key2" ]);
+        });
+
+        it("pass object parameter", function() {
+            model.convertColumnToName({
+                id: 1,
+                key2: 2
+            }).should.deepEqual({
+                key1: 1,
+                key2: 2
+            });
+        });
+
+        it("should return undefined", function() {
+            should(model.convertColumnToName(1)).equal(undefined);
+        });
+    });
+
+    describe("compatible", function() {
+        const model1 = new Model("base", toshihiko, require("./util/common").COMMON_SCHEMA);
+        const model2 = new Model("base", toshihiko, require("./util/common").COMMON_SCHEMA_NO_PRIMARY);
+        const model3 = new Model("base", toshihiko, require("./util/common").COMMON_SCHEMA_MULTI_PRIMARY);
+
+        describe("getPrimaryKeysName", function() {
+            it("no primary key", function() {
+                model2.getPrimaryKeysName().should.deepEqual([]);
+            });
+
+            it("single primary key", function() {
+                model1.getPrimaryKeysName().should.deepEqual("key1");
+            });
+
+            it("multiple primary keys", function() {
+                model3.getPrimaryKeysName().should.deepEqual([ "key1", "key4" ]);
+            });
+        });
+
+        describe("getPrimaryKeysColumn", function() {
+            it("no primary key", function() {
+                model2.getPrimaryKeysColumn().should.deepEqual([]);
+            });
+
+            it("single primary key", function() {
+                model1.getPrimaryKeysColumn().should.deepEqual("id");
+            });
+
+            it("multiple primary keys", function() {
+                model3.getPrimaryKeysColumn().should.deepEqual([ "id", "key4" ]);
+            });
+        });
+    });
+
+    describe("transaction", function() {
+        it("should begin transaction", function() {
+            hack.hackAsyncReturn(model.parent.adapter, "beginTransaction", [ undefined, { foo: "bar" }]);
+            model.beginTransaction(function(err, conn) {
+                should.ifError(err);
+                conn.should.deepEqual({ foo: "bar" });
+            });
+        });
+
+        it("should commit", function() {
+            hack.hackAsyncReturn(model.parent.adapter, "commit", [ undefined, { foo: "bar" }]);
+            model.commit(function(err, conn) {
+                should.ifError(err);
+                conn.should.deepEqual({ foo: "bar" });
+            });
+        });
+
+        it("should rollback", function() {
+            hack.hackAsyncReturn(model.parent.adapter, "rollback", [ undefined, { foo: "bar" }]);
+            model.rollback(function(err, conn) {
+                should.ifError(err);
+                conn.should.deepEqual({ foo: "bar" });
+            });
         });
     });
 });
