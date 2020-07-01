@@ -1,4 +1,4 @@
-# [1.0.0](https://github.com/XadillaX/Toshihiko/compare/1.0.0-alpha.10...1.0.0) (2020-06-30)
+## [1.0.1](https://github.com/XadillaX/Toshihiko/compare/1.0.0-alpha.10...1.0.1) (2020-07-01)
 
 
 ### Bug Fixes
@@ -13,16 +13,6 @@
 * package.json to reduce vulnerabilities ([#203](https://github.com/XadillaX/Toshihiko/issues/203)) ([14e7910](https://github.com/XadillaX/Toshihiko/commit/14e79108fdc44703182a37e90c481b2b1420454f))
 * test cases ([#221](https://github.com/XadillaX/Toshihiko/issues/221)) ([5fa5005](https://github.com/XadillaX/Toshihiko/commit/5fa5005e9cfc9ec7f215fe424d473fc88f8a5bff))
 * update null should depend allow null ([8945d8e](https://github.com/XadillaX/Toshihiko/commit/8945d8ea986e1f6efca60fd94c804d7d44cce8d4))
-
-
-
-# [0.9.0](https://github.com/XadillaX/Toshihiko/compare/0.8.4...0.9.0) (2016-09-22)
-
-
-### Features
-
-* 添加 force index 支持 ([d63146d](https://github.com/XadillaX/Toshihiko/commit/d63146d2db3164ca08e09906b8057a868c391473))
-* 移除模板字符串 ([db3329d](https://github.com/XadillaX/Toshihiko/commit/db3329dd3a55ff91c731ef678b3541439fb2b681))
 
 
 
