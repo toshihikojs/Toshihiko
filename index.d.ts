@@ -20,6 +20,7 @@ export interface BaseType<T> {
   parse(orig: any): T;
 
   equal?: (a: any, b: any) => boolean;
+  toJSON?: (a: T) => any;
 }
 
 interface _Type {
