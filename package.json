@@ -21,10 +21,10 @@
     "toshihiko-mysqlparser": "^1.0.0"
   },
   "devDependencies": {
-    "coveralls": "3.0.7",
-    "cz-conventional-changelog": "3.0.0",
     "chalk": "^3.0.0",
     "conventional-changelog-cli": "2.0.17",
+    "coveralls": "3.0.7",
+    "cz-conventional-changelog": "3.0.0",
     "decache": "^4.3.0",
     "ghooks": "2.0.4",
     "istanbul": "1.0.0-alpha.1",
@@ -34,7 +34,7 @@
     "mysql": "^2.15.0",
     "mysql2": "^2.0.0",
     "should": "13.2.2",
-    "sync-runner": "^0.1.9",
+    "sync-runner": "^1.0.0",
     "toshihiko-memcached": "^1.0.1",
     "validate-commit-msg": "2.14.0"
   },
