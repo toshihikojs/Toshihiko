@@ -3,7 +3,7 @@
 [![Toshihiko](http://img.shields.io/npm/v/toshihiko.svg)](https://www.npmjs.org/package/toshihiko)
 [![Toshihiko](http://img.shields.io/npm/dm/toshihiko.svg)](https://www.npmjs.org/package/toshihiko)
 [![Build Status](https://travis-ci.org/XadillaX/Toshihiko.svg?branch=feature/v1)](https://travis-ci.org/XadillaX/Toshihiko)
-[![Coverage Status](https://img.shields.io/coveralls/XadillaX/Toshihiko/feature/v1.svg)](https://coveralls.io/r/XadillaX/Toshihiko?branch=feature/v1)
+[![Coverage Status](https://img.shields.io/coveralls/XadillaX/Toshihiko/feature/v1.svg)](https://coveralls.io/r/XadillaX/Toshihiko?branch=master)
 [![License](https://img.shields.io/npm/l/toshihiko.svg?style=flat)](https://www.npmjs.org/package/toshihiko)
 [![Dependency Status](https://david-dm.org/XadillaX/Toshihiko.svg)](https://david-dm.org/XadillaX/Toshihiko)
 [![Greenkeeper badge](https://badges.greenkeeper.io/XadillaX/Toshihiko.svg)](https://greenkeeper.io/)
