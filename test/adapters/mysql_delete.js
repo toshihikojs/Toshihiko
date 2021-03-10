@@ -87,16 +87,16 @@ module.exports = function(name, options) {
             }
         });
 
-        let id = 4;
+        let id;
         beforeEach(function(done) {
-            id++;
             const yukari = new Yukari(model, "new");
             yukari.buildNewRow({ key4: "tobedeleted", key5: new Date() });
             yukari.insert(function(err) {
                 should.ifError(err);
                 const query = new Query(model);
-                query.find(function(err) {
+                query.find(function(err, data) {
                     should.ifError(err);
+                    id = data[data.length - 1].key1;
                     model.cache.getData("__toshihiko__", "test1", [ { id: id } ], function(err, result) {
                         should.ifError(err);
                         result.should.match([{
@@ -123,7 +123,7 @@ module.exports = function(name, options) {
                 database.should.equal("__toshihiko__");
                 name.should.equal("test1");
                 keys.should.match([
-                    { id: 5 }
+                    { id: id }
                 ]);
                 model.cache.deleteKeys = $deleteKeys;
                 deleteKeysCalled++;
