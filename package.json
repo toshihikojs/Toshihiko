@@ -7,7 +7,7 @@
     "test": "test"
   },
   "dependencies": {
-    "@types/mysql2": "types/mysql2#master",
+    "@types/mysql": "^2.15.18",
     "async": "^1.0.0",
     "bluebird": "^3.5.1",
     "debug": "^4.1.1",

@@ -1,4 +1,4 @@
-import { Connection } from 'mysql2';
+import { Connection } from 'mysql';
 
 type ObjStatic = { [key: string]: any };
 type IfError = Error | undefined;
