@@ -8,7 +8,7 @@ clean:
 	@rm -rf node_modules
 
 install:
-	@npm install -d --registry=http://registry.npm.taobao.org/
+	@npm install -d --registry=https://registry.npmmirror.com/
 
 debug-test:
 	@NODE_ENV=test DEBUG=toshihiko:* $(MOCHA) -t $(TIMEOUT) --recursive
