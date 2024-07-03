@@ -15,7 +15,7 @@
     "lodash": "4.17.21",
     "moment": "^2.20.0",
     "otrans": "^1.0.1",
-    "scarlet-task": "^1.0.0",
+    "scarlet-task": "^2.0.0",
     "sqlstring": "^2.3.0",
     "toshihiko-mysqlparser": "^1.0.0"
   },
