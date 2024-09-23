@@ -53,6 +53,15 @@ module.exports = function(name, options) {
             sql.should.equal("`id` = key2 + 123, `key3` = CONCAT(\"{\\\"foo\\\":\\\"\", id, key4, \"\\\"}\"), " +
                 "`key4` = \"123,456\"");
         });
+
+        it("should makeSet null", function() {
+            const sql = adapter.makeSet(model, {
+                key1: 421,
+                key2: 1.23,
+                key4: null
+            });
+            sql.should.equal("`id` = 421, `key2` = 1.23, `key4` = null");
+        });
     });
 
     describe(`${name} makeUpdate`, function() {

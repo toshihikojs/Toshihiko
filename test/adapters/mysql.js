@@ -121,7 +121,7 @@ describe("🐣 adapters/mysql", function() {
 
         describe("should use mysql2", function() {
             it("when default", function(done) {
-                const Pool = require("mysql2/lib/pool");
+                const Pool = require("../../node_modules/mysql2/lib/pool");
                 const adapter = new MySQLAdapter({}, {});
 
                 adapter.mysql.should.be.instanceof(Pool);
@@ -129,7 +129,7 @@ describe("🐣 adapters/mysql", function() {
             });
 
             it("when use config", function(done) {
-                const Pool = require("mysql2/lib/pool");
+                const Pool = require("../../node_modules/mysql2/lib/pool");
                 const options = { package: "mysql2" };
                 const adapter = new MySQLAdapter({}, options);
 
@@ -191,7 +191,7 @@ describe("🐣 adapters/mysql", function() {
                 options.package = name;
                 const adapter = new MySQLAdapter({}, options);
 
-                const Pool = require(name === "mysql" ? "mysql/lib/Pool" : "mysql2/lib/pool");
+                const Pool = require(name === "mysql" ? "mysql/lib/Pool" : "../../node_modules/mysql2/lib/pool");
                 adapter.mysql.should.be.instanceof(Pool);
 
                 adapter.execute("DROP TABLE IF EXISTS `test1`, `test2`;", function(err) {
