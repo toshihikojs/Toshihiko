@@ -1,53 +1,53 @@
 {
   "name": "toshihiko",
-  "version": "1.0.4",
+  "version": "2.0.0",
   "description": "Yet another simple ORM for node.js.",
-  "main": "index.js",
-  "directories": {
-    "test": "test"
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "jest --forceExit",
+    "test:coverage": "jest --coverage --forceExit",
+    "lint": "eslint src/ test/ --ext .ts",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "async": "^3.2.2",
-    "@types/mysql": "^2.15.18",
-    "bluebird": "^3.5.1",
-    "debug": "^4.1.1",
-    "eventemitter2": "^6.0.0",
-    "fbbk-json": "^1.1.0",
-    "lodash": "4.17.21",
-    "moment": "^2.20.0",
+    "async": "^3.2.6",
+    "dayjs": "^1.11.13",
+    "debug": "^4.4.0",
+    "eventemitter2": "^6.4.9",
+    "lodash": "^4.17.21",
     "otrans": "^1.0.1",
     "scarlet-task": "^2.0.0",
-    "sqlstring": "^2.3.0",
+    "sqlstring": "^2.3.3",
     "toshihiko-mysqlparser": "^1.0.0"
   },
   "devDependencies": {
-    "chalk": "^3.0.0",
-    "conventional-changelog-cli": "2.0.17",
-    "coveralls": "3.0.7",
-    "cz-conventional-changelog": "3.0.0",
-    "decache": "^4.3.0",
-    "ghooks": "2.0.4",
-    "istanbul": "1.0.0-alpha.1",
-    "jshint": "^2.12.0",
-    "mocha": "5.1.0",
-    "mockjs": "^1.0.1-beta3",
-    "mysql": "^2.15.0",
-    "mysql2": "^2.0.0",
-    "should": "13.2.2",
-    "sync-runner": "^1.0.0",
-    "toshihiko-memcached": "^1.0.1",
-    "validate-commit-msg": "2.14.0"
+    "@types/async": "^3.2.24",
+    "@types/debug": "^4.1.12",
+    "@types/jest": "^29.5.14",
+    "@types/lodash": "^4.17.14",
+    "@types/node": "^22.10.5",
+    "@types/sqlstring": "^2.3.2",
+    "jest": "^29.7.0",
+    "mysql2": "^3.12.0",
+    "ts-jest": "^29.2.5",
+    "typescript": "^5.7.3"
   },
-  "scripts": {
-    "test": "make test",
-    "lint": "./node_modules/.bin/jshint .",
-    "validate": "npm ls",
-    "commit-msg": "./node_modules/.bin/validate-commit-msg",
-    "changelog": "./node_modules/.bin/conventional-changelog -p angular -i CHANGELOG.md -s"
+  "peerDependencies": {
+    "mysql2": ">=2.0.0"
+  },
+  "peerDependenciesMeta": {
+    "mysql2": {
+      "optional": true
+    }
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/XadillaX/Toshihiko.git"
+    "url": "git@github.com:mapleincode/Toshihiko.git"
   },
   "keywords": [
     "orm",
@@ -61,20 +61,10 @@
   ],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/XadillaX/Toshihiko/issues"
+    "url": "https://github.com/mapleincode/Toshihiko/issues"
   },
-  "homepage": "https://github.com/XadillaX/Toshihiko",
+  "homepage": "https://github.com/mapleincode/Toshihiko",
   "engines": {
-    "node": ">=4.0"
-  },
-  "config": {
-    "commitizen": {
-      "path": "./node_modules/cz-conventional-changelog"
-    },
-    "ghooks": {
-      "pre-commit": "npm run lint && npm run validate && rm docs/misc/changelog.md && cp CHANGELOG.md docs/misc/changelog.md && git add docs/misc/changelog.md",
-      "commit-msg": "npm run commit-msg",
-      "pre-push": "npm test"
-    }
+    "node": ">=16.0"
   }
 }

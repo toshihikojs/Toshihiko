@@ -31,3 +31,9 @@ coverage
 *.out
 
 *-es6.js
+
+package-lock.json
+
+# Compiled output (TypeScript -> JavaScript)
+dist/
+lib/

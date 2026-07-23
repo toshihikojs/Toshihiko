@@ -1,3 +1,51 @@
+# [2.0.0](https://github.com/XadillaX/Toshihiko/compare/1.0.4...2.0.0) (2026-07-23)
+
+
+### ⚠ BREAKING CHANGES
+
+* **typescript:** 项目已完全使用 TypeScript 重写
+* **node:** 最低 Node.js 版本要求从 4.0 提升到 16.0
+* **promise:** 移除 bluebird 依赖，使用原生 Promise
+* **datetime:** 移除 moment 依赖，使用 dayjs 替代
+* **test:** 测试框架从 mocha + should + istanbul 迁移到 Jest + ts-jest
+
+
+### Features
+
+* **typescript:** 使用 TypeScript 5.x 完全重写项目 ([src/](https://github.com/XadillaX/Toshihiko/tree/master/src))
+* **types:** 添加完整的 TypeScript 类型定义 ([src/types.ts](https://github.com/XadillaX/Toshihiko/blob/master/src/types.ts))
+* **build:** 添加 TypeScript 编译配置，输出到 dist/ 目录
+* **test:** 使用 Jest + ts-jest 重写所有测试用例（9 个测试套件，171 个测试）
+
+
+### Bug Fixes
+
+* **common:** 修复 `extend()` 递归调用参数顺序错误导致深层对象合并异常
+* **datetime:** 修复 `Datetime.equal` 对不同日期返回 true 的问题，改用 `valueOf()` 比较
+* **query:** 修复 `field`/`orderBy` 别名绑定方式，确保引用一致性
+* **yukari:** 修复 `validateOne` 中 `async.whilst` 在 async 3.x 下的兼容性问题（test 函数需异步回调）
+
+
+### Dependencies
+
+* **dayjs:** 替换 moment 作为日期处理库
+* **typescript:** 添加 TypeScript 5.x 作为开发依赖
+* **jest:** 替换 mocha 作为测试框架
+* **ts-jest:** 添加 TypeScript 测试支持
+* **@types/*:** 添加所有依赖的类型定义
+
+
+### Removed
+
+* **bluebird:** 移除，使用原生 Promise
+* **moment:** 移除，使用 dayjs 替代
+* **mocha:** 移除，使用 Jest 替代
+* **should:** 移除，使用 Jest 内置断言
+* **istanbul:** 移除，使用 Jest 内置覆盖率
+* **jshint:** 移除，使用 TypeScript 类型检查
+
+
+
 ## [1.0.3](https://github.com/XadillaX/Toshihiko/compare/1.0.0-alpha.10...1.0.3) (2020-07-03)
 
 
