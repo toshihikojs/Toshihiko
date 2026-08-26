@@ -15,6 +15,8 @@ const Query = require("../../lib/query");
 const Toshihiko = require("../../lib/toshihiko");
 
 module.exports = function(name, options) {
+    const expectedWarning = name === "mysql" ? { warningCount: 0 } : { warningStatus: 0 };
+
     describe(`${name} makeSet`, function() {
         const toshihiko = new Toshihiko("mysql", options);
         const adapter = toshihiko.adapter;
@@ -169,14 +171,13 @@ module.exports = function(name, options) {
             query._updateData = { key1: "{{key1}}" };
             adapter.updateByQuery(query, function(err, result, sql) {
                 should.ifError(err);
-                result.should.match({
+                result.should.match(Object.assign({
                     fieldCount: 0,
                     affectedRows: 2,
                     insertId: 0,
                     serverStatus: 2,
-                    warningStatus: 0,
                     changedRows: 0
-                });
+                }, expectedWarning));
                 sql.should.equal("UPDATE `test1` SET `id` = id WHERE (`id` < 3) ORDER BY `id` DESC LIMIT 5");
 
                 deleteKeysCalled.should.equal(1);
@@ -192,14 +193,13 @@ module.exports = function(name, options) {
             query._updateData = { key1: "{{key1}}" };
             adapter.updateByQuery(query, function(err, result, sql) {
                 should.ifError(err);
-                result.should.match({
+                result.should.match(Object.assign({
                     fieldCount: 0,
                     affectedRows: 4,
                     insertId: 0,
                     serverStatus: 34,
-                    warningStatus: 0,
                     changedRows: 0
-                });
+                }, expectedWarning));
                 sql.should.equal("UPDATE `test1` SET `id` = id");
                 done();
             });

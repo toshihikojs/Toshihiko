@@ -16,6 +16,8 @@ const Toshihiko = require("../../lib/toshihiko");
 const Yukari = require("../../lib/yukari");
 
 module.exports = function(name, options) {
+    const expectedWarning = name === "mysql" ? { warningCount: 0 } : { warningStatus: 0 };
+
     describe(`${name} makeDelete`, function() {
         const toshihiko = new Toshihiko("mysql", options);
         const adapter = toshihiko.adapter;
@@ -142,13 +144,12 @@ module.exports = function(name, options) {
             query.where({ key4: "tobedeleted" }).limit(5).order({ key1: -1 });
             adapter.deleteByQuery(query, function(err, result, sql) {
                 should.ifError(err);
-                result.should.match({
+                result.should.match(Object.assign({
                     fieldCount: 0,
                     affectedRows: 1,
                     insertId: 0,
-                    serverStatus: 34,
-                    warningStatus: 0
-                });
+                    serverStatus: 34
+                }, expectedWarning));
                 sql.should.equal("DELETE FROM `test1` WHERE (`key4` = \"tobedeleted\") ORDER BY `id` DESC LIMIT 5");
 
                 deleteKeysCalled.should.equal(1);
@@ -163,13 +164,12 @@ module.exports = function(name, options) {
             const query = new Query(model).where({ key4: "123123" }).limit(5).order({ key1: -1 });
             adapter.deleteByQuery(query, function(err, result, sql) {
                 should.ifError(err);
-                result.should.match({
+                result.should.match(Object.assign({
                     fieldCount: 0,
                     affectedRows: 0,
                     insertId: 0,
-                    serverStatus: 34,
-                    warningStatus: 0
-                });
+                    serverStatus: 34
+                }, expectedWarning));
                 sql.should.equal("DELETE FROM `test1` WHERE (`key4` = \"123123\") ORDER BY `id` DESC LIMIT 5");
                 done();
             });
