@@ -1,10 +1,7 @@
-'use strict';
-
-const assert = require('node:assert/strict');
-const test = require('node:test');
-
-const { MySQLAdapter } = require('../..');
-const { Toshihiko, Type } = require('toshihiko');
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { Toshihiko, Type } from 'toshihiko';
+import { MySQLAdapter } from '../..';
 
 const database = process.env.MYSQL_DATABASE ?? 'toshihiko_test';
 const adapter = new MySQLAdapter({
@@ -53,7 +50,9 @@ test('read, write, raw execution, and transactions work end to end', async () =>
     { field: User.fieldNamesMap.score, value: 2.5 },
   ]);
   assert.equal(mutation.affectedRows, 1);
-  assert.equal((await User.findById(1, true)).score, 2.5);
+  const updated = await User.findById(1, true);
+  assert.notEqual(updated, null);
+  assert.equal(updated?.score, 2.5);
 
   const connection = await adapter.beginTransaction();
   await adapter.execute(connection, 'INSERT INTO `users` (`display_name`, `score`) VALUES (?, ?)', ['Rolled back', 3]);

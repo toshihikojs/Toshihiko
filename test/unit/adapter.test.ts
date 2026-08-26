@@ -1,36 +1,12 @@
-'use strict';
-
-const assert = require('node:assert/strict');
-const test = require('node:test');
-const { format } = require('mysql2');
-
-const { MySQLAdapter } = require('../../dist');
-const { Toshihiko, Type } = require('toshihiko');
-
-function createPool(results = []) {
-  const calls = [];
-  let resultIndex = 0;
-  const pool = {
-    calls,
-    end: async () => undefined,
-    format,
-    getConnection: async () => {
-      throw new Error('getConnection not configured');
-    },
-    on() {
-      return this;
-    },
-    async query(sql, values) {
-      calls.push({ method: 'query', sql, values });
-      return [results[resultIndex++] ?? [], []];
-    },
-    async execute(sql, values) {
-      calls.push({ method: 'execute', sql, values });
-      return [results[resultIndex++] ?? [], []];
-    },
-  };
-  return pool;
-}
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { Toshihiko, Type } from 'toshihiko';
+import { MySQLAdapter } from '../../dist';
+import {
+  asConnection,
+  createConnection,
+  createPool,
+} from '../helpers/mysql';
 
 test('find and count execute through the Promise pool without callbacks', async () => {
   const pool = createPool([
@@ -63,14 +39,8 @@ test('find and count execute through the Promise pool without callbacks', async 
 
 test('execute preserves both v2 and legacy connection-first argument order', async () => {
   const pool = createPool([[{ ok: 1 }]]);
-  const connectionCalls = [];
-  const connection = {
-    async execute(sql, values) {
-      connectionCalls.push({ method: 'execute', sql, values });
-      return [[{ connected: true }], []];
-    },
-  };
-  const shown = [];
+  const connection = createConnection([[{ connected: true }]]);
+  const shown: string[] = [];
   const adapter = new MySQLAdapter({ pool, showSql: (sql) => shown.push(sql) });
 
   await adapter.execute('SELECT ?', [1]);
@@ -79,7 +49,7 @@ test('execute preserves both v2 and legacy connection-first argument order', asy
   await adapter.execute('INSERT INTO `users` SET ?', { name: 'Alice' });
 
   assert.deepEqual(pool.calls[0], { method: 'execute', sql: 'SELECT ?', values: [1] });
-  assert.deepEqual(connectionCalls[0], { method: 'execute', sql: 'SELECT ?', values: [2] });
+  assert.deepEqual(connection.calls[0], { method: 'execute', sql: 'SELECT ?', values: [2] });
   assert.deepEqual(pool.calls[1], { method: 'query', sql: 'SELECT 1', values: undefined });
   assert.deepEqual(pool.calls[2], {
     method: 'query',
@@ -96,8 +66,8 @@ test('execute preserves both v2 and legacy connection-first argument order', asy
 });
 
 test('transaction connections are released on success and failure', async () => {
-  const events = [];
-  const connection = {
+  const events: string[] = [];
+  const connection = asConnection({
     async beginTransaction() {
       events.push('begin');
     },
@@ -111,9 +81,8 @@ test('transaction connections are released on success and failure', async () => 
     release() {
       events.push('release');
     },
-  };
-  const pool = createPool();
-  pool.getConnection = async () => connection;
+  });
+  const pool = createPool([], async () => connection);
   const adapter = new MySQLAdapter({ pool });
 
   const acquired = await adapter.beginTransaction();
@@ -125,16 +94,15 @@ test('transaction connections are released on success and failure', async () => 
 
 test('a failed transaction start releases its checked-out connection', async () => {
   let released = false;
-  const connection = {
+  const connection = asConnection({
     async beginTransaction() {
       throw new Error('begin failed');
     },
     release() {
       released = true;
     },
-  };
-  const pool = createPool();
-  pool.getConnection = async () => connection;
+  });
+  const pool = createPool([], async () => connection);
   const adapter = new MySQLAdapter({ pool });
 
   await assert.rejects(adapter.beginTransaction(), /begin failed/);

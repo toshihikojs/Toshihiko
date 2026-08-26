@@ -1,10 +1,8 @@
-'use strict';
-
-const assert = require('node:assert/strict');
-const test = require('node:test');
-
-const { MySQLAdapter } = require('../..');
-const { Toshihiko, Type } = require('toshihiko');
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { Toshihiko, Type, type FieldType } from 'toshihiko';
+import { MySQLAdapter } from '../..';
+import { dataFor } from '../helpers/mysql';
 
 const database = process.env.MYSQL_DATABASE ?? 'toshihiko_test';
 const adapter = new MySQLAdapter({
@@ -20,13 +18,13 @@ const legacyDate = new Date(2026, 0, 2, 3, 4, 5);
 const BinaryType = Object.freeze({
   name: 'Binary',
   needQuotes: false,
-  parse(value) {
+  parse(value: string) {
     return { dec: Number.parseInt(String(value), 2) };
   },
-  restore(value) {
+  restore(value: { readonly dec: number }) {
     return `BIN(${Number.parseInt(String(value.dec), 10)})`;
   },
-});
+}) satisfies FieldType<{ readonly dec: number }, string>;
 
 const Record = toshihiko.define('legacy_records', [
   { name: 'id', type: Type.Integer, primaryKey: true, autoIncrement: true },
@@ -45,13 +43,6 @@ const Plain = toshihiko.define('legacy_plain', [
   { name: 'code', type: Type.Integer },
   { name: 'value', type: Type.String },
 ]);
-
-function dataFor(model, values) {
-  return Object.entries(values).map(([name, value]) => ({
-    field: model.fieldNamesMap[name],
-    value,
-  }));
-}
 
 test.before(async () => {
   await adapter.execute('DROP TABLE IF EXISTS `legacy_records`, `legacy_composite`, `legacy_plain`, `legacy_tx`');
@@ -101,7 +92,13 @@ test('v1 insert/readback restores JSON, datetime, null, and custom SQL types', a
   assert.equal(row.score, 0.5);
   assert.deepEqual(row.payload, { foo: 'bar' });
   assert.equal(row.name, null);
-  assert.equal(new Date(row.created_at).getTime(), legacyDate.getTime());
+  const createdAt = row.created_at;
+  assert.ok(
+    typeof createdAt === 'string' ||
+      typeof createdAt === 'number' ||
+      createdAt instanceof Date,
+  );
+  assert.equal(new Date(createdAt).getTime(), legacyDate.getTime());
   assert.equal(row.bits, '10101000');
 });
 
@@ -130,9 +127,15 @@ test('v1 complex field and where operators return the intended rows', async () =
 });
 
 test('v1 single-row limit variants preserve offset and empty behavior', async () => {
-  assert.equal((await Record.order({ id: 1 }).findOne(true)).id, 1);
-  assert.equal((await Record.order({ id: 1 }).limit(2).findOne(true)).id, 1);
-  assert.equal((await Record.order({ id: 1 }).limit(1, 100).findOne(true)).id, 2);
+  const first = await Record.order({ id: 1 }).findOne(true);
+  const limited = await Record.order({ id: 1 }).limit(2).findOne(true);
+  const offset = await Record.order({ id: 1 }).limit(1, 100).findOne(true);
+  assert.notEqual(first, null);
+  assert.notEqual(limited, null);
+  assert.notEqual(offset, null);
+  assert.equal(first?.id, 1);
+  assert.equal(limited?.id, 1);
+  assert.equal(offset?.id, 2);
   assert.equal(await Record.order({ id: 1 }).limit(100, 100).findOne(true), null);
 });
 
@@ -169,8 +172,12 @@ test('v1 update and updateByQuery preserve typed and raw values', async () => {
   const query = Record.where({ id: { $gte: 2 } }).order({ id: 1 }).limit(1);
   query._updateData = { name: 'updated' };
   assert.equal((await adapter.updateByQuery(query)).affectedRows, 1);
-  assert.equal((await Record.findById(2, true)).name, 'updated');
-  assert.equal((await Record.findById(3, true)).name, 'Bob');
+  const updated = await Record.findById(2, true);
+  const untouched = await Record.findById(3, true);
+  assert.notEqual(updated, null);
+  assert.notEqual(untouched, null);
+  assert.equal(updated?.name, 'updated');
+  assert.equal(untouched?.name, 'Bob');
 });
 
 test('v1 deleteByQuery respects ordering and row-count limit', async () => {
@@ -192,5 +199,9 @@ test('v1 transaction commit and rollback isolate writes on one connection', asyn
   await adapter.rollback(rolledBack);
 
   const rows = await adapter.execute('SELECT `id` FROM `legacy_tx` ORDER BY `id` ASC');
-  assert.deepEqual(rows.map((row) => row.id), [1, 2]);
+  assert.ok(Array.isArray(rows));
+  assert.deepEqual(rows.map((row: unknown) => {
+    assert.ok(typeof row === 'object' && row !== null && 'id' in row);
+    return row.id;
+  }), [1, 2]);
 });

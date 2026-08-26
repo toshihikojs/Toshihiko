@@ -1,10 +1,7 @@
-'use strict';
-
-const assert = require('node:assert/strict');
-const test = require('node:test');
-
-const { MySQLSqlBuilder } = require('../../dist');
-const { Toshihiko, Type } = require('toshihiko');
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { Toshihiko, Type } from 'toshihiko';
+import { MySQLSqlBuilder } from '../../dist';
 
 const toshihiko = new Toshihiko('mysql');
 const Model = toshihiko.define('test`table', [

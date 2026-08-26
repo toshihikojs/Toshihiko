@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": ".test-dist",
+    "rootDir": "test"
+  },
+  "include": [
+    "test/helpers/**/*.ts",
+    "test/unit/**/*.test.ts",
+    "test/integration/**/*.test.ts"
+  ]
+}

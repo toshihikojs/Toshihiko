@@ -1,21 +1,18 @@
-'use strict';
-
-const assert = require('node:assert/strict');
-const test = require('node:test');
-
-const { MySQLSqlBuilder } = require('../../dist');
-const { Toshihiko, Type } = require('toshihiko');
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { Toshihiko, Type, type FieldType } from 'toshihiko';
+import { MySQLSqlBuilder } from '../../dist';
 
 const BinaryType = Object.freeze({
   name: 'Binary',
   needQuotes: false,
-  parse(value) {
+  parse(value: string) {
     return { dec: Number.parseInt(String(value), 2) };
   },
-  restore(value) {
+  restore(value: { readonly dec: number }) {
     return `BIN(${Number.parseInt(String(value.dec), 10)})`;
   },
-});
+}) satisfies FieldType<{ readonly dec: number }, string>;
 
 const toshihiko = new Toshihiko('mysql');
 const Model = toshihiko.define('test`table', [
@@ -116,7 +113,14 @@ test('v1 object and array where trees retain ordering and logic', () => {
 test('v1 empty and invalid where inputs retain their guards', () => {
   assert.equal(builder.makeWhere(Model, {}), '()');
   assert.throws(() => builder.makeWhere(Model, { missing: 100 }), /missing/);
-  assert.throws(() => builder.makeArrayWhere(Model, {}, 'AND'), /Non-array condition/);
+  assert.throws(
+    () => builder.makeArrayWhere(
+      Model,
+      {} as unknown as readonly Readonly<Record<string, unknown>>[],
+      'AND',
+    ),
+    /Non-array condition/,
+  );
   assert.throws(() => builder.makeFieldWhere(Model, 'missing', 1), /no field named/);
   assert.throws(() => builder.makeFieldWhere(Model, 'key2', { $in: [] }), /non-empty array/);
   assert.throws(() => builder.makeFieldWhere(Model, 'key2', { $between: [1] }), /exactly two/);
@@ -125,8 +129,15 @@ test('v1 empty and invalid where inputs retain their guards', () => {
 test('v1 order, limit, and index generation remains deterministic', () => {
   assert.equal(builder.makeOrder(Model, [{ key1: -1 }]), '`id` DESC');
   assert.equal(builder.makeOrder(Model, []), '');
+  const legacyOrder = [
+    { key1: -1 },
+    { key2: 1 },
+    { key3: 2 },
+    { key4: -1 },
+    { key5: '123' },
+  ] as unknown as readonly Readonly<Record<string, 1 | -1>>[];
   assert.equal(
-    builder.makeOrder(Model, [{ key1: -1 }, { key2: 1 }, { key3: 2 }, { key4: -1 }, { key5: '123' }]),
+    builder.makeOrder(Model, legacyOrder),
     '`id` DESC, `key2` ASC, `key3` ASC, `key4` DESC, `key5` ASC',
   );
   assert.equal(builder.makeOrder(Model, [{}]), '');

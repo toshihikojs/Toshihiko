@@ -1,64 +1,30 @@
-'use strict';
-
-const assert = require('node:assert/strict');
-const test = require('node:test');
-const { format } = require('mysql2');
-
-const { Adapter } = require('@toshihiko/base-adapter');
-const { MySQLAdapter } = require('../../dist');
-const { Toshihiko, Type } = require('toshihiko');
-
-function createPool(responses = []) {
-  const calls = [];
-  let responseIndex = 0;
-  async function run(method, sql, values) {
-    calls.push({ method, sql, values });
-    const response = responses[responseIndex++];
-    if (response instanceof Error) {
-      throw response;
-    }
-    return [response ?? [], []];
-  }
-  return {
-    calls,
-    end: async () => undefined,
-    execute(sql, values) {
-      return run('execute', sql, values);
-    },
-    format,
-    getConnection: async () => {
-      throw new Error('getConnection not configured');
-    },
-    on() {
-      return this;
-    },
-    query(sql, values) {
-      return run('query', sql, values);
-    },
-  };
-}
-
-function define(adapter, name, schema) {
-  return new Toshihiko(adapter).define(name, schema);
-}
-
-function dataFor(model, values) {
-  return Object.entries(values).map(([name, value]) => ({
-    field: model.fieldNamesMap[name],
-    value,
-  }));
-}
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { Adapter } from '@toshihiko/base-adapter';
+import { Type, type FieldType } from 'toshihiko';
+import {
+  MySQLAdapter,
+  type MySQLModel,
+  type MySQLQueryOptions,
+} from '../../dist';
+import {
+  asConnection,
+  createConnection,
+  createPool,
+  dataFor,
+  define,
+} from '../helpers/mysql';
 
 const BinaryType = Object.freeze({
   name: 'Binary',
   needQuotes: false,
-  parse(value) {
+  parse(value: unknown) {
     return { dec: Number.parseInt(String(value), 2) };
   },
-  restore(value) {
+  restore(value: { readonly dec: number }) {
     return `BIN(${Number.parseInt(String(value.dec), 10)})`;
   },
-});
+}) satisfies FieldType<{ readonly dec: number }, string>;
 
 test('v1 construction keeps Adapter identity, public options, and credentials private', async () => {
   const pool = createPool();
@@ -95,7 +61,7 @@ test('v1 construction keeps Adapter identity, public options, and credentials pr
 });
 
 test('v1 showSql receives formatted SQL on success and failure', async () => {
-  const shown = [];
+  const shown: string[] = [];
   const pool = createPool([[{ ok: 1 }], new Error('database failed')]);
   const adapter = new MySQLAdapter({ pool, showSql: (sql) => shown.push(sql) });
 
@@ -111,7 +77,7 @@ test('v1 execute selects prepared, raw, object-expansion, and connection paths',
     { affectedRows: 1 },
     { affectedRows: 0 },
   ]);
-  const connection = createPool([[{ connected: 1 }]]);
+  const connection = createConnection([[{ connected: 1 }]]);
   const adapter = new MySQLAdapter({ pool });
 
   assert.deepEqual(await adapter.execute('SELECT ?', [1]), [{ prepared: 1 }]);
@@ -122,9 +88,9 @@ test('v1 execute selects prepared, raw, object-expansion, and connection paths',
   );
   assert.deepEqual(await adapter.execute(connection, 'SELECT ?', [2]), [{ connected: 1 }]);
   await adapter.execute('CREATE TABLE ?? (`id` INT(?))', ['legacy_table', 11]);
-  assert.equal(pool.calls[0].method, 'execute');
-  assert.equal(pool.calls[1].method, 'query');
-  assert.equal(pool.calls[2].method, 'query');
+  assert.equal(pool.calls[0]?.method, 'execute');
+  assert.equal(pool.calls[1]?.method, 'query');
+  assert.equal(pool.calls[2]?.method, 'query');
   assert.deepEqual(pool.calls[3], {
     method: 'query',
     sql: 'CREATE TABLE ?? (`id` INT(?))',
@@ -169,16 +135,20 @@ test('v1 queryToOptions preserves query state and single-row limit rules', () =>
 test('v1 makeSql dispatch remains override-compatible', () => {
   const adapter = new MySQLAdapter({ pool: createPool() });
   const User = define(adapter, 'users', [{ name: 'id', type: Type.Integer }]);
-  const calls = [];
-  adapter.makeFind = (model, options) => {
+  const calls: Array<[
+    'find' | 'update' | 'delete',
+    MySQLModel,
+    MySQLQueryOptions | undefined,
+  ]> = [];
+  adapter.makeFind = (model: MySQLModel, options?: MySQLQueryOptions) => {
     calls.push(['find', model, options]);
     return 'FIND';
   };
-  adapter.makeUpdate = (model, options) => {
+  adapter.makeUpdate = (model: MySQLModel, options?: MySQLQueryOptions) => {
     calls.push(['update', model, options]);
     return 'UPDATE';
   };
-  adapter.makeDelete = (model, options) => {
+  adapter.makeDelete = (model: MySQLModel, options?: MySQLQueryOptions) => {
     calls.push(['delete', model, options]);
     return 'DELETE';
   };
@@ -188,7 +158,7 @@ test('v1 makeSql dispatch remains override-compatible', () => {
   assert.equal(adapter.makeSql('count', User, { where: {} }), 'FIND');
   assert.equal(adapter.makeSql('update', User, { where: {} }), 'UPDATE');
   assert.equal(adapter.makeSql('delete', User, { where: {} }), 'DELETE');
-  assert.equal(calls[2][2].count, true);
+  assert.equal(calls[2]?.[2]?.count, true);
 });
 
 test('v1 findWithNoCache preserves list, single, empty, and connection failures', async () => {
@@ -204,7 +174,7 @@ test('v1 findWithNoCache preserves list, single, empty, and connection failures'
   assert.deepEqual(await adapter.findWithNoCache(User, { single: true, limit: [0, 1] }), { id: 1 });
   assert.equal(await adapter.findWithNoCache(User, { single: true, limit: [100, 1] }), null);
 
-  const connection = createPool([new Error('dummy')]);
+  const connection = createConnection([new Error('dummy')]);
   await assert.rejects(
     adapter.findWithNoCache(User, { connection, where: { id: 1 } }),
     /dummy/,
@@ -319,7 +289,7 @@ test('v1 insert without auto-increment uses supplied primary or full row values'
     { name: 'score', type: Type.Float },
   ]);
   await primaryAdapter.insert(Primary, null, dataFor(Primary, { id: 1, score: 0.5 }));
-  assert.deepEqual(primaryPool.calls[1].values, [1]);
+  assert.deepEqual(primaryPool.calls[1]?.values, [1]);
 
   const rowPool = createPool([
     { affectedRows: 1, insertId: 0 },
@@ -331,12 +301,12 @@ test('v1 insert without auto-increment uses supplied primary or full row values'
     { name: 'score', type: Type.Float },
   ]);
   await rowAdapter.insert(NoPrimary, null, dataFor(NoPrimary, { id: 2, score: 1 }));
-  assert.deepEqual(rowPool.calls[1].values, [2, 1]);
+  assert.deepEqual(rowPool.calls[1]?.values, [2, 1]);
 });
 
 test('v1 insert uses the supplied connection for write and readback', async () => {
   const pool = createPool();
-  const connection = createPool([
+  const connection = createConnection([
     { affectedRows: 1, insertId: 0 },
     [{ id: 3 }],
   ]);
@@ -408,7 +378,7 @@ test('v1 insert rejects missing data, ambiguous readback, and missing rows', asy
 
 test('v1 update preserves bound values, raw expressions, and connection selection', async () => {
   const pool = createPool();
-  const connection = createPool([{ affectedRows: 1, insertId: 0 }]);
+  const connection = createConnection([{ affectedRows: 1, insertId: 0 }]);
   const adapter = new MySQLAdapter({ pool });
   const Item = define(adapter, 'items', [
     { name: 'id', type: Type.Integer, primaryKey: true },
@@ -486,7 +456,7 @@ test('v1 mutation methods reject malformed driver results', async () => {
 
 test('v1 query mutations propagate errors from a supplied connection', async () => {
   const pool = createPool();
-  const connection = createPool([new Error('dummy update'), new Error('dummy delete')]);
+  const connection = createConnection([new Error('dummy update'), new Error('dummy delete')]);
   const adapter = new MySQLAdapter({ pool });
   const Item = define(adapter, 'items', [
     { name: 'id', type: Type.Integer, primaryKey: true },
@@ -501,8 +471,8 @@ test('v1 query mutations propagate errors from a supplied connection', async () 
 });
 
 test('v1 transactions release connections after begin, commit, rollback, and failures', async () => {
-  const events = [];
-  const connection = {
+  const events: string[] = [];
+  const connection = asConnection({
     async beginTransaction() {
       events.push('begin');
     },
@@ -516,9 +486,8 @@ test('v1 transactions release connections after begin, commit, rollback, and fai
     release() {
       events.push('release');
     },
-  };
-  const pool = createPool();
-  pool.getConnection = async () => connection;
+  });
+  const pool = createPool([], async () => connection);
   const adapter = new MySQLAdapter({ pool });
 
   assert.equal(await adapter.beginTransaction(), connection);
@@ -526,15 +495,16 @@ test('v1 transactions release connections after begin, commit, rollback, and fai
   await assert.rejects(adapter.rollback(connection), /rollback failed/);
   assert.deepEqual(events, ['begin', 'commit', 'release', 'rollback', 'release']);
 
-  const failedConnection = {
+  const failedConnection = asConnection({
     async beginTransaction() {
       throw new Error('begin failed');
     },
     release() {
       events.push('failed-release');
     },
-  };
-  pool.getConnection = async () => failedConnection;
-  await assert.rejects(adapter.beginTransaction(), /begin failed/);
+  });
+  const failedPool = createPool([], async () => failedConnection);
+  const failedAdapter = new MySQLAdapter({ pool: failedPool });
+  await assert.rejects(failedAdapter.beginTransaction(), /begin failed/);
   assert.equal(events.at(-1), 'failed-release');
 });
