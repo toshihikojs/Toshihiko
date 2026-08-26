@@ -1,47 +1,89 @@
 # Toshihiko Base Adapter
 
-[![Build Status](https://github.com/toshihikojs/base-adapter/actions/workflows/node.js.yml/badge.svg)](https://github.com/toshihikojs/base-adapter/actions)
-[![Coverage Status](https://coveralls.io/repos/github/toshihikojs/base-adapter/badge.svg?branch=master)](https://coveralls.io/github/toshihikojs/base-adapter?branch=master)
+[![CI](https://github.com/toshihikojs/base-adapter/actions/workflows/ci.yml/badge.svg?branch=v2)](https://github.com/toshihikojs/base-adapter/actions/workflows/ci.yml)
 
-Toshihiko Base Adapter is a TypeScript library for extending object properties and providing basic database adapter functionalities.
+The Promise-only, typed foundation for Toshihiko v2 database adapters.
 
 ## Installation
 
-Install the package using npm:
-
 ```bash
-npm install --save @toshihiko/base-adapter
+npm install @toshihiko/base-adapter toshihiko
 ```
 
-## Usage
+Node.js 22 or newer is required.
 
-### Extending Object Properties
+## Implementing an Adapter
 
-The `extend` function is used to extend the properties of an object.
+Define one type map for the database-specific options, query model, connection, and results. Every inherited operation returns a native Promise. Operations that are not overridden reject with `AdapterNotImplementedError`.
+
+```typescript
+import {
+  Adapter,
+  type AdapterFindOptions,
+  type AdapterQuery,
+  type AdapterRow,
+  type AdapterTypeMap,
+} from '@toshihiko/base-adapter';
+
+interface MyConnection {
+  query(sql: string, values?: readonly unknown[]): Promise<readonly AdapterRow[]>;
+}
+
+interface MyField {
+  readonly name: string;
+}
+
+interface MyModel {
+  readonly name: string;
+}
+
+interface MyAdapterTypes extends AdapterTypeMap {
+  readonly connection: MyConnection;
+  readonly executeArguments: readonly [sql: string, values?: readonly unknown[]];
+  readonly executeResult: readonly AdapterRow[];
+  readonly field: MyField;
+  readonly fieldValue: unknown;
+  readonly findResult: readonly AdapterRow[] | AdapterRow | null;
+  readonly insertResult: AdapterRow;
+  readonly mutationResult: { readonly affectedRows: number };
+  readonly options: { readonly database: string };
+  readonly query: AdapterQuery<MyModel>;
+}
+
+class MyAdapter extends Adapter<MyAdapterTypes> {
+  override async find(
+    query: MyAdapterTypes['query'],
+    options?: AdapterFindOptions,
+  ): Promise<MyAdapterTypes['findResult']> {
+    return options?.single ? null : [];
+  }
+
+  override getDBName(): string {
+    return this.options.database;
+  }
+}
+```
+
+The adapter constructor can then be passed directly to Toshihiko:
+
+```typescript
+import { Toshihiko } from 'toshihiko';
+
+const toshihiko = new Toshihiko(MyAdapter, { database: 'app' });
+```
+
+## Merging Options
+
+`extend` deep-merges plain own properties without mutating either input. Arrays and dates are cloned, and prototype-pollution keys are ignored.
 
 ```typescript
 import { extend } from '@toshihiko/base-adapter';
 
-const defaultOptions = { a: 1, b: { c: 2 } };
-const options = { b: { d: 3 }, e: 4 };
-const result = extend(defaultOptions, options);
+const defaults = { host: 'localhost', pool: { size: 10 } };
+const options = { pool: { size: 20 } };
 
-console.log(result);
-// Output: { a: 1, b: { c: 2, d: 3 }, e: 4 }
-```
-
-### Database Adapter
-
-The `Adapter` class provides basic database adapter functionalities.
-
-```typescript
-import { Adapter, AdapterOptions } from '@toshihiko/base-adapter';
-
-const options = { key: 'value' };
-const adapter = new Adapter<{ key: string }>(options);
-
-adapter.find({}, {}).catch(err => console.error(err.message));
-// Output: this adapter's find function is not implemented yet.
+const merged = extend(defaults, options);
+// { host: 'localhost', pool: { size: 20 } }
 ```
 
 ## Contributing

@@ -1,87 +1,158 @@
-import createDebug from 'debug';
 import { EventEmitter } from 'eventemitter3';
-import * as util from './util';
+import type {
+  AdapterFindOptions,
+  AdapterFindResult,
+  AdapterQuery,
+  AdapterRow,
+} from 'toshihiko';
+import { extend } from './util';
 
-const debug = createDebug('toshihiko:adapter:base');
-
-function createNextTickErrorPromise(message: string): Promise<any> {
-  return new Promise((_, reject) => {
-    process.nextTick(() => {
-      reject(new Error(message));
-    });
-  });
+export interface AdapterData<Field = unknown, Value = unknown> {
+  readonly field: Field;
+  readonly value: Value;
 }
 
-export class Adapter<AdapterOptions extends {}> extends EventEmitter {
-  options!: AdapterOptions;
+export interface AdapterTypeMap {
+  readonly connection: unknown;
+  readonly executeArguments: readonly unknown[];
+  readonly executeResult: unknown;
+  readonly field: unknown;
+  readonly fieldValue: unknown;
+  readonly findResult: AdapterFindResult;
+  readonly insertResult: AdapterRow | null;
+  readonly mutationResult: unknown;
+  readonly options: object;
+  readonly query: AdapterQuery;
+}
 
-  constructor(options: AdapterOptions) {
+export interface DefaultAdapterTypeMap extends AdapterTypeMap {
+  readonly connection: unknown;
+  readonly executeArguments: readonly unknown[];
+  readonly executeResult: unknown;
+  readonly field: unknown;
+  readonly fieldValue: unknown;
+  readonly findResult: AdapterFindResult;
+  readonly insertResult: AdapterRow | null;
+  readonly mutationResult: unknown;
+  readonly options: Readonly<Record<string, unknown>>;
+  readonly query: AdapterQuery;
+}
+
+type AdapterModel<Types extends AdapterTypeMap> =
+  Types['query'] extends AdapterQuery<infer Model> ? Model : unknown;
+
+export class AdapterNotImplementedError extends Error {
+  readonly method: string;
+
+  constructor(method: string) {
+    super(`this adapter's ${method} function is not implemented yet.`);
+    this.name = 'AdapterNotImplementedError';
+    this.method = method;
+  }
+}
+
+export class Adapter<
+  Types extends AdapterTypeMap = DefaultAdapterTypeMap,
+> extends EventEmitter {
+  readonly options: Types['options'];
+
+  constructor(options?: Types['options'] | null) {
     super();
-
-    Object.defineProperties(this, {
-      options: {
-        value: util.extend({}, options || {}),
-        writable: true,
-        configurable: false,
-        enumerable: true,
-      },
-    });
-
-    debug('created.', this);
+    this.options = copyOptions(options);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async find(query: any, options: any = null): Promise<any> {
-    return createNextTickErrorPromise("this adapter's find function is not implemented yet.");
+  async find(
+    query: Types['query'],
+    options?: AdapterFindOptions,
+  ): Promise<Types['findResult']> {
+    void query;
+    void options;
+    return this.notImplemented('find');
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async count(query: any): Promise<number> {
-    return createNextTickErrorPromise("this adapter's count function is not implemented yet.");
+  async count(query: Types['query']): Promise<number> {
+    void query;
+    return this.notImplemented('count');
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async updateByQuery(query: any): Promise<any> {
-    return createNextTickErrorPromise("this adapter's updateByQuery function is not implemented yet.");
+  async updateByQuery(
+    query: Types['query'],
+  ): Promise<Types['mutationResult']> {
+    void query;
+    return this.notImplemented('updateByQuery');
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async deleteByQuery(query: any): Promise<any> {
-    return createNextTickErrorPromise("this adapter's deleteByQuery function is not implemented yet.");
+  async deleteByQuery(
+    query: Types['query'],
+  ): Promise<Types['mutationResult']> {
+    void query;
+    return this.notImplemented('deleteByQuery');
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async insert(model: any, conn: any, data: any): Promise<any> {
-    return createNextTickErrorPromise("this adapter's insert function is not implemented yet.");
+  async insert(
+    model: AdapterModel<Types>,
+    connection: Types['connection'] | null,
+    data: readonly AdapterData<Types['field'], Types['fieldValue']>[],
+  ): Promise<Types['insertResult']> {
+    void model;
+    void connection;
+    void data;
+    return this.notImplemented('insert');
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async update(model: any, conn: any, pk: any, data: any): Promise<any> {
-    return createNextTickErrorPromise("this adapter's update function is not implemented yet.");
+  async update(
+    model: AdapterModel<Types>,
+    connection: Types['connection'] | null,
+    primaryKey: Readonly<Record<string, unknown>>,
+    data: readonly AdapterData<Types['field'], Types['fieldValue']>[],
+  ): Promise<Types['mutationResult']> {
+    void model;
+    void connection;
+    void primaryKey;
+    void data;
+    return this.notImplemented('update');
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async execute(...args: any[]): Promise<any> {
-    return createNextTickErrorPromise("this adapter's execute function is not implemented yet.");
+  async execute(
+    ...arguments_: Types['executeArguments']
+  ): Promise<Types['executeResult']> {
+    void arguments_;
+    return this.notImplemented('execute');
   }
 
   getDBName(): string {
     return '';
   }
 
-  async beginTransaction(): Promise<any> {
-    return createNextTickErrorPromise("this adapter's beginTransaction function is not implemented yet.");
+  async beginTransaction(): Promise<Types['connection']> {
+    return this.notImplemented('beginTransaction');
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async commit(conn: any): Promise<any> {
-    return createNextTickErrorPromise("this adapter's commit function is not implemented yet.");
+  async commit(connection: Types['connection']): Promise<void> {
+    void connection;
+    return this.notImplemented('commit');
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async rollback(conn: any): Promise<any> {
-    return createNextTickErrorPromise("this adapter's rollback function is not implemented yet.");
+  async rollback(connection: Types['connection']): Promise<void> {
+    void connection;
+    return this.notImplemented('rollback');
+  }
+
+  protected notImplemented(method: string): never {
+    throw new AdapterNotImplementedError(method);
   }
 }
 
-export { extend } from './util';
+function copyOptions<Options extends object>(
+  options: Options | null | undefined,
+): Options {
+  return { ...(options ?? {}) } as Options;
+}
+
+export { extend };
+export type {
+  AdapterFindOptions,
+  AdapterFindResult,
+  AdapterQuery,
+  AdapterRow,
+};
