@@ -6,13 +6,13 @@
  */
 "use strict";
 
+const fs = require("fs");
 const path = require("path");
 
 const async = require("async");
 const chalk = require("chalk");
 const decache = require("decache");
 const otrans = require("otrans");
-const runSync = require("sync-runner");
 const should = require("should");
 
 const Adapter = require("../../lib/adapters/base");
@@ -143,10 +143,16 @@ describe("🐣 adapters/mysql", function() {
                 decache("mysql2");
                 decache("../../lib/adapters/mysql");
                 const MySQLAdapter_ = require("../../lib/adapters/mysql");
-                runSync("mv node_modules/mysql2 node_modules/mysql2.bak", path.resolve(__dirname, "../../"));
+                const mysql2Path = path.resolve(__dirname, "../../node_modules/mysql2");
+                const backupPath = `${mysql2Path}.bak`;
+                fs.renameSync(mysql2Path, backupPath);
 
-                const adapter = new MySQLAdapter_({}, {});
-                runSync("mv node_modules/mysql2.bak node_modules/mysql2", path.resolve(__dirname, "../../"));
+                let adapter;
+                try {
+                    adapter = new MySQLAdapter_({}, {});
+                } finally {
+                    fs.renameSync(backupPath, mysql2Path);
+                }
 
                 const Pool = require("mysql/lib/Pool");
                 adapter.mysql.should.be.instanceof(Pool);

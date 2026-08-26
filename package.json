@@ -35,7 +35,6 @@
     "mysql": "^2.15.0",
     "mysql2": "^2.0.0",
     "should": "13.2.2",
-    "sync-runner": "^1.0.0",
     "toshihiko-memcached": "^1.0.1",
     "toshihiko-redis": "0.0.8",
     "typescript": "^5.5.4",
