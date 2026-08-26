@@ -121,7 +121,7 @@ export class Model<
     this.ai = autoIncrementField;
     this.nameToColumn = nameToColumn as NameToColumnMap<Schema>;
     this.columnToName = columnToName;
-    this.fieldNamesMap = fieldNamesMap as FieldNamesMap<Schema>;
+    this.fieldNamesMap = fieldNamesMap as unknown as FieldNamesMap<Schema>;
   }
 
   build<const Input extends BuildInput<Schema>>(

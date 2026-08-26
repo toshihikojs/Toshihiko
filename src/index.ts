@@ -6,8 +6,10 @@ export type { FieldName, RowShape } from './contracts/common';
 export type {
   Field,
   FieldDefinition,
+  FieldDefinitionJsonValue,
   FieldType,
   FieldValidator,
+  JsonRowFromSchema,
   PrimaryKeyNames,
   RowFromSchema,
   SchemaDefinition,

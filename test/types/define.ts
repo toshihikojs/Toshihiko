@@ -105,9 +105,11 @@ const partialUser = User.build({
 });
 const optionalBirthday: Date | null | undefined = partialUser.birthday;
 const validation: Promise<void> = Validated.build({ score: 1 }).validateAll();
+const serializedBirthday: string | null | undefined = user.toJSON().birthday;
 
 void optionalBirthday;
 void validation;
+void serializedBirthday;
 
 // @ts-expect-error build() preserves FieldType value types.
 User.build({ id: '1' });

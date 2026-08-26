@@ -4,6 +4,7 @@ const assert = require('node:assert/strict');
 const test = require('node:test');
 
 const { Toshihiko, Type } = require('../..');
+const { Yukari } = require('../../dist/yukari.js');
 
 test('define compiles the documented schema into model metadata', () => {
   const toshihiko = new Toshihiko('mysql', { database: 'toshihiko' });
@@ -145,5 +146,89 @@ test('Yukari validation rejects nulls and synchronous validators', async () => {
   await assert.rejects(
     User.build({ legacy: 'value' }).validateAll(),
     /must return a Promise/,
+  );
+});
+
+test('Yukari restores database columns without applying build defaults', () => {
+  const toshihiko = new Toshihiko('mysql');
+  const User = toshihiko.define('user', [
+    { name: 'id', column: 'user_id', type: Type.Integer },
+    { name: 'name', type: Type.String, default: 'anonymous' },
+    { name: 'settings', type: Type.Json },
+    {
+      name: 'createdAt',
+      column: 'created_at',
+      type: Type.Datetime,
+    },
+  ]);
+  const yukari = new Yukari(User, 'query');
+
+  yukari.fillRowFromSource({
+    user_id: '7',
+    settings: '{"theme":"dark"}',
+    created_at: '2026-08-26T01:02:03.000Z',
+  }, true);
+
+  assert.equal(yukari.id, 7);
+  assert.equal(yukari.name, undefined);
+  assert.deepEqual(yukari.settings, { theme: 'dark' });
+  assert.equal(yukari.createdAt.toISOString(), '2026-08-26T01:02:03.000Z');
+  assert.equal(yukari.fieldIndex('id'), 0);
+  assert.equal(yukari.fieldIndex('name'), -1);
+  assert.deepEqual(yukari.changes(), []);
+});
+
+test('Yukari serializes current and original rows and extracts changes', () => {
+  const toshihiko = new Toshihiko('mysql');
+  const User = toshihiko.define('user', [
+    { name: 'id', column: 'user_id', type: Type.Integer },
+    { name: 'settings', type: Type.Json },
+    {
+      name: 'createdAt',
+      column: 'created_at',
+      type: Type.Datetime,
+      allowNull: true,
+    },
+  ]);
+  const yukari = new Yukari(User, 'query');
+  yukari.fillRowFromSource({
+    user_id: '7',
+    settings: '{"theme":"dark"}',
+    created_at: '2026-08-26T01:02:03.000Z',
+  }, true);
+
+  yukari.id = 8;
+  yukari.settings.theme = 'light';
+
+  assert.deepEqual(yukari.toJSON(), {
+    id: 8,
+    settings: { theme: 'light' },
+    createdAt: '2026-08-26T01:02:03.000Z',
+  });
+  assert.deepEqual(yukari.toJSON(true), {
+    id: 7,
+    settings: { theme: 'dark' },
+    createdAt: '2026-08-26T01:02:03.000Z',
+  });
+
+  yukari.createdAt = null;
+  assert.deepEqual(
+    yukari.changes().map(({ field, value }) => ({ name: field.name, value })),
+    [
+      { name: 'id', value: 8 },
+      { name: 'settings', value: { theme: 'light' } },
+      { name: 'createdAt', value: null },
+    ],
+  );
+  assert.deepEqual(
+    Yukari.extractAdapterData(User, yukari).map(({ field, value }) => ({
+      name: field.name,
+      value,
+    })),
+    [
+      { name: 'id', value: 8 },
+      { name: 'settings', value: { theme: 'light' } },
+      { name: 'createdAt', value: null },
+    ],
   );
 });

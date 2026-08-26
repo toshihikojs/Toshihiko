@@ -12,7 +12,11 @@ const User = toshihiko.define('user', [
 const user = User.build({ id: 1, name: 'Alice' });
 const id: number = user.id;
 const name: string = user.name;
+const json = user.toJSON();
+const jsonId: number | undefined = json.id;
 
 void user;
 void id;
 void name;
+void json;
+void jsonId;

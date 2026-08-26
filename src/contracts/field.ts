@@ -73,6 +73,21 @@ export type FieldDefinitionValue<Definition extends FieldDefinitionShape> =
   | FieldTypeValue<FieldTypeFromDefinition<Definition>>
   | NullableValue<Definition>;
 
+export type FieldDefinitionJsonValue<Definition extends FieldDefinitionShape> =
+  null extends FieldDefinitionValue<Definition>
+    ? FieldTypeJsonValue<FieldTypeFromDefinition<Definition>> | null
+    : FieldTypeJsonValue<FieldTypeFromDefinition<Definition>>;
+
+type FieldTypeJsonValue<Type extends FieldTypeLike> =
+  Type extends { toJSON(value: never): infer JsonValue }
+    ? JsonValue
+    : FieldTypeValue<Type>;
+
+export type JsonRowFromSchema<Schema extends SchemaDefinition> = {
+  [Definition in Schema[number] as Definition['name']]:
+    FieldDefinitionJsonValue<Definition>;
+};
+
 export type ValidatedFieldDefinition<Definition extends FieldDefinitionShape> = Omit<
   Definition,
   'default' | 'defaultValue' | 'validators'
@@ -145,6 +160,33 @@ export class Field<
     }
 
     return this.type.restore(value as never);
+  }
+
+  equal(
+    left: FieldDefinitionValue<Definition>,
+    right: FieldDefinitionValue<Definition>,
+  ): boolean {
+    if (left === null || right === null) {
+      return left === right;
+    }
+
+    const type = this.type as FieldTypeLike;
+    if (type.equal === undefined) {
+      return left === right;
+    }
+
+    return type.equal(left as never, right as never);
+  }
+
+  toJSON(
+    value: FieldDefinitionValue<Definition>,
+  ): FieldDefinitionJsonValue<Definition> {
+    const type = this.type as FieldTypeLike;
+    if (value === null || type.toJSON === undefined) {
+      return value as FieldDefinitionJsonValue<Definition>;
+    }
+
+    return type.toJSON(value as never) as FieldDefinitionJsonValue<Definition>;
   }
 }
 
