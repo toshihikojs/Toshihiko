@@ -99,13 +99,11 @@ module.exports = function(name, options) {
         });
 
         it("should throw error with no update", function() {
-            try {
+            should.throws(function() {
                 adapter.makeUpdate(model, {
                     where: { key1: 123 }
                 });
-            } catch(e) {
-                e.message.should.equal("no set data.");
-            }
+            }, /no set data\./);
         });
     });
 
@@ -435,9 +433,10 @@ module.exports = function(name, options) {
             }
         });
     
-        after(function() {
-            model.cache.memcached.flush(function() {
-                adapter.mysql.end();
+        after(function(done) {
+            model.cache.memcached.flush(function(err) {
+                should.ifError(err);
+                adapter.mysql.end(done);
             });
         });
 

@@ -288,9 +288,10 @@ module.exports = function(name, options) {
                 }
             });
 
-            after(function() {
-                model.cache.memcached.flush(function() {
-                    adapter.mysql.end();
+            after(function(done) {
+                model.cache.memcached.flush(function(err) {
+                    should.ifError(err);
+                    adapter.mysql.end(done);
                 });
             });
 

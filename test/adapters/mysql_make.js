@@ -8,6 +8,7 @@
 
 const moment = require("moment");
 const Mock = require("mockjs");
+const should = require("should");
 
 const common = require("../util/common");
 const Toshihiko = require("../../lib/toshihiko");
@@ -198,12 +199,9 @@ module.exports = function(name, options) {
         });
 
         it("should generate - 3", function() {
-            try {
+            should.throws(function() {
                 adapter.makeFieldWhere(model, "fsdaklj", 1, "or");
-            } catch(e) {
-                e.should.be.instanceof(Error);
-                e.message.indexOf("no field named").should.above(-1);
-            }
+            }, /no field named/);
         });
     });
 
@@ -362,11 +360,9 @@ module.exports = function(name, options) {
             sql = adapter.makeOrder(model, [ {} ]);
             sql.should.equal("");
 
-            try {
+            should.throws(function() {
                 sql = adapter.makeOrder(model, [ { id: -1 } ]);
-            } catch(e) {
-                e.message.indexOf("no field").should.above(-1);
-            }
+            }, /no field/);
         });
     });
 

@@ -192,13 +192,15 @@ describe("🐣 adapters/mysql", function() {
 
     [ "mysql", "mysql2" ].forEach(name => {
         describe(name, function() {
+            const driverOptions = require("../../util/common").extend({}, correctOptions);
+            driverOptions.package = name;
+
             before(function(done) {
-                const options = require("../../util/common").extend({}, correctOptions);
-                options.package = name;
-                const adapter = new MySQLAdapter({}, options);
+                const adapter = new MySQLAdapter({}, driverOptions);
 
                 const Pool = require(name === "mysql" ? "mysql/lib/Pool" : "../../node_modules/mysql2/lib/pool");
                 adapter.mysql.should.be.instanceof(Pool);
+                adapter.package.should.equal(name);
 
                 adapter.execute("DROP TABLE IF EXISTS `test1`, `test2`;", function(err) {
                     should.ifError(err);
@@ -213,10 +215,10 @@ describe("🐣 adapters/mysql", function() {
             });
 
             describe(`${name} execute`, function() {
-                const adapter = new MySQLAdapter({}, correctOptions);
+                const adapter = new MySQLAdapter({}, driverOptions);
 
-                after(function() {
-                    adapter.mysql.end();
+                after(function(done) {
+                    adapter.mysql.end(done);
                 });
 
                 it("should execute `create table`", function(done) {
@@ -261,7 +263,7 @@ describe("🐣 adapters/mysql", function() {
             });
 
             describe(`${name} transaction`, function() {
-                const adapter = new MySQLAdapter({}, correctOptions);
+                const adapter = new MySQLAdapter({}, driverOptions);
                 let conn;
 
                 before(function(done) {
@@ -274,8 +276,7 @@ describe("🐣 adapters/mysql", function() {
                 after(function(done) {
                     adapter.execute("drop table test", function(err) {
                         should.ifError(err);
-                        adapter.mysql.end();
-                        done();
+                        adapter.mysql.end(done);
                     });
                 });
 
@@ -336,7 +337,7 @@ describe("🐣 adapters/mysql", function() {
             describe("show sql", function() {
                 it("should use a certain logger", function(done) {
                     let logged = false;
-                    const adapter = new MySQLAdapter({}, Object.assign({}, correctOptions, {
+                    const adapter = new MySQLAdapter({}, Object.assign({}, driverOptions, {
                         database: "mysql",
                         showSql: function(sql) {
                             sql.should.equal("HELLO WORLD");
@@ -345,7 +346,7 @@ describe("🐣 adapters/mysql", function() {
                     }));
                     adapter.execute("HELLO WORLD", function(err) {
                         err.message.indexOf("HELLO WORLD").should.not.equal(-1);
-                        if(logged) done();
+                        if(logged) adapter.mysql.end(done);
                     });
                 });
             });
@@ -364,7 +365,7 @@ describe("🐣 adapters/mysql", function() {
                         _conn: conn
                     };
 
-                    const adapter = new MySQLAdapter({}, correctOptions);
+                    const adapter = new MySQLAdapter({}, driverOptions);
                     const _options = adapter.queryToOptions(query, options);
 
                     _options.should.deepEqual({
@@ -379,15 +380,15 @@ describe("🐣 adapters/mysql", function() {
                     });
 
                     _options.conn.should.equal(conn);
-                    done();
+                    adapter.mysql.end(done);
                 });
             });
 
-            require("./mysql_insert")(name, correctOptions);
-            require("./mysql_make")(name, correctOptions);
-            require("./mysql_find")(name, correctOptions);
-            require("./mysql_update")(name, correctOptions);
-            require("./mysql_delete")(name, correctOptions);
+            require("./mysql_insert")(name, driverOptions);
+            require("./mysql_make")(name, driverOptions);
+            require("./mysql_find")(name, driverOptions);
+            require("./mysql_update")(name, driverOptions);
+            require("./mysql_delete")(name, driverOptions);
         });
     });
 });

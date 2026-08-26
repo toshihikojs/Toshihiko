@@ -8,8 +8,8 @@
 
 const Type = require("../../lib/field_type");
 
-process.on("unhandledRejection", function() {
-    // ... do nothing
+process.on("unhandledRejection", function(err) {
+    throw err;
 });
 
 module.exports = {

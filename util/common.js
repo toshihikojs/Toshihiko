@@ -82,6 +82,11 @@ common.promisify = function(callback) {
         reject = _reject;
     });
 
+    // Callback users handle errors through the callback. Keep the returned
+    // promise observable without reporting the same error as unhandled when
+    // that promise is intentionally ignored.
+    if(typeof callback === "function") q.suppressUnhandledRejections();
+
     // let it be compitable with 0.9
     q.$promise = q;
 

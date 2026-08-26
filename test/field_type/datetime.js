@@ -26,8 +26,9 @@ module.exports = function() {
         });
 
         it("equal", function() {
-            Datetime.equal(date, "2016-10-13 17:37:00");
-            Datetime.equal(date, moment("2016-10-13 17:37:00"));
+            Datetime.equal(date, "2016-10-13 17:37:00").should.equal(true);
+            Datetime.equal(date, moment("2016-10-13 17:37:00")).should.equal(true);
+            Datetime.equal(date, "2016-10-13 17:38:00").should.equal(false);
         });
 
         it("toJSON", function() {

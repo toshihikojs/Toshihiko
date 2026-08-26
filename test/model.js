@@ -8,7 +8,6 @@
 
 const should = require("should");
 
-const hack = require("./util/hack");
 const Model = require("../lib/model");
 const Query = require("../lib/query");
 const Toshihiko = require("../lib/toshihiko");
@@ -72,14 +71,8 @@ describe("🐣 model", function() {
             });
         });
 
-        it("should define without", function() {
-            const toshihiko = new Toshihiko("base", {
-                cache: {
-                    module: require("./util/cache"),
-                    foo: 1,
-                    bar: 2
-                }
-            });
+        it("should define without cache", function() {
+            const toshihiko = new Toshihiko("base");
             const model = new Model("name", toshihiko, [
                 { name: "key1" }
             ]);
@@ -93,10 +86,7 @@ describe("🐣 model", function() {
                     column: "key1",
                     primaryKey: false
                 }],
-                cache: {
-                    foo: 1,
-                    bar: 2
-                }
+                cache: null
             });
 
             model.toshihiko.should.equal(toshihiko);
@@ -241,28 +231,50 @@ describe("🐣 model", function() {
     });
 
     describe("transaction", function() {
+        const adapter = model.parent.adapter;
+        const beginTransaction = adapter.beginTransaction;
+        const commit = adapter.commit;
+        const rollback = adapter.rollback;
+
+        afterEach(function() {
+            adapter.beginTransaction = beginTransaction;
+            adapter.commit = commit;
+            adapter.rollback = rollback;
+        });
+
         it("should begin transaction", function() {
-            hack.hackAsyncReturn(model.parent.adapter, "beginTransaction", [ undefined, { foo: "bar" }]);
-            model.beginTransaction(function(err, conn) {
-                should.ifError(err);
-                conn.should.deepEqual({ foo: "bar" });
-            });
+            const conn = { foo: "bar" };
+            adapter.beginTransaction = function(callback) {
+                process.nextTick(function() {
+                    callback(undefined, conn);
+                });
+            };
+
+            return model.beginTransaction().should.eventually.equal(conn);
         });
 
         it("should commit", function() {
-            hack.hackAsyncReturn(model.parent.adapter, "commit", [ undefined, { foo: "bar" }]);
-            model.commit(function(err, conn) {
-                should.ifError(err);
-                conn.should.deepEqual({ foo: "bar" });
-            });
+            const conn = { foo: "bar" };
+            adapter.commit = function(_conn, callback) {
+                _conn.should.equal(conn);
+                process.nextTick(function() {
+                    callback();
+                });
+            };
+
+            return model.commit(conn).should.be.fulfilled();
         });
 
         it("should rollback", function() {
-            hack.hackAsyncReturn(model.parent.adapter, "rollback", [ undefined, { foo: "bar" }]);
-            model.rollback(function(err, conn) {
-                should.ifError(err);
-                conn.should.deepEqual({ foo: "bar" });
-            });
+            const conn = { foo: "bar" };
+            adapter.rollback = function(_conn, callback) {
+                _conn.should.equal(conn);
+                process.nextTick(function() {
+                    callback();
+                });
+            };
+
+            return model.rollback(conn).should.be.fulfilled();
         });
     });
 });
