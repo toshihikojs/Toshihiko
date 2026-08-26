@@ -1,0 +1,59 @@
+{
+  "name": "@toshihiko/mysql-adapter",
+  "version": "2.0.0-alpha.0",
+  "description": "Promise-only MySQL adapter for Toshihiko v2.",
+  "type": "commonjs",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "author": "XadillaX <i@2333.moe>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/toshihikojs/mysql-adapter.git"
+  },
+  "bugs": {
+    "url": "https://github.com/toshihikojs/mysql-adapter/issues"
+  },
+  "homepage": "https://github.com/toshihikojs/mysql-adapter#readme",
+  "engines": {
+    "node": ">=22"
+  },
+  "peerDependencies": {
+    "@toshihiko/base-adapter": ">=2.0.0-alpha.0 <3",
+    "toshihiko": ">=2.0.0-alpha.0 <3"
+  },
+  "dependencies": {
+    "@toshihiko/sql-utils": "^1.1.1",
+    "mysql2": "^3.24.2"
+  },
+  "devDependencies": {
+    "@toshihiko/base-adapter": "file:../base-adapter",
+    "@types/node": "^22.0.0",
+    "toshihiko": "file:../Toshihiko",
+    "typescript": "^5.9.3"
+  },
+  "scripts": {
+    "build": "npm run clean && tsc -p tsconfig.build.json",
+    "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
+    "test": "npm run typecheck && npm run build && npm run test:unit && npm run test:package",
+    "test:unit": "node --test test/unit/*.test.cjs",
+    "test:package": "tsc -p test/package/tsconfig.json && node --test test/package/runtime.test.cjs",
+    "test:integration": "node --test test/integration/*.test.cjs",
+    "typecheck": "tsc -p tsconfig.json",
+    "validate": "npm ls",
+    "prepublishOnly": "npm test"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}
