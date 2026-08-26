@@ -7,7 +7,18 @@ import {
   type MySQLQueryResult,
   type MySQLStatement,
 } from '../..';
-import { Toshihiko, Type } from 'toshihiko';
+import { Toshihiko, Type, type FieldType } from 'toshihiko';
+
+const BinaryType = {
+  name: 'Binary',
+  needQuotes: false,
+  parse(value: string) {
+    return { dec: Number.parseInt(value, 2) };
+  },
+  restore(value: { readonly dec: number }) {
+    return `BIN(${value.dec})`;
+  },
+} satisfies FieldType<{ readonly dec: number }, string>;
 
 const options: MySQLAdapterOptions = {
   database: 'typed',
@@ -18,6 +29,9 @@ const toshihiko = new Toshihiko(MySQLAdapter, options);
 const User = toshihiko.define('users', [
   { name: 'id', column: 'user_id', type: Type.Integer, primaryKey: true },
   { name: 'name', type: Type.String },
+]);
+const Binary = toshihiko.define('binary_values', [
+  { name: 'value', type: BinaryType },
 ]);
 
 User.find(true).then((rows) => {
@@ -30,6 +44,9 @@ User.find(true).then((rows) => {
 const adapter = new MySQLAdapter(options);
 const statement: MySQLStatement = new MySQLSqlBuilder().compileFind(User, {
   where: { id: 1 },
+});
+const rawStatement: MySQLStatement = new MySQLSqlBuilder().compileSet(Binary, {
+  value: { dec: 7 },
 });
 const database: string = adapter.database;
 const pending: Promise<MySQLQueryResult> = adapter.execute('SELECT ?', [1]);
@@ -45,6 +62,7 @@ const updated: Promise<MySQLMutationResult> = adapter.update(User, null, { id: 1
 
 void database;
 void statement;
+void rawStatement;
 void pending;
 void transaction;
 void counted;

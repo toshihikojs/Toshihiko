@@ -34,6 +34,9 @@ export interface MySQLField {
   readonly column: string;
   readonly name: string;
   readonly primaryKey: boolean;
+  readonly type?: {
+    readonly needQuotes?: boolean;
+  };
   restore(value: unknown): unknown;
 }
 

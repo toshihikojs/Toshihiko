@@ -173,7 +173,7 @@ export class MySQLSqlBuilder {
         continue;
       }
       const field = getField(model, key);
-      fragments.push(`${quoteIdentifier(field.column)} ${entry[key] === 1 ? 'ASC' : 'DESC'}`);
+      fragments.push(`${quoteIdentifier(field.column)} ${Number(entry[key]) > 0 ? 'ASC' : 'DESC'}`);
     }
     return fragments.join(', ');
   }
@@ -214,6 +214,16 @@ export class MySQLSqlBuilder {
       });
     }
     return joinStatements(assignments, ', ');
+  }
+
+  compileValue(field: MySQLField, value: unknown): MySQLStatement {
+    if (value === null) {
+      if (!field.allowNull) {
+        throw new TypeError(`field "${field.name}" does not allow null.`);
+      }
+      return statement('NULL');
+    }
+    return this.compileRestoredValue(field, value);
   }
 
   makeFind(model: MySQLModel, options: MySQLQueryOptions = {}): string {
@@ -331,21 +341,20 @@ export class MySQLSqlBuilder {
       if (!Array.isArray(operand) || operand.length === 0) {
         throw new TypeError('$in requires a non-empty array.');
       }
-      const values = operand.map((value) => this.restore(field, value));
-      return {
-        sql: `${column} IN (${values.map(() => '?').join(', ')})`,
-        values,
-      };
+      const values = operand.map((value) => this.compileRestoredValue(field, value));
+      const compiled = joinStatements(values, ', ');
+      return { sql: `${column} IN (${compiled.sql})`, values: compiled.values };
     }
 
     if (symbol === 'BETWEEN') {
       if (!Array.isArray(operand) || operand.length !== 2) {
         throw new TypeError('$between requires exactly two values.');
       }
-      return {
-        sql: `${column} BETWEEN ? AND ?`,
-        values: [this.restore(field, operand[0]), this.restore(field, operand[1])],
-      };
+      const compiled = joinStatements([
+        this.compileRestoredValue(field, operand[0]),
+        this.compileRestoredValue(field, operand[1]),
+      ], ' AND ');
+      return { sql: `${column} BETWEEN ${compiled.sql}`, values: compiled.values };
     }
 
     const logicalValues = splitLogicalValues(operand);
@@ -377,16 +386,21 @@ export class MySQLSqlBuilder {
     if ((symbol === '=' || symbol === '!=') && value === null) {
       return statement(`${column} IS ${symbol === '=' ? 'NULL' : 'NOT NULL'}`);
     }
-    return { sql: `${column} ${symbol} ?`, values: [this.restore(field, value)] };
+    const compiled = this.compileRestoredValue(field, value);
+    return {
+      sql: `${column} ${symbol} ${compiled.sql}`,
+      values: compiled.values,
+    };
   }
 
   private compileEquality(field: MySQLField, value: unknown): MySQLStatement {
     if (value === null) {
       return statement(`${quoteIdentifier(field.column)} IS NULL`);
     }
+    const compiled = this.compileRestoredValue(field, value);
     return {
-      sql: `${quoteIdentifier(field.column)} = ?`,
-      values: [this.restore(field, value)],
+      sql: `${quoteIdentifier(field.column)} = ${compiled.sql}`,
+      values: compiled.values,
     };
   }
 
@@ -405,11 +419,22 @@ export class MySQLSqlBuilder {
     if (isRawExpression(value)) {
       return statement(sqlNameToColumn(value.slice(2, -2), completeNameToColumn(model)));
     }
-    return { sql: '?', values: [this.restore(field, value)] };
+    return this.compileRestoredValue(field, value);
   }
 
   private restore(field: MySQLField, value: unknown): unknown {
     return field.restore(value);
+  }
+
+  private compileRestoredValue(
+    field: MySQLField,
+    value: unknown,
+  ): MySQLStatement {
+    const restored = this.restore(field, value);
+    if (field.type?.needQuotes === false && typeof restored === 'string') {
+      return statement(restored);
+    }
+    return { sql: '?', values: [restored] };
   }
 
   private compileWhereClause(

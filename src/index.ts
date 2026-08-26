@@ -118,18 +118,20 @@ export class MySQLAdapter extends Adapter<MySQLAdapterOptions> {
     }
 
     const primaryValues: Record<string, unknown> = {};
-    const values: unknown[] = [];
-    const assignments = data.map((entry) => {
-      const value = restoreFieldValue(entry.field, entry.value);
+    const assignments: MySQLStatement[] = data.map((entry) => {
       if (entry.field.primaryKey || model.primaryKeys.length === 0) {
         primaryValues[entry.field.name] = entry.value;
       }
-      values.push(value);
-      return `${quoteIdentifier(entry.field.column)} = ?`;
+      const compiled = this.builder.compileValue(entry.field, entry.value);
+      return {
+        sql: `${quoteIdentifier(entry.field.column)} = ${compiled.sql}`,
+        values: compiled.values,
+      };
     });
-    const sql = `INSERT INTO ${quoteIdentifier(model.name)} SET ${assignments.join(', ')}`;
+    const insertSet = joinStatements(assignments, ', ');
+    const sql = `INSERT INTO ${quoteIdentifier(model.name)} SET ${insertSet.sql}`;
     const mutation = assertMutationResult(
-      await this.execute(connection, sql, values),
+      await this.execute(connection, sql, insertSet.values),
       'insert',
     );
 
@@ -193,7 +195,9 @@ export class MySQLAdapter extends Adapter<MySQLAdapterOptions> {
     this.showSql?.(sqlForLog);
 
     const target = parsed.connection ?? this.mysql;
-    const [result] = parsed.values === undefined || !Array.isArray(parsed.values)
+    const [result] = parsed.values === undefined
+      || !Array.isArray(parsed.values)
+      || parsed.sql.includes('??')
       ? await target.query<QueryResult>(
         parsed.sql,
         parsed.values === undefined
@@ -353,7 +357,16 @@ export class MySQLAdapter extends Adapter<MySQLAdapterOptions> {
     model: MySQLModel,
     options?: MySQLQueryOptions,
   ): string {
-    return this.builder.makeSql(type, model, options);
+    switch (type) {
+      case 'count':
+        return this.makeFind(model, { ...options, count: true });
+      case 'delete':
+        return this.makeDelete(model, options);
+      case 'update':
+        return this.makeUpdate(model, options);
+      default:
+        return this.makeFind(model, options);
+    }
   }
 }
 
@@ -395,13 +408,15 @@ function sanitizePublicOptions(
 ): MySQLAdapterOptions {
   const {
     database: _database,
+    host = 'localhost',
     password: _password,
     pool: _pool,
+    port = 3306,
     user: _user,
     username: _username,
     ...publicOptions
   } = options;
-  return publicOptions;
+  return { ...publicOptions, host, port };
 }
 
 function normalizeShowSql(
@@ -480,16 +495,6 @@ function assertMutationResult(
   return result as ResultSetHeader;
 }
 
-function restoreFieldValue(field: MySQLField, value: unknown): unknown {
-  if (value === null) {
-    if (!field.allowNull) {
-      throw new TypeError(`field "${field.name}" does not allow null.`);
-    }
-    return null;
-  }
-  return field.restore(value);
-}
-
 function resolveInsertedRowWhere(
   model: MySQLModel,
   primaryValues: Readonly<Record<string, unknown>>,
@@ -518,6 +523,16 @@ function resolveInsertedRowWhere(
 
 function quoteIdentifier(identifier: string): string {
   return `\`${identifier.replaceAll('`', '``')}\``;
+}
+
+function joinStatements(
+  statements: readonly MySQLStatement[],
+  separator: string,
+): MySQLStatement {
+  return {
+    sql: statements.map((statement) => statement.sql).join(separator),
+    values: statements.flatMap((statement) => statement.values),
+  };
 }
 
 export { MySQLSqlBuilder } from './sql-builder';
