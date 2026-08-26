@@ -1,7 +1,9 @@
 import type { FieldName } from './common';
+import { Yukari, type BuiltYukari } from '../yukari';
 import {
   Field,
   type FieldDefinitionShape,
+  type FieldTypeFromDefinition,
   type PrimaryKeyNames,
   type RowFromSchema,
   type SchemaDefinition,
@@ -32,6 +34,34 @@ export type NameToColumnMap<Schema extends SchemaDefinition> = {
 export type FieldNamesMap<Schema extends SchemaDefinition> = {
   readonly [Definition in Schema[number] as Definition['name']]: Field<Definition>;
 };
+
+export type BuildInput<Schema extends SchemaDefinition> = Partial<RowFromSchema<Schema>>;
+
+type DefaultedDefinition<Definition extends FieldDefinitionShape> =
+  Definition extends { readonly default: unknown } | { readonly defaultValue: unknown }
+    ? Definition
+    : FieldTypeFromDefinition<Definition> extends { readonly defaultValue: unknown }
+      ? Definition
+      : never;
+
+type DefaultedFieldNames<Schema extends SchemaDefinition> =
+  DefaultedDefinition<Schema[number]>['name'];
+
+type KnownBuiltFieldNames<
+  Schema extends SchemaDefinition,
+  Input extends BuildInput<Schema>,
+> = Extract<keyof Input | DefaultedFieldNames<Schema>, keyof RowFromSchema<Schema>>;
+
+export type BuiltRowFromSchema<
+  Schema extends SchemaDefinition,
+  Input extends BuildInput<Schema>,
+> = Pick<RowFromSchema<Schema>, KnownBuiltFieldNames<Schema, Input>>
+  & Partial<Omit<RowFromSchema<Schema>, KnownBuiltFieldNames<Schema, Input>>>;
+
+type NoUnknownBuildFields<
+  Schema extends SchemaDefinition,
+  Input extends BuildInput<Schema>,
+> = Input & Record<Exclude<keyof Input, keyof RowFromSchema<Schema>>, never>;
 
 export class Model<
   Name extends string,
@@ -92,6 +122,14 @@ export class Model<
     this.nameToColumn = nameToColumn as NameToColumnMap<Schema>;
     this.columnToName = columnToName;
     this.fieldNamesMap = fieldNamesMap as FieldNamesMap<Schema>;
+  }
+
+  build<const Input extends BuildInput<Schema>>(
+    fields: NoUnknownBuildFields<Schema, Input>,
+  ): BuiltYukari<Name, Schema, Input> {
+    const yukari = new Yukari<Name, Schema>(this, 'new');
+    yukari.buildNewRow(fields);
+    return yukari as BuiltYukari<Name, Schema, Input>;
   }
 }
 

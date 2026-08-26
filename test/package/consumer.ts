@@ -9,6 +9,10 @@ const User = toshihiko.define('user', [
   { name: 'name', type: Type.String },
 ]);
 
-const user: typeof User.row = { id: 1, name: 'Alice' };
+const user = User.build({ id: 1, name: 'Alice' });
+const id: number = user.id;
+const name: string = user.name;
 
 void user;
+void id;
+void name;

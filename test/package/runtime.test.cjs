@@ -79,3 +79,71 @@ test('define rejects non-function validators from JavaScript callers', () => {
     /validators must be functions that return Promises/,
   );
 });
+
+test('build creates a new Yukari and clones field defaults', () => {
+  const toshihiko = new Toshihiko('mysql');
+  const User = toshihiko.define('user', [
+    { name: 'id', type: Type.Integer },
+    { name: 'name', type: Type.String, default: 'anonymous' },
+    { name: 'settings', type: Type.Json },
+    { name: 'birthday', type: Type.Datetime, allowNull: true },
+  ]);
+
+  const first = User.build({ id: 1, birthday: null, ignored: true });
+  const second = User.build({ id: 2 });
+
+  assert.equal(first.$model, User);
+  assert.equal(first.$source, 'new');
+  assert.equal(first.id, 1);
+  assert.equal(first.name, 'anonymous');
+  assert.equal(first.birthday, null);
+  assert.equal(first.ignored, undefined);
+  assert.deepEqual(first.settings, {});
+  assert.deepEqual(second.settings, {});
+  assert.notEqual(first.settings, second.settings);
+  assert.deepEqual(Object.keys(first), ['id', 'name', 'settings', 'birthday']);
+});
+
+test('Yukari validation is Promise-only and runs validators in order', async () => {
+  const calls = [];
+  const toshihiko = new Toshihiko('mysql');
+  const User = toshihiko.define('user', [{
+    name: 'score',
+    type: Type.Integer,
+    validators: [
+      async function lowerBound(value) {
+        calls.push(`lower:${value}:${this === User}`);
+        if (value < 0) return 'score is too small';
+      },
+      async function upperBound(value) {
+        calls.push(`upper:${value}:${this === User}`);
+        if (value > 100) return 'score is too large';
+      },
+    ],
+  }]);
+
+  await User.build({ score: 50 }).validateAll();
+  assert.deepEqual(calls, ['lower:50:true', 'upper:50:true']);
+
+  await assert.rejects(
+    User.build({ score: -1 }).validateAll(),
+    /score is too small/,
+  );
+});
+
+test('Yukari validation rejects nulls and synchronous validators', async () => {
+  const toshihiko = new Toshihiko('mysql');
+  const User = toshihiko.define('user', [
+    { name: 'name', type: Type.String, allowNull: false },
+    { name: 'legacy', validators: () => 'invalid' },
+  ]);
+
+  await assert.rejects(
+    User.build({ name: null }).validateAll(),
+    /Field name can't be null/,
+  );
+  await assert.rejects(
+    User.build({ legacy: 'value' }).validateAll(),
+    /must return a Promise/,
+  );
+});

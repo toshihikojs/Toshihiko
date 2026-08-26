@@ -62,13 +62,13 @@ const Validated = toshihiko.define('validated', [
 
 type UserPrimaryKey = InferModelPrimaryKey<typeof User>;
 
-const user: typeof User.row = {
+const user = User.build({
   id: 1,
   username: 'Alice',
   birthday: null,
   industry: { big: 'internet', small: 'financial' },
   nickname: 'ali',
-};
+});
 
 const primaryKey: UserPrimaryKey = 'id';
 const idColumn: 'user_id' = User.nameToColumn.id;
@@ -96,6 +96,24 @@ void invalidUser;
 const invalidIndustry: typeof User.row.industry = 'internet,financial';
 
 void invalidIndustry;
+
+const partialUser = User.build({
+  id: 2,
+  username: 'Bob',
+  industry: { big: 'internet', small: 'social' },
+  nickname: 'bobby',
+});
+const optionalBirthday: Date | null | undefined = partialUser.birthday;
+const validation: Promise<void> = Validated.build({ score: 1 }).validateAll();
+
+void optionalBirthday;
+void validation;
+
+// @ts-expect-error build() preserves FieldType value types.
+User.build({ id: '1' });
+
+// @ts-expect-error build() rejects unknown logical field names.
+User.build({ id: 1, missing: true });
 
 // @ts-expect-error Only fields marked as primary keys are inferred.
 const invalidPrimaryKey: UserPrimaryKey = 'username';
