@@ -21,7 +21,11 @@ function createPool(results = []) {
       return this;
     },
     async query(sql, values) {
-      calls.push({ sql, values });
+      calls.push({ method: 'query', sql, values });
+      return [results[resultIndex++] ?? [], []];
+    },
+    async execute(sql, values) {
+      calls.push({ method: 'execute', sql, values });
       return [results[resultIndex++] ?? [], []];
     },
   };
@@ -45,16 +49,24 @@ test('find and count execute through the Promise pool without callbacks', async 
   const row = await User.where({ id: 1 }).findOne(true);
   assert.deepEqual(row, { id: 1, name: 'Alice' });
   assert.equal(await adapter.count(User.where({ id: { $gte: 2 } })), 3);
-  assert.equal(pool.calls[0].sql, 'SELECT `user_id`, `name` FROM `users` WHERE (`user_id` = 1) LIMIT 0, 1');
-  assert.equal(pool.calls[1].sql, 'SELECT COUNT(0) FROM `users` WHERE (`user_id` >= 2)');
+  assert.deepEqual(pool.calls[0], {
+    method: 'execute',
+    sql: 'SELECT `user_id`, `name` FROM `users` WHERE (`user_id` = ?) LIMIT 0, 1',
+    values: [1],
+  });
+  assert.deepEqual(pool.calls[1], {
+    method: 'execute',
+    sql: 'SELECT COUNT(0) FROM `users` WHERE (`user_id` >= ?)',
+    values: [2],
+  });
 });
 
 test('execute preserves both v2 and legacy connection-first argument order', async () => {
   const pool = createPool([[{ ok: 1 }]]);
   const connectionCalls = [];
   const connection = {
-    async query(sql, values) {
-      connectionCalls.push({ sql, values });
+    async execute(sql, values) {
+      connectionCalls.push({ method: 'execute', sql, values });
       return [[{ connected: true }], []];
     },
   };
@@ -63,10 +75,24 @@ test('execute preserves both v2 and legacy connection-first argument order', asy
 
   await adapter.execute('SELECT ?', [1]);
   await adapter.execute(connection, 'SELECT ?', [2]);
+  await adapter.execute('SELECT 1');
+  await adapter.execute('INSERT INTO `users` SET ?', { name: 'Alice' });
 
-  assert.deepEqual(pool.calls[0], { sql: 'SELECT ?', values: [1] });
-  assert.deepEqual(connectionCalls[0], { sql: 'SELECT ?', values: [2] });
-  assert.deepEqual(shown, ['SELECT 1', 'SELECT 2']);
+  assert.deepEqual(pool.calls[0], { method: 'execute', sql: 'SELECT ?', values: [1] });
+  assert.deepEqual(connectionCalls[0], { method: 'execute', sql: 'SELECT ?', values: [2] });
+  assert.deepEqual(pool.calls[1], { method: 'query', sql: 'SELECT 1', values: undefined });
+  assert.deepEqual(pool.calls[2], {
+    method: 'query',
+    sql: 'INSERT INTO `users` SET ?',
+    values: { name: 'Alice' },
+  });
+  assert.deepEqual(shown, [
+    'SELECT 1',
+    'SELECT 2',
+    'SELECT 1',
+    "INSERT INTO `users` SET `name` = 'Alice'",
+  ]);
+  assert.equal('package' in adapter, false);
 });
 
 test('transaction connections are released on success and failure', async () => {
@@ -132,8 +158,16 @@ test('insert reads back the generated row and update rejects stale records', asy
     { field: User.fieldNamesMap.name, value: 'Alice' },
   ]);
   assert.deepEqual(inserted, { user_id: 4, name: 'Alice' });
-  assert.equal(pool.calls[0].sql, "INSERT INTO `users` SET `name` = 'Alice'");
-  assert.equal(pool.calls[1].sql, 'SELECT `user_id`, `name` FROM `users` WHERE (`user_id` = 4) LIMIT 0, 1');
+  assert.deepEqual(pool.calls[0], {
+    method: 'execute',
+    sql: 'INSERT INTO `users` SET `name` = ?',
+    values: ['Alice'],
+  });
+  assert.deepEqual(pool.calls[1], {
+    method: 'execute',
+    sql: 'SELECT `user_id`, `name` FROM `users` WHERE (`user_id` = ?) LIMIT 0, 1',
+    values: [4],
+  });
 
   await assert.rejects(
     adapter.update(User, null, { id: 4 }, [

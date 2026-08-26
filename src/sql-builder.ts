@@ -4,6 +4,7 @@ import type {
   MySQLField,
   MySQLModel,
   MySQLQueryOptions,
+  MySQLStatement,
 } from './contracts';
 
 type SqlOperation = string;
@@ -30,24 +31,24 @@ const fieldOperators = Object.freeze({
 type FieldOperator = keyof typeof fieldOperators;
 
 export class MySQLSqlBuilder {
-  makeFieldWhere(
+  compileFieldWhere(
     model: MySQLModel,
     key: string,
     condition: unknown,
     logic: string = 'AND',
-  ): string {
+  ): MySQLStatement {
     const normalizedLogic = normalizeLogic(logic);
     const field = getField(model, key);
 
     if (condition === null) {
-      return `${quoteIdentifier(field.column)} IS NULL`;
+      return statement(`${quoteIdentifier(field.column)} IS NULL`);
     }
 
     if (!isRecord(condition) || condition instanceof Date || Array.isArray(condition)) {
-      return this.makeEquality(field, condition);
+      return this.compileEquality(field, condition);
     }
 
-    const fragments: string[] = [];
+    const fragments: MySQLStatement[] = [];
     let recognized = true;
 
     for (const [rawOperator, operand] of Object.entries(condition)) {
@@ -55,13 +56,13 @@ export class MySQLSqlBuilder {
       if (operator === '$and' || operator === '$or') {
         const nestedLogic = operator === '$and' ? 'AND' : 'OR';
         const values = Array.isArray(operand) ? operand : [operand];
-        const nested = values.map((value) => this.makeFieldWhere(
+        const nested = values.map((value) => this.compileFieldWhere(
           model,
           key,
           value,
           nestedLogic,
         ));
-        fragments.push(groupFragments(nested, nestedLogic));
+        fragments.push(groupStatements(nested, nestedLogic));
         continue;
       }
 
@@ -70,14 +71,40 @@ export class MySQLSqlBuilder {
         break;
       }
 
-      fragments.push(this.makeOperator(field, operator, operand));
+      fragments.push(this.compileOperator(field, operator, operand));
     }
 
     if (recognized && fragments.length > 0) {
-      return groupFragments(fragments, normalizedLogic);
+      return groupStatements(fragments, normalizedLogic);
     }
 
-    return this.makeEquality(field, condition);
+    return this.compileEquality(field, condition);
+  }
+
+  makeFieldWhere(
+    model: MySQLModel,
+    key: string,
+    condition: unknown,
+    logic: string = 'AND',
+  ): string {
+    return formatStatement(this.compileFieldWhere(model, key, condition, logic));
+  }
+
+  compileArrayWhere(
+    model: MySQLModel,
+    condition: readonly Readonly<Record<string, unknown>>[],
+    logic: string = 'AND',
+  ): MySQLStatement {
+    if (!Array.isArray(condition)) {
+      throw new TypeError('Non-array condition.');
+    }
+
+    const normalizedLogic = normalizeLogic(logic);
+    return groupStatements(
+      condition.map((entry) => this.compileWhere(model, entry, 'AND')),
+      normalizedLogic,
+      true,
+    );
   }
 
   makeArrayWhere(
@@ -85,41 +112,34 @@ export class MySQLSqlBuilder {
     condition: readonly Readonly<Record<string, unknown>>[],
     logic: string = 'AND',
   ): string {
-    if (!Array.isArray(condition)) {
-      throw new TypeError('Non-array condition.');
-    }
-
-    const normalizedLogic = normalizeLogic(logic);
-    return `(${condition
-      .map((entry) => this.makeWhere(model, entry, 'AND'))
-      .join(` ${normalizedLogic} `)})`;
+    return formatStatement(this.compileArrayWhere(model, condition, logic));
   }
 
-  makeWhere(
+  compileWhere(
     model: MySQLModel,
     condition: Readonly<Record<string, unknown>> | readonly Readonly<Record<string, unknown>>[],
     logic: string = 'AND',
-  ): string {
+  ): MySQLStatement {
     const normalizedLogic = normalizeLogic(logic);
     if (Array.isArray(condition)) {
-      return this.makeArrayWhere(model, condition, normalizedLogic);
+      return this.compileArrayWhere(model, condition, normalizedLogic);
     }
     if (!isRecord(condition)) {
       throw new TypeError('SQL condition must be an object or array.');
     }
 
-    const fragments: string[] = [];
+    const fragments: MySQLStatement[] = [];
     for (const [key, value] of Object.entries(condition)) {
       if (key === '$and' || key === '$or') {
         const nestedLogic = key === '$and' ? 'AND' : 'OR';
         if (Array.isArray(value)) {
-          fragments.push(this.makeArrayWhere(
+          fragments.push(this.compileArrayWhere(
             model,
             value.map(assertConditionRecord),
             nestedLogic,
           ));
         } else {
-          fragments.push(this.makeWhere(
+          fragments.push(this.compileWhere(
             model,
             assertConditionRecord(value),
             nestedLogic,
@@ -128,10 +148,18 @@ export class MySQLSqlBuilder {
         continue;
       }
 
-      fragments.push(this.makeFieldWhere(model, key, value, normalizedLogic));
+      fragments.push(this.compileFieldWhere(model, key, value, normalizedLogic));
     }
 
-    return `(${fragments.join(` ${normalizedLogic} `)})`;
+    return groupStatements(fragments, normalizedLogic, true);
+  }
+
+  makeWhere(
+    model: MySQLModel,
+    condition: Readonly<Record<string, unknown>> | readonly Readonly<Record<string, unknown>>[],
+    logic: string = 'AND',
+  ): string {
+    return formatStatement(this.compileWhere(model, condition, logic));
   }
 
   makeOrder(
@@ -165,23 +193,34 @@ export class MySQLSqlBuilder {
     model: MySQLModel,
     update: Readonly<Record<string, unknown>>,
   ): string {
-    const assignments: string[] = [];
+    return formatStatement(this.compileSet(model, update));
+  }
+
+  compileSet(
+    model: MySQLModel,
+    update: Readonly<Record<string, unknown>>,
+  ): MySQLStatement {
+    const assignments: MySQLStatement[] = [];
     for (const [key, value] of Object.entries(update)) {
       const field = model.fieldNamesMap[key];
       if (field === undefined) {
         continue;
       }
 
-      assignments.push(`${quoteIdentifier(field.column)} = ${this.makeSetValue(
-        model,
-        field,
-        value,
-      )}`);
+      const setValue = this.compileSetValue(model, field, value);
+      assignments.push({
+        sql: `${quoteIdentifier(field.column)} = ${setValue.sql}`,
+        values: setValue.values,
+      });
     }
-    return assignments.join(', ');
+    return joinStatements(assignments, ', ');
   }
 
   makeFind(model: MySQLModel, options: MySQLQueryOptions = {}): string {
+    return formatStatement(this.compileFind(model, options));
+  }
+
+  compileFind(model: MySQLModel, options: MySQLQueryOptions = {}): MySQLStatement {
     const fields = options.fields?.length ? options.fields : undefined;
     const selected = options.count
       ? 'COUNT(0)'
@@ -195,51 +234,62 @@ export class MySQLSqlBuilder {
           return quoteIdentifier(column);
         }).join(', ');
 
-    let sql = `SELECT ${selected} FROM ${quoteIdentifier(model.name)}`;
+    let result = statement(`SELECT ${selected} FROM ${quoteIdentifier(model.name)}`);
     const index = this.makeIndex(model, options.index);
     if (index) {
-      sql += ` ${index}`;
+      result = appendStatement(result, statement(` ${index}`));
     }
-    sql += this.makeWhereClause(model, options.where);
-    sql += this.makeOrderClause(model, options.order);
-    sql += this.makeLimitClause(model, options.limit);
-    return sql;
+    result = appendStatement(result, this.compileWhereClause(model, options.where));
+    result = appendStatement(result, statement(this.makeOrderClause(model, options.order)));
+    result = appendStatement(result, statement(this.makeLimitClause(model, options.limit)));
+    return result;
   }
 
   makeUpdate(model: MySQLModel, options: MySQLQueryOptions = {}): string {
-    const set = this.makeSet(model, options.update ?? {});
-    if (!set) {
+    return formatStatement(this.compileUpdate(model, options));
+  }
+
+  compileUpdate(model: MySQLModel, options: MySQLQueryOptions = {}): MySQLStatement {
+    const set = this.compileSet(model, options.update ?? {});
+    if (!set.sql) {
       throw new Error('no set data.');
     }
 
-    let sql = `UPDATE ${quoteIdentifier(model.name)}`;
+    let result = statement(`UPDATE ${quoteIdentifier(model.name)}`);
     const index = this.makeIndex(model, options.index);
     if (index) {
-      sql += ` ${index}`;
+      result = appendStatement(result, statement(` ${index}`));
     }
-    sql += ` SET ${set}`;
-    sql += this.makeWhereClause(model, options.where);
-    sql += this.makeOrderClause(model, options.order);
-    sql += this.makeLimitClause(model, options.limit);
-    return sql;
+    result = appendStatement(result, {
+      sql: ` SET ${set.sql}`,
+      values: set.values,
+    });
+    result = appendStatement(result, this.compileWhereClause(model, options.where));
+    result = appendStatement(result, statement(this.makeOrderClause(model, options.order)));
+    result = appendStatement(result, statement(this.makeLimitClause(model, options.limit)));
+    return result;
   }
 
   makeDelete(model: MySQLModel, options: MySQLQueryOptions = {}): string {
-    let sql = `DELETE FROM ${quoteIdentifier(model.name)}`;
-    sql += this.makeWhereClause(model, options.where);
-    sql += this.makeOrderClause(model, options.order);
+    return formatStatement(this.compileDelete(model, options));
+  }
+
+  compileDelete(model: MySQLModel, options: MySQLQueryOptions = {}): MySQLStatement {
+    let result = statement(`DELETE FROM ${quoteIdentifier(model.name)}`);
+    result = appendStatement(result, this.compileWhereClause(model, options.where));
+    result = appendStatement(result, statement(this.makeOrderClause(model, options.order)));
 
     const limit = options.limit;
     if (limit !== undefined && limit.length > 0) {
       if (limit.length === 1) {
-        sql += ` LIMIT ${normalizeLimit(limit[0])}`;
+        result = appendStatement(result, statement(` LIMIT ${normalizeLimit(limit[0])}`));
       } else if (limit[0] === 0) {
-        sql += ` LIMIT ${normalizeLimit(limit[1])}`;
+        result = appendStatement(result, statement(` LIMIT ${normalizeLimit(limit[1])}`));
       } else {
         throw new Error('MySQL DELETE supports a row count but not a non-zero offset.');
       }
     }
-    return sql;
+    return result;
   }
 
   makeSql(
@@ -247,25 +297,33 @@ export class MySQLSqlBuilder {
     model: MySQLModel,
     options: MySQLQueryOptions = {},
   ): string {
+    return formatStatement(this.compileSql(type, model, options));
+  }
+
+  compileSql(
+    type: SqlOperation,
+    model: MySQLModel,
+    options: MySQLQueryOptions = {},
+  ): MySQLStatement {
     switch (type) {
       case 'count':
-        return this.makeFind(model, { ...options, count: true });
+        return this.compileFind(model, { ...options, count: true });
       case 'delete':
-        return this.makeDelete(model, options);
+        return this.compileDelete(model, options);
       case 'update':
-        return this.makeUpdate(model, options);
+        return this.compileUpdate(model, options);
       case 'find':
-        return this.makeFind(model, options);
+        return this.compileFind(model, options);
       default:
-        return this.makeFind(model, options);
+        return this.compileFind(model, options);
     }
   }
 
-  private makeOperator(
+  private compileOperator(
     field: MySQLField,
     operator: FieldOperator,
     operand: unknown,
-  ): string {
+  ): MySQLStatement {
     const symbol = fieldOperators[operator];
     const column = quoteIdentifier(field.column);
 
@@ -274,85 +332,95 @@ export class MySQLSqlBuilder {
         throw new TypeError('$in requires a non-empty array.');
       }
       const values = operand.map((value) => this.restore(field, value));
-      return `${column} IN (${values.map(formatValue).join(', ')})`;
+      return {
+        sql: `${column} IN (${values.map(() => '?').join(', ')})`,
+        values,
+      };
     }
 
     if (symbol === 'BETWEEN') {
       if (!Array.isArray(operand) || operand.length !== 2) {
         throw new TypeError('$between requires exactly two values.');
       }
-      return `${column} BETWEEN ${formatValue(this.restore(field, operand[0]))} AND ${formatValue(this.restore(field, operand[1]))}`;
+      return {
+        sql: `${column} BETWEEN ? AND ?`,
+        values: [this.restore(field, operand[0]), this.restore(field, operand[1])],
+      };
     }
 
     const logicalValues = splitLogicalValues(operand);
-    const andFragments = logicalValues.and.map((value) => this.makeComparison(
+    const andFragments = logicalValues.and.map((value) => this.compileComparison(
       field,
       symbol,
       value,
     ));
-    const orFragments = logicalValues.or.map((value) => this.makeComparison(
+    const orFragments = logicalValues.or.map((value) => this.compileComparison(
       field,
       symbol,
       value,
     ));
-    const andSql = groupFragments(andFragments, 'AND');
-    const orSql = groupFragments(orFragments, 'OR');
+    const andSql = groupStatements(andFragments, 'AND');
+    const orSql = groupStatements(orFragments, 'OR');
 
-    if (andSql && orSql) {
-      return `(${andSql} AND ${orSql})`;
+    if (andSql.sql && orSql.sql) {
+      return groupStatements([andSql, orSql], 'AND', true);
     }
-    return andSql || orSql;
+    return andSql.sql ? andSql : orSql;
   }
 
-  private makeComparison(
+  private compileComparison(
     field: MySQLField,
     symbol: string,
     value: unknown,
-  ): string {
+  ): MySQLStatement {
     const column = quoteIdentifier(field.column);
     if ((symbol === '=' || symbol === '!=') && value === null) {
-      return `${column} IS ${symbol === '=' ? 'NULL' : 'NOT NULL'}`;
+      return statement(`${column} IS ${symbol === '=' ? 'NULL' : 'NOT NULL'}`);
     }
-    return `${column} ${symbol} ${formatValue(this.restore(field, value))}`;
+    return { sql: `${column} ${symbol} ?`, values: [this.restore(field, value)] };
   }
 
-  private makeEquality(field: MySQLField, value: unknown): string {
+  private compileEquality(field: MySQLField, value: unknown): MySQLStatement {
     if (value === null) {
-      return `${quoteIdentifier(field.column)} IS NULL`;
+      return statement(`${quoteIdentifier(field.column)} IS NULL`);
     }
-    return `${quoteIdentifier(field.column)} = ${formatValue(this.restore(field, value))}`;
+    return {
+      sql: `${quoteIdentifier(field.column)} = ?`,
+      values: [this.restore(field, value)],
+    };
   }
 
-  private makeSetValue(
+  private compileSetValue(
     model: MySQLModel,
     field: MySQLField,
     value: unknown,
-  ): string {
+  ): MySQLStatement {
     if (value === null) {
       if (!field.allowNull) {
         throw new TypeError(`field "${field.name}" does not allow null.`);
       }
-      return 'NULL';
+      return statement('NULL');
     }
 
     if (isRawExpression(value)) {
-      return sqlNameToColumn(value.slice(2, -2), completeNameToColumn(model));
+      return statement(sqlNameToColumn(value.slice(2, -2), completeNameToColumn(model)));
     }
-    return formatValue(this.restore(field, value));
+    return { sql: '?', values: [this.restore(field, value)] };
   }
 
   private restore(field: MySQLField, value: unknown): unknown {
     return field.restore(value);
   }
 
-  private makeWhereClause(
+  private compileWhereClause(
     model: MySQLModel,
     where?: Readonly<Record<string, unknown>>,
-  ): string {
+  ): MySQLStatement {
     if (where === undefined || Object.keys(where).length === 0) {
-      return '';
+      return statement('');
     }
-    return ` WHERE ${this.makeWhere(model, where)}`;
+    const compiled = this.compileWhere(model, where);
+    return { sql: ` WHERE ${compiled.sql}`, values: compiled.values };
   }
 
   private makeOrderClause(
@@ -382,8 +450,46 @@ function getField(model: MySQLModel, name: string): MySQLField {
   return field;
 }
 
-function formatValue(value: unknown): string {
-  return mysqlFormat('?', [value as never]);
+function statement(sql: string): MySQLStatement {
+  return { sql, values: [] };
+}
+
+function appendStatement(
+  left: MySQLStatement,
+  right: MySQLStatement,
+): MySQLStatement {
+  return {
+    sql: left.sql + right.sql,
+    values: [...left.values, ...right.values],
+  };
+}
+
+function joinStatements(
+  fragments: readonly MySQLStatement[],
+  separator: string,
+): MySQLStatement {
+  return {
+    sql: fragments.map((fragment) => fragment.sql).join(separator),
+    values: fragments.flatMap((fragment) => fragment.values),
+  };
+}
+
+function groupStatements(
+  fragments: readonly MySQLStatement[],
+  logic: SqlLogic,
+  forceGroup: boolean = false,
+): MySQLStatement {
+  const joined = joinStatements(
+    fragments.filter((fragment) => Boolean(fragment.sql)),
+    ` ${logic} `,
+  );
+  return forceGroup || fragments.length > 1
+    ? { sql: `(${joined.sql})`, values: joined.values }
+    : joined;
+}
+
+function formatStatement(compiled: MySQLStatement): string {
+  return mysqlFormat(compiled.sql, [...compiled.values] as never[]);
 }
 
 function quoteIdentifier(identifier: string): string {
@@ -400,11 +506,6 @@ function normalizeLimit(value: number | string | undefined): number {
     return 0;
   }
   return Math.max(0, normalized);
-}
-
-function groupFragments(fragments: readonly string[], logic: SqlLogic): string {
-  const sql = fragments.filter(Boolean).join(` ${logic} `);
-  return fragments.length > 1 ? `(${sql})` : sql;
 }
 
 function splitLogicalValues(value: unknown): {

@@ -9,6 +9,7 @@ import type {
   Pool,
   PoolConnection,
   PoolOptions,
+  ExecuteValues,
   QueryValues,
   QueryResult,
   ResultSetHeader,
@@ -21,6 +22,7 @@ import type {
   MySQLModel,
   MySQLQuery,
   MySQLQueryOptions,
+  MySQLStatement,
   MySQLValues,
 } from './contracts';
 import { MySQLSqlBuilder } from './sql-builder';
@@ -33,7 +35,6 @@ const defaultFindOptions: AdapterFindOptions = Object.freeze({
 export class MySQLAdapter extends Adapter<MySQLAdapterOptions> {
   readonly database: string;
   readonly mysql: Pool;
-  readonly package = 'mysql2';
   readonly username: string;
 
   private readonly builder = new MySQLSqlBuilder();
@@ -67,8 +68,12 @@ export class MySQLAdapter extends Adapter<MySQLAdapterOptions> {
 
   override async count(query: MySQLQuery): Promise<number> {
     const options = this.queryToOptions(query);
-    const sql = this.makeSql('count', query.model, options);
-    const result = await this.execute(options.connection ?? null, sql);
+    const compiled = this.builder.compileSql('count', query.model, options);
+    const result = await this.execute(
+      options.connection ?? null,
+      compiled.sql,
+      compiled.values,
+    );
     const rows = assertRows(result, 'count');
     const first = rows[0];
     if (first === undefined) {
@@ -79,18 +84,26 @@ export class MySQLAdapter extends Adapter<MySQLAdapterOptions> {
 
   override async updateByQuery(query: MySQLQuery): Promise<ResultSetHeader> {
     const options = this.queryToOptions(query);
-    const sql = this.makeSql('update', query.model, options);
+    const compiled = this.builder.compileSql('update', query.model, options);
     return assertMutationResult(
-      await this.execute(options.connection ?? null, sql),
+      await this.execute(
+        options.connection ?? null,
+        compiled.sql,
+        compiled.values,
+      ),
       'updateByQuery',
     );
   }
 
   override async deleteByQuery(query: MySQLQuery): Promise<ResultSetHeader> {
     const options = this.queryToOptions(query);
-    const sql = this.makeSql('delete', query.model, options);
+    const compiled = this.builder.compileSql('delete', query.model, options);
     return assertMutationResult(
-      await this.execute(options.connection ?? null, sql),
+      await this.execute(
+        options.connection ?? null,
+        compiled.sql,
+        compiled.values,
+      ),
       'deleteByQuery',
     );
   }
@@ -105,16 +118,18 @@ export class MySQLAdapter extends Adapter<MySQLAdapterOptions> {
     }
 
     const primaryValues: Record<string, unknown> = {};
+    const values: unknown[] = [];
     const assignments = data.map((entry) => {
       const value = restoreFieldValue(entry.field, entry.value);
       if (entry.field.primaryKey || model.primaryKeys.length === 0) {
         primaryValues[entry.field.name] = entry.value;
       }
-      return `${quoteIdentifier(entry.field.column)} = ${this.format('?', [value])}`;
+      values.push(value);
+      return `${quoteIdentifier(entry.field.column)} = ?`;
     });
     const sql = `INSERT INTO ${quoteIdentifier(model.name)} SET ${assignments.join(', ')}`;
     const mutation = assertMutationResult(
-      await this.execute(connection, sql),
+      await this.execute(connection, sql, values),
       'insert',
     );
 
@@ -122,12 +137,15 @@ export class MySQLAdapter extends Adapter<MySQLAdapterOptions> {
     if (Object.keys(where).length === 0) {
       throw new Error('insert successfully but no unique readback condition is available.');
     }
-    const findSql = this.makeFind(model, {
+    const findStatement = this.builder.compileFind(model, {
       fields: model.schema.map((field) => field.name),
       where,
       limit: [0, 1],
     });
-    const rows = assertRows(await this.execute(connection, findSql), 'insert readback');
+    const rows = assertRows(
+      await this.execute(connection, findStatement.sql, findStatement.values),
+      'insert readback',
+    );
     const row = rows[0];
     if (row === undefined) {
       throw new Error('insert successfully but failed to read the record.');
@@ -152,12 +170,12 @@ export class MySQLAdapter extends Adapter<MySQLAdapterOptions> {
     for (const entry of data) {
       updateData[entry.field.name] = entry.value;
     }
-    const sql = this.makeUpdate(model, {
+    const compiled = this.builder.compileUpdate(model, {
       update: updateData,
       where: primaryKey,
     });
     const mutation = assertMutationResult(
-      await this.execute(connection, sql),
+      await this.execute(connection, compiled.sql, compiled.values),
       'update',
     );
     if (mutation.affectedRows === 0) {
@@ -175,9 +193,17 @@ export class MySQLAdapter extends Adapter<MySQLAdapterOptions> {
     this.showSql?.(sqlForLog);
 
     const target = parsed.connection ?? this.mysql;
-    const [result] = parsed.values === undefined
-      ? await target.query<QueryResult>(parsed.sql)
-      : await target.query<QueryResult>(parsed.sql, normalizeDriverValues(parsed.values));
+    const [result] = parsed.values === undefined || !Array.isArray(parsed.values)
+      ? await target.query<QueryResult>(
+        parsed.sql,
+        parsed.values === undefined
+          ? undefined
+          : normalizeDriverValues(parsed.values),
+      )
+      : await target.execute<QueryResult>(
+        parsed.sql,
+        normalizeExecuteValues(parsed.values),
+      );
     return result;
   }
 
@@ -222,9 +248,13 @@ export class MySQLAdapter extends Adapter<MySQLAdapterOptions> {
     model: MySQLModel,
     options: MySQLQueryOptions = {},
   ): Promise<AdapterRow | readonly AdapterRow[] | null> {
-    const sql = this.makeSql('find', model, options);
+    const compiled = this.builder.compileSql('find', model, options);
     const rows = assertRows(
-      await this.execute(options.connection ?? null, sql),
+      await this.execute(
+        options.connection ?? null,
+        compiled.sql,
+        compiled.values,
+      ),
       'find',
     );
     return options.single ? rows[0] ?? null : rows;
@@ -417,6 +447,15 @@ function normalizeDriverValues(
   return normalized as QueryValues;
 }
 
+function normalizeExecuteValues(
+  values: MySQLValues,
+): ExecuteValues {
+  const normalized = Array.isArray(values)
+    ? [...values]
+    : { ...values };
+  return normalized as ExecuteValues;
+}
+
 function assertRows(result: QueryResult, operation: string): readonly AdapterRow[] {
   if (!Array.isArray(result) || result.some((row) => !isRow(row))) {
     throw new TypeError(`MySQL ${operation} did not return rows.`);
@@ -494,6 +533,7 @@ export type {
   MySQLQueryOptions,
   MySQLQueryResult,
   MySQLShowSql,
+  MySQLStatement,
   MySQLValues,
 } from './contracts';
 

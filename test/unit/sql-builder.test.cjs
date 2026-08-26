@@ -77,3 +77,29 @@ test('find, update, delete, and raw expressions retain the original call shape',
   );
   assert.throws(() => builder.makeUpdate(Model, { update: {} }), /no set data/);
 });
+
+test('compiled statements preserve placeholders and value order', () => {
+  assert.deepEqual(
+    builder.compileFind(Model, {
+      where: {
+        id: { $between: [2, 9] },
+        $or: [{ name: 'Alice' }, { score: { $in: [1.5, 2.5] } }],
+      },
+      limit: [0, 5],
+    }),
+    {
+      sql: 'SELECT * FROM `test``table` WHERE (`user_id` BETWEEN ? AND ? AND ((`name` = ?) OR (`score` IN (?, ?)))) LIMIT 0, 5',
+      values: [2, 9, 'Alice', 1.5, 2.5],
+    },
+  );
+  assert.deepEqual(
+    builder.compileUpdate(Model, {
+      update: { score: '{{score + 1}}', name: 'Bob' },
+      where: { id: 1 },
+    }),
+    {
+      sql: 'UPDATE `test``table` SET `score` = score + 1, `name` = ? WHERE (`user_id` = ?)',
+      values: ['Bob', 1],
+    },
+  );
+});

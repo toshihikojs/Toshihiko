@@ -18,8 +18,8 @@ test('published package connects directly to Toshihiko and hydrates rows', async
     on() {
       return this;
     },
-    async query(sql) {
-      queries.push(sql);
+    async execute(sql, values) {
+      queries.push({ sql, values });
       return [[{ user_id: '7', display_name: 'Alice' }], []];
     },
   };
@@ -31,5 +31,8 @@ test('published package connects directly to Toshihiko and hydrates rows', async
 
   const user = await User.findOne(true);
   assert.deepEqual(user, { id: 7, name: 'Alice' });
-  assert.equal(queries[0], 'SELECT `user_id`, `display_name` FROM `users` LIMIT 0, 1');
+  assert.deepEqual(queries[0], {
+    sql: 'SELECT `user_id`, `display_name` FROM `users` LIMIT 0, 1',
+    values: [],
+  });
 });

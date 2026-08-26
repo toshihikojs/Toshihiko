@@ -1,9 +1,11 @@
 import {
   MySQLAdapter,
+  MySQLSqlBuilder,
   type MySQLAdapterOptions,
   type MySQLConnection,
   type MySQLMutationResult,
   type MySQLQueryResult,
+  type MySQLStatement,
 } from '../..';
 import { Toshihiko, Type } from 'toshihiko';
 
@@ -26,6 +28,9 @@ User.find(true).then((rows) => {
 });
 
 const adapter = new MySQLAdapter(options);
+const statement: MySQLStatement = new MySQLSqlBuilder().compileFind(User, {
+  where: { id: 1 },
+});
 const database: string = adapter.database;
 const pending: Promise<MySQLQueryResult> = adapter.execute('SELECT ?', [1]);
 const transaction: Promise<MySQLConnection> = adapter.beginTransaction();
@@ -39,6 +44,7 @@ const updated: Promise<MySQLMutationResult> = adapter.update(User, null, { id: 1
 ]);
 
 void database;
+void statement;
 void pending;
 void transaction;
 void counted;

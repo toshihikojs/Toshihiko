@@ -64,6 +64,11 @@ export interface MySQLQueryOptions {
   readonly where?: Readonly<Record<string, unknown>>;
 }
 
+export interface MySQLStatement {
+  readonly sql: string;
+  readonly values: readonly unknown[];
+}
+
 export type MySQLExecuteArguments =
   | readonly [sql: string, values?: MySQLValues]
   | readonly [
