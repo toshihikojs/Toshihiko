@@ -1,0 +1,48 @@
+{
+  "name": "@toshihiko/sql-utils",
+  "version": "1.1.1",
+  "description": "SQL string utils for Toshihiko.js.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "author": "XadillaX <i@2333.moe>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/toshihikojs/sql-utils.git"
+  },
+  "bugs": {
+    "url": "https://github.com/toshihikojs/sql-utils/issues"
+  },
+  "homepage": "https://github.com/toshihikojs/sql-utils#readme",
+  "devDependencies": {
+    "@types/mocha": "^10.0.1",
+    "@types/node": "^22.5.5",
+    "@types/should": "^13.0.0",
+    "cheerio": "^1.0.0",
+    "coveralls": "^3.1.1",
+    "eslint": "^8.57.1",
+    "eslint-config-egg": "^14.0.0",
+    "eslint-plugin-import": "^2.30.0",
+    "mocha": "^10.2.0",
+    "nyc": "^17.1.0",
+    "should": "^13.2.3",
+    "ts-node": "^10.9.2",
+    "typescript": "~5.5.0",
+    "open": "^8.4.0"
+  },
+  "scripts": {
+    "build": "npm run gen-keywords && tsc -p ./tsconfig.src.json",
+    "test": "nyc --reporter=lcov --reporter=text-summary mocha -r ts-node/register 'test/**/*.test.ts'",
+    "coveralls": "nyc report --reporter=text-lcov | coveralls",
+    "gen-keywords": "npx ts-node tools/keywords/extract.ts",
+    "coverage:html": "nyc --reporter=html mocha -r ts-node/register 'test/**/*.test.ts' && node -e \"require('open')('coverage/index.html')\"",
+    "prepublishOnly": "npm run build",
+    "prepare": "npm run gen-keywords"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

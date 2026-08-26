@@ -1,0 +1,11 @@
+{
+  "version": "0.2",
+  "language": "en",
+  "ignorePaths": [
+    "node_modules/**",
+    "dist/**",
+    "tools/keywords/keywords.html",
+    "src/keywords.ts"
+  ],
+  "dictionaries": ["typescript", "node", "html", "css", "en_US"]
+}
