@@ -37,7 +37,7 @@ export class Model<
   Name extends string,
   Schema extends SchemaDefinition,
 > {
-  declare readonly $inferRow: RowFromSchema<Schema>;
+  declare readonly row: RowFromSchema<Schema>;
   declare readonly $inferPrimaryKey: PrimaryKeyNames<Schema>;
 
   readonly name: Name;
@@ -95,11 +95,8 @@ export class Model<
   }
 }
 
-export type InferModelRow<ModelType> = ModelType extends Model<
-  string,
-  infer Schema
->
-  ? RowFromSchema<Schema>
+export type InferModelRow<ModelType> = ModelType extends { readonly row: infer Row }
+  ? Row
   : never;
 
 export type InferModelPrimaryKey<ModelType> = ModelType extends Model<

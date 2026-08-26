@@ -1,7 +1,6 @@
 import {
   Toshihiko,
   Type,
-  type InferModelRow,
 } from '../..';
 
 const toshihiko = new Toshihiko('mysql');
@@ -10,8 +9,6 @@ const User = toshihiko.define('user', [
   { name: 'name', type: Type.String },
 ]);
 
-type UserRow = InferModelRow<typeof User>;
-
-const user: UserRow = { id: 1, name: 'Alice' };
+const user: typeof User.row = { id: 1, name: 'Alice' };
 
 void user;

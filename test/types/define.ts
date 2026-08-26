@@ -4,7 +4,6 @@ import {
   type FieldDefinition,
   type FieldType,
   type InferModelPrimaryKey,
-  type InferModelRow,
 } from '../../src';
 
 const Industry = {
@@ -61,10 +60,9 @@ const Validated = toshihiko.define('validated', [
   },
 ]);
 
-type UserRow = InferModelRow<typeof User>;
 type UserPrimaryKey = InferModelPrimaryKey<typeof User>;
 
-const user: UserRow = {
+const user: typeof User.row = {
   id: 1,
   username: 'Alice',
   birthday: null,
@@ -82,7 +80,7 @@ void idColumn;
 void nicknameColumn;
 void Validated;
 
-const invalidUser: UserRow = {
+const invalidUser: typeof User.row = {
   id: 1,
   username: 'Alice',
   birthday: null,
@@ -95,7 +93,7 @@ const invalidUser: UserRow = {
 void invalidUser;
 
 // @ts-expect-error Custom FieldType values are preserved by define().
-const invalidIndustry: UserRow['industry'] = 'internet,financial';
+const invalidIndustry: typeof User.row.industry = 'internet,financial';
 
 void invalidIndustry;
 
