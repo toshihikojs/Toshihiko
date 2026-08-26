@@ -28,11 +28,13 @@ export type FieldValidator<Value> = (
   value: Value,
 ) => Promise<string | void>;
 
+type AsyncValidatorShape = (...arguments_: never[]) => Promise<unknown>;
+
 export interface FieldDefinitionShape {
   readonly name: string;
   readonly column?: string;
   readonly type?: FieldTypeLike;
-  readonly validators?: unknown;
+  readonly validators?: AsyncValidatorShape | readonly AsyncValidatorShape[];
   readonly allowNull?: boolean;
   readonly primaryKey?: boolean;
   readonly autoIncrement?: boolean;

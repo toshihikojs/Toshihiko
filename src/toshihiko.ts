@@ -1,5 +1,5 @@
 import { Model, type ModelOptions } from './contracts/model';
-import type { SchemaDefinition, ValidatedSchema } from './contracts/field';
+import type { SchemaDefinition } from './contracts/field';
 
 export interface ToshihikoOptions {
   readonly [key: string]: unknown;
@@ -22,7 +22,7 @@ export class Toshihiko<
     const Schema extends SchemaDefinition,
   >(
     collectionName: Name,
-    schema: Schema & ValidatedSchema<Schema>,
+    schema: Schema,
     options: ModelOptions = {},
   ): Model<Name, Schema> {
     return new Model<Name, Schema>(collectionName, this, schema, options);

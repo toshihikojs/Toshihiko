@@ -6,7 +6,6 @@ import {
   type RowFromSchema,
   type SchemaDefinition,
   type ValidatedFieldDefinition,
-  type ValidatedSchema,
 } from './field';
 import type { Toshihiko } from '../toshihiko';
 
@@ -56,7 +55,7 @@ export class Model<
   constructor(
     name: Name,
     parent: Toshihiko,
-    schema: Schema & ValidatedSchema<Schema>,
+    schema: Schema,
     options: ModelOptions = {},
   ) {
     this.name = name;

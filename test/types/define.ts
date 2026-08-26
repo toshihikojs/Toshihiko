@@ -1,6 +1,7 @@
 import {
   Toshihiko,
   Type,
+  type FieldDefinition,
   type FieldType,
   type InferModelPrimaryKey,
   type InferModelRow,
@@ -45,7 +46,7 @@ const User = toshihiko.define('user', [
   {
     name: 'nickname',
   },
-] as const);
+]);
 
 const Validated = toshihiko.define('validated', [
   {
@@ -58,7 +59,7 @@ const Validated = toshihiko.define('validated', [
       }
     },
   },
-] as const);
+]);
 
 type UserRow = InferModelRow<typeof User>;
 type UserPrimaryKey = InferModelPrimaryKey<typeof User>;
@@ -103,8 +104,14 @@ const invalidPrimaryKey: UserPrimaryKey = 'username';
 
 void invalidPrimaryKey;
 
-// @ts-expect-error Defaults must use the FieldType value type.
-toshihiko.define('invalid-default', [{ name: 'score', type: Type.Integer, default: 'zero' }] as const);
+const invalidDefault: FieldDefinition<'score', typeof Type.Integer> = {
+  name: 'score',
+  type: Type.Integer,
+  // @ts-expect-error Defaults must use the FieldType value type.
+  default: 'zero',
+};
+
+void invalidDefault;
 
 const syncValidator = (value: number): string | void => {
   if (value < 0) {
@@ -113,7 +120,7 @@ const syncValidator = (value: number): string | void => {
 };
 
 // @ts-expect-error v2 validators must return Promise objects.
-toshihiko.define('invalid-sync-validator', [{ name: 'score', type: Type.Integer, validators: syncValidator }] as const);
+toshihiko.define('invalid-sync-validator', [{ name: 'score', type: Type.Integer, validators: syncValidator }]);
 
 const callbackValidator = (
   value: number,
@@ -123,4 +130,4 @@ const callbackValidator = (
 };
 
 // @ts-expect-error v2 does not support callback validators.
-toshihiko.define('invalid-callback-validator', [{ name: 'score', type: Type.Integer, validators: callbackValidator }] as const);
+toshihiko.define('invalid-callback-validator', [{ name: 'score', type: Type.Integer, validators: callbackValidator }]);
