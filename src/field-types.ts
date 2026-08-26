@@ -10,12 +10,13 @@ export type JsonValue =
 
 const StringType = Object.freeze({
   name: 'String',
+  needQuotes: true,
   defaultValue: '',
   parse(value: unknown): string {
     return value === null || value === undefined ? '' : String(value);
   },
   restore(value: string): string {
-    return value;
+    return value === null || value === undefined ? '' : String(value);
   },
   equal(left: string, right: string): boolean {
     return left === right;
@@ -24,6 +25,7 @@ const StringType = Object.freeze({
 
 const BooleanType = Object.freeze({
   name: 'Boolean',
+  needQuotes: false,
   defaultValue: false,
   parse(value: unknown): boolean {
     return Boolean(value);
@@ -38,6 +40,7 @@ const BooleanType = Object.freeze({
 
 const IntegerType = Object.freeze({
   name: 'Integer',
+  needQuotes: false,
   defaultValue: 0,
   parse(value: unknown): number {
     return Number.parseInt(String(value), 10);
@@ -52,12 +55,13 @@ const IntegerType = Object.freeze({
 
 const FloatType = Object.freeze({
   name: 'Float',
+  needQuotes: false,
   defaultValue: 0,
   parse(value: unknown): number {
     return Number.parseFloat(String(value));
   },
   restore(value: number): number {
-    return value;
+    return Number.parseFloat(String(value));
   },
   equal(left: number, right: number): boolean {
     return left === right;
@@ -66,6 +70,7 @@ const FloatType = Object.freeze({
 
 const JsonType = Object.freeze({
   name: 'Json',
+  needQuotes: true,
   defaultValue: Object.freeze({}) as JsonValue,
   parse(value: unknown): JsonValue {
     if (typeof value === 'string') {
@@ -83,6 +88,7 @@ const JsonType = Object.freeze({
 
 const DatetimeType = Object.freeze({
   name: 'Datetime',
+  needQuotes: true,
   parse(value: unknown): Date {
     return value instanceof Date ? new Date(value.getTime()) : new Date(String(value));
   },

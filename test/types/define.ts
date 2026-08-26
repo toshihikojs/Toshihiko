@@ -12,6 +12,7 @@ import {
 
 const Industry = {
   name: 'Industry',
+  needQuotes: false,
   parse(value: string) {
     const [big = '', small = ''] = value.split(',');
     return { big, small };

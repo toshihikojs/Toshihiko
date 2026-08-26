@@ -6,6 +6,7 @@ export interface FieldType<
   JsonValue = Value,
 > {
   readonly name: string;
+  readonly needQuotes?: boolean;
   readonly defaultValue?: Value;
   parse(value: StorageValue): Value;
   restore(value: Value): StorageValue;
@@ -15,6 +16,7 @@ export interface FieldType<
 
 export interface FieldTypeLike {
   readonly name: string;
+  readonly needQuotes?: boolean;
   readonly defaultValue?: unknown;
   parse(value: never): unknown;
   restore(value: never): unknown;

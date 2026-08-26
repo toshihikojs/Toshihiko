@@ -67,6 +67,14 @@ test('define compiles the documented schema into model metadata', () => {
   assert.equal(User.fieldNamesMap.username.defaultValue, 'anonymous');
 });
 
+test('built-in field types retain v1 restore coercion for JavaScript callers', () => {
+  assert.equal(Type.String.needQuotes, true);
+  assert.equal(Type.Float.needQuotes, false);
+  assert.equal(Type.String.restore(2), '2');
+  assert.equal(Type.String.restore(null), '');
+  assert.equal(Type.Float.restore('2.5'), 2.5);
+});
+
 test('define keeps model-local options without interpreting infrastructure', () => {
   const toshihiko = new Toshihiko('mysql');
   const cache = { name: 'memcached' };
