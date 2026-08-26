@@ -3,7 +3,6 @@ import {
   type AdapterFindOptions,
   type AdapterQuery,
   type AdapterRow,
-  type AdapterTypeMap,
 } from '../..';
 import { Toshihiko, Type } from 'toshihiko';
 
@@ -11,24 +10,15 @@ interface TestModel {
   readonly name: string;
 }
 
-interface TestAdapterTypes extends AdapterTypeMap {
-  readonly connection: { readonly transactionId: number };
-  readonly executeArguments: readonly [sql: string, parameters?: readonly unknown[]];
-  readonly executeResult: readonly AdapterRow[];
-  readonly field: { readonly name: string };
-  readonly fieldValue: unknown;
-  readonly findResult: readonly AdapterRow[] | AdapterRow | null;
-  readonly insertResult: AdapterRow;
-  readonly mutationResult: { readonly affectedRows: number };
-  readonly options: { readonly database: string };
-  readonly query: AdapterQuery<TestModel>;
+interface TestAdapterOptions {
+  readonly database: string;
 }
 
-class TestAdapter extends Adapter<TestAdapterTypes> {
+class TestAdapter extends Adapter<TestAdapterOptions> {
   override async find(
-    query: TestAdapterTypes['query'],
+    query: AdapterQuery<TestModel>,
     options?: AdapterFindOptions,
-  ): Promise<TestAdapterTypes['findResult']> {
+  ): Promise<readonly AdapterRow[] | AdapterRow | null> {
     void query;
     return options?.single ? null : [];
   }

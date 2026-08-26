@@ -12,34 +12,7 @@ export interface AdapterData<Field = unknown, Value = unknown> {
   readonly value: Value;
 }
 
-export interface AdapterTypeMap {
-  readonly connection: unknown;
-  readonly executeArguments: readonly unknown[];
-  readonly executeResult: unknown;
-  readonly field: unknown;
-  readonly fieldValue: unknown;
-  readonly findResult: AdapterFindResult;
-  readonly insertResult: AdapterRow | null;
-  readonly mutationResult: unknown;
-  readonly options: object;
-  readonly query: AdapterQuery;
-}
-
-export interface DefaultAdapterTypeMap extends AdapterTypeMap {
-  readonly connection: unknown;
-  readonly executeArguments: readonly unknown[];
-  readonly executeResult: unknown;
-  readonly field: unknown;
-  readonly fieldValue: unknown;
-  readonly findResult: AdapterFindResult;
-  readonly insertResult: AdapterRow | null;
-  readonly mutationResult: unknown;
-  readonly options: Readonly<Record<string, unknown>>;
-  readonly query: AdapterQuery;
-}
-
-type AdapterModel<Types extends AdapterTypeMap> =
-  Types['query'] extends AdapterQuery<infer Model> ? Model : unknown;
+export type DefaultAdapterOptions = Readonly<Record<string, unknown>>;
 
 export class AdapterNotImplementedError extends Error {
   readonly method: string;
@@ -52,48 +25,48 @@ export class AdapterNotImplementedError extends Error {
 }
 
 export class Adapter<
-  Types extends AdapterTypeMap = DefaultAdapterTypeMap,
+  Options extends object = DefaultAdapterOptions,
 > extends EventEmitter {
-  readonly options: Types['options'];
+  readonly options: Options;
 
-  constructor(options?: Types['options'] | null) {
+  constructor(options?: Options | null) {
     super();
     this.options = copyOptions(options);
   }
 
   async find(
-    query: Types['query'],
+    query: AdapterQuery,
     options?: AdapterFindOptions,
-  ): Promise<Types['findResult']> {
+  ): Promise<AdapterFindResult> {
     void query;
     void options;
     return this.notImplemented('find');
   }
 
-  async count(query: Types['query']): Promise<number> {
+  async count(query: AdapterQuery): Promise<number> {
     void query;
     return this.notImplemented('count');
   }
 
   async updateByQuery(
-    query: Types['query'],
-  ): Promise<Types['mutationResult']> {
+    query: AdapterQuery,
+  ): Promise<unknown> {
     void query;
     return this.notImplemented('updateByQuery');
   }
 
   async deleteByQuery(
-    query: Types['query'],
-  ): Promise<Types['mutationResult']> {
+    query: AdapterQuery,
+  ): Promise<unknown> {
     void query;
     return this.notImplemented('deleteByQuery');
   }
 
   async insert(
-    model: AdapterModel<Types>,
-    connection: Types['connection'] | null,
-    data: readonly AdapterData<Types['field'], Types['fieldValue']>[],
-  ): Promise<Types['insertResult']> {
+    model: unknown,
+    connection: unknown,
+    data: readonly AdapterData[],
+  ): Promise<AdapterRow | null> {
     void model;
     void connection;
     void data;
@@ -101,11 +74,11 @@ export class Adapter<
   }
 
   async update(
-    model: AdapterModel<Types>,
-    connection: Types['connection'] | null,
+    model: unknown,
+    connection: unknown,
     primaryKey: Readonly<Record<string, unknown>>,
-    data: readonly AdapterData<Types['field'], Types['fieldValue']>[],
-  ): Promise<Types['mutationResult']> {
+    data: readonly AdapterData[],
+  ): Promise<unknown> {
     void model;
     void connection;
     void primaryKey;
@@ -114,8 +87,8 @@ export class Adapter<
   }
 
   async execute(
-    ...arguments_: Types['executeArguments']
-  ): Promise<Types['executeResult']> {
+    ...arguments_: readonly unknown[]
+  ): Promise<unknown> {
     void arguments_;
     return this.notImplemented('execute');
   }
@@ -124,16 +97,16 @@ export class Adapter<
     return '';
   }
 
-  async beginTransaction(): Promise<Types['connection']> {
+  async beginTransaction(): Promise<unknown> {
     return this.notImplemented('beginTransaction');
   }
 
-  async commit(connection: Types['connection']): Promise<void> {
+  async commit(connection: unknown): Promise<void> {
     void connection;
     return this.notImplemented('commit');
   }
 
-  async rollback(connection: Types['connection']): Promise<void> {
+  async rollback(connection: unknown): Promise<void> {
     void connection;
     return this.notImplemented('rollback');
   }

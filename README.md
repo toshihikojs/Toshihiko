@@ -14,7 +14,7 @@ Node.js 22 or newer is required.
 
 ## Implementing an Adapter
 
-Define one type map for the database-specific options, query model, connection, and results. Every inherited operation returns a native Promise. Operations that are not overridden reject with `AdapterNotImplementedError`.
+Pass only the Adapter's public options type to the base class. Concrete method signatures remain the single source of truth for database-specific queries, connections, and results. Every inherited operation returns a native Promise. Operations that are not overridden reject with `AdapterNotImplementedError`.
 
 ```typescript
 import {
@@ -22,39 +22,21 @@ import {
   type AdapterFindOptions,
   type AdapterQuery,
   type AdapterRow,
-  type AdapterTypeMap,
 } from '@toshihiko/base-adapter';
-
-interface MyConnection {
-  query(sql: string, values?: readonly unknown[]): Promise<readonly AdapterRow[]>;
-}
-
-interface MyField {
-  readonly name: string;
-}
 
 interface MyModel {
   readonly name: string;
 }
 
-interface MyAdapterTypes extends AdapterTypeMap {
-  readonly connection: MyConnection;
-  readonly executeArguments: readonly [sql: string, values?: readonly unknown[]];
-  readonly executeResult: readonly AdapterRow[];
-  readonly field: MyField;
-  readonly fieldValue: unknown;
-  readonly findResult: readonly AdapterRow[] | AdapterRow | null;
-  readonly insertResult: AdapterRow;
-  readonly mutationResult: { readonly affectedRows: number };
-  readonly options: { readonly database: string };
-  readonly query: AdapterQuery<MyModel>;
+interface MyAdapterOptions {
+  readonly database: string;
 }
 
-class MyAdapter extends Adapter<MyAdapterTypes> {
+class MyAdapter extends Adapter<MyAdapterOptions> {
   override async find(
-    query: MyAdapterTypes['query'],
+    query: AdapterQuery<MyModel>,
     options?: AdapterFindOptions,
-  ): Promise<MyAdapterTypes['findResult']> {
+  ): Promise<readonly AdapterRow[] | AdapterRow | null> {
     return options?.single ? null : [];
   }
 
