@@ -6,6 +6,33 @@ const test = require('node:test');
 const { Toshihiko, Type } = require('../..');
 const { Yukari } = require('../../dist/yukari.js');
 
+class MemoryAdapter {
+  constructor(options) {
+    this.options = options;
+    this.calls = [];
+  }
+
+  getDBName() {
+    return this.options.database;
+  }
+
+  async find(query, options) {
+    this.calls.push({
+      connection: query._conn,
+      fields: [...query._fields],
+      index: query._index,
+      limit: [...query._limit],
+      options,
+      order: query._order,
+      table: query.model.name,
+      where: query._where,
+    });
+
+    const rows = this.options.rows;
+    return options.single ? rows[0] ?? null : rows;
+  }
+}
+
 test('define compiles the documented schema into model metadata', () => {
   const toshihiko = new Toshihiko('mysql', { database: 'toshihiko' });
   const User = toshihiko.define('user', [
@@ -230,5 +257,160 @@ test('Yukari serializes current and original rows and extracts changes', () => {
       { name: 'settings', value: { theme: 'light' } },
       { name: 'createdAt', value: null },
     ],
+  );
+});
+
+test('a Promise Adapter plugs directly into the original Model query API', async () => {
+  const connection = { transaction: 1 };
+  const toshihiko = new Toshihiko(MemoryAdapter, {
+    database: 'toshihiko',
+    rows: [
+      { user_id: '7', user_name: 'Alice' },
+      { user_id: '8', user_name: 'Bob' },
+    ],
+  });
+  const User = toshihiko.define('user', [
+    { name: 'id', column: 'user_id', type: Type.Integer, primaryKey: true },
+    { name: 'name', column: 'user_name', type: Type.String },
+  ]);
+
+  const users = await User
+    .where({ id: { $gte: 7 } })
+    .fields('id, name')
+    .index('PRIMARY')
+    .orderBy({ id: 'desc' })
+    .limit(2)
+    .conn(connection)
+    .find();
+
+  assert.equal(toshihiko.database, 'toshihiko');
+  assert.equal(toshihiko.adapter instanceof MemoryAdapter, true);
+  assert.deepEqual(users.map((user) => user.toJSON()), [
+    { id: 7, name: 'Alice' },
+    { id: 8, name: 'Bob' },
+  ]);
+  assert.deepEqual(toshihiko.adapter.calls[0], {
+    connection,
+    fields: ['id', 'name'],
+    index: 'PRIMARY',
+    limit: [2],
+    options: { noCache: false, single: false },
+    order: [{ id: -1 }],
+    table: 'user',
+    where: { id: { $gte: 7 } },
+  });
+
+  const first = await User.findOne();
+  assert.equal(first.id, 7);
+  assert.deepEqual(toshihiko.adapter.calls[1].options, {
+    noCache: false,
+    single: true,
+  });
+
+  const json = await User.findById(7, true);
+  assert.deepEqual(json, { id: 7, name: 'Alice' });
+  assert.deepEqual(toshihiko.adapter.calls[2].where, { id: 7 });
+
+  await User.order('id').find(false, { noCache: true });
+  assert.deepEqual(toshihiko.adapter.calls[3].order, [{ id: 1 }]);
+  assert.deepEqual(toshihiko.adapter.calls[3].options, {
+    noCache: true,
+    single: false,
+  });
+});
+
+test('findById validates composite keys before invoking the Adapter', async () => {
+  const adapter = new MemoryAdapter({ database: 'toshihiko', rows: [] });
+  const toshihiko = new Toshihiko(adapter);
+  const Membership = toshihiko.define('membership', [
+    { name: 'userId', column: 'user_id', type: Type.Integer, primaryKey: true },
+    { name: 'groupId', column: 'group_id', type: Type.Integer, primaryKey: true },
+  ]);
+
+  await Membership.findById({ userId: 1, groupId: 2 });
+  assert.deepEqual(adapter.calls[0].where, { userId: 1, groupId: 2 });
+
+  await assert.rejects(
+    Membership.findById({ userId: 1 }),
+    /missing primary key groupId/,
+  );
+  assert.equal(adapter.calls.length, 1);
+});
+
+test('v2 rejects unresolved, callback, and synchronous Adapters clearly', async () => {
+  const unresolved = new Toshihiko('mysql');
+  const User = unresolved.define('user', [
+    { name: 'id', type: Type.Integer, primaryKey: true },
+  ]);
+  await assert.rejects(
+    User.find(),
+    /Pass an Adapter constructor or instance instead/,
+  );
+
+  class LegacyConstructorAdapter {
+    constructor(parent, options) {
+      void parent;
+      void options;
+    }
+  }
+  assert.throws(
+    () => new Toshihiko(LegacyConstructorAdapter),
+    /legacy callback Adapter constructors are not supported/,
+  );
+
+  const callbackAdapter = {
+    find(query, callback, options) {
+      void query;
+      void callback;
+      void options;
+    },
+    getDBName() {
+      return 'callback';
+    },
+  };
+  await assert.rejects(
+    new Toshihiko(callbackAdapter)
+      .define('user', [{ name: 'id', primaryKey: true }])
+      .find(),
+    /callback Adapters are not supported/,
+  );
+
+  const synchronousAdapter = {
+    find() {
+      return [];
+    },
+    getDBName() {
+      return 'sync';
+    },
+  };
+  await assert.rejects(
+    new Toshihiko(synchronousAdapter)
+      .define('user', [{ name: 'id', primaryKey: true }])
+      .find(),
+    /must return a Promise/,
+  );
+});
+
+test('Query rejects Adapter results with the wrong list or single shape', async () => {
+  const wrongShapeAdapter = {
+    async find(query, options) {
+      void query;
+      return options.single ? [] : { id: 1 };
+    },
+    getDBName() {
+      return 'wrong-shape';
+    },
+  };
+  const User = new Toshihiko(wrongShapeAdapter).define('user', [
+    { name: 'id', type: Type.Integer, primaryKey: true },
+  ]);
+
+  await assert.rejects(
+    User.find(),
+    /must return an array for a list query/,
+  );
+  await assert.rejects(
+    User.findOne(),
+    /must return one row or null for a single query/,
   );
 });

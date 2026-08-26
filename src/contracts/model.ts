@@ -1,5 +1,17 @@
 import type { FieldName } from './common';
-import { Yukari, type BuiltYukari } from '../yukari';
+import {
+  Yukari,
+  type BuiltYukari,
+  type QueriedYukari,
+} from '../yukari';
+import {
+  Query,
+  type FindByIdInput,
+  type QueryFindOptions,
+  type QueryJsonRow,
+  type QueryOrder,
+  type QueryWhere,
+} from '../query';
 import {
   Field,
   type FieldDefinitionShape,
@@ -131,6 +143,106 @@ export class Model<
     yukari.buildNewRow(fields);
     return yukari as BuiltYukari<Name, Schema, Input>;
   }
+
+  where(condition: QueryWhere<RowFromSchema<Schema>>): Query<Name, Schema> {
+    return new Query(this).where(condition);
+  }
+
+  field(
+    fields: string | readonly FieldName<RowFromSchema<Schema>>[],
+  ): Query<Name, Schema> {
+    return new Query(this).fields(fields);
+  }
+
+  fields(
+    fields: string | readonly FieldName<RowFromSchema<Schema>>[],
+  ): Query<Name, Schema> {
+    return new Query(this).fields(fields);
+  }
+
+  limit(limit: number | string | readonly (number | string)[]): Query<Name, Schema>;
+  limit(offset: number | string, count: number | string): Query<Name, Schema>;
+  limit(
+    first: number | string | readonly (number | string)[],
+    second?: number | string,
+  ): Query<Name, Schema> {
+    const query = new Query(this);
+    return second === undefined
+      ? query.limit(first)
+      : query.limit(normalizeModelLimit(first), second);
+  }
+
+  index(indexName: string): Query<Name, Schema> {
+    return new Query(this).index(indexName);
+  }
+
+  order(order: QueryOrder<RowFromSchema<Schema>>): Query<Name, Schema> {
+    return new Query(this).order(order);
+  }
+
+  orderBy(order: QueryOrder<RowFromSchema<Schema>>): Query<Name, Schema> {
+    return new Query(this).orderBy(order);
+  }
+
+  conn(connection: unknown): Query<Name, Schema> {
+    return new Query(this).conn(connection);
+  }
+
+  find(): Promise<readonly QueriedYukari<Name, Schema>[]>;
+  find(
+    toJSON: false,
+    options?: QueryFindOptions,
+  ): Promise<readonly QueriedYukari<Name, Schema>[]>;
+  find(
+    toJSON: true,
+    options?: QueryFindOptions,
+  ): Promise<readonly QueryJsonRow<Schema>[]>;
+  find(
+    toJSON = false,
+    options: QueryFindOptions = {},
+  ): Promise<readonly QueriedYukari<Name, Schema>[]> | Promise<readonly QueryJsonRow<Schema>[]> {
+    return toJSON
+      ? new Query(this).find(true, options)
+      : new Query(this).find(false, options);
+  }
+
+  findOne(): Promise<QueriedYukari<Name, Schema> | null>;
+  findOne(toJSON: false): Promise<QueriedYukari<Name, Schema> | null>;
+  findOne(toJSON: true): Promise<QueryJsonRow<Schema> | null>;
+  findOne(
+    toJSON = false,
+  ): Promise<QueriedYukari<Name, Schema> | null> | Promise<QueryJsonRow<Schema> | null> {
+    return toJSON ? new Query(this).findOne(true) : new Query(this).findOne(false);
+  }
+
+  findById(
+    id: FindByIdInput<Schema>,
+  ): Promise<QueriedYukari<Name, Schema> | null>;
+  findById(
+    id: FindByIdInput<Schema>,
+    toJSON: false,
+  ): Promise<QueriedYukari<Name, Schema> | null>;
+  findById(
+    id: FindByIdInput<Schema>,
+    toJSON: true,
+  ): Promise<QueryJsonRow<Schema> | null>;
+  findById(
+    id: FindByIdInput<Schema>,
+    toJSON = false,
+  ): Promise<QueriedYukari<Name, Schema> | null> | Promise<QueryJsonRow<Schema> | null> {
+    const query = new Query(this);
+    return toJSON ? query.findById(id, true) : query.findById(id, false);
+  }
+}
+
+function normalizeModelLimit(
+  value: number | string | readonly (number | string)[],
+): number | string {
+  return isReadonlyArray(value) ? value[0] ?? 0 : value;
+}
+
+function isReadonlyArray(value: unknown): value is readonly unknown[] {
+  return Array.isArray(value);
 }
 
 export type InferModelRow<ModelType> = ModelType extends { readonly row: infer Row }

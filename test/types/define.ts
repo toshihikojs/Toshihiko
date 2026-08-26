@@ -1,6 +1,10 @@
 import {
   Toshihiko,
   Type,
+  type Adapter,
+  type AdapterFindOptions,
+  type AdapterFindResult,
+  type AdapterQuery,
   type FieldDefinition,
   type FieldType,
   type InferModelPrimaryKey,
@@ -110,6 +114,64 @@ const serializedBirthday: string | null | undefined = user.toJSON().birthday;
 void optionalBirthday;
 void validation;
 void serializedBirthday;
+
+class TestAdapter implements Adapter {
+  constructor(readonly options: { readonly database: string }) {}
+
+  async find(
+    query: AdapterQuery,
+    options?: AdapterFindOptions,
+  ): Promise<AdapterFindResult> {
+    void query;
+    void options;
+    return [];
+  }
+
+  getDBName(): string {
+    return this.options.database;
+  }
+}
+
+const connected = new Toshihiko(TestAdapter, { database: 'typed' });
+const ConnectedUser = connected.define('connected-user', [
+  { name: 'id', type: Type.Integer, primaryKey: true },
+  { name: 'name', type: Type.String },
+]);
+const foundUsers = ConnectedUser
+  .where({ id: { $gte: 1 }, name: { $like: 'A%' } })
+  .orderBy({ id: 'desc' })
+  .limit(10)
+  .find();
+const foundUser = ConnectedUser.findById(1);
+const foundJson = ConnectedUser.findById(1, true);
+
+foundUsers.then((rows) => {
+  const foundId: number | undefined = rows[0]?.id;
+  void foundId;
+});
+foundUser.then((row) => {
+  const foundName: string | undefined = row?.name;
+  void foundName;
+});
+foundJson.then((row) => {
+  const foundName: string | undefined = row?.name;
+  void foundName;
+});
+
+// @ts-expect-error Query conditions reject unknown logical field names.
+ConnectedUser.where({ missing: 1 });
+
+// @ts-expect-error findById() preserves the primary-key FieldType.
+ConnectedUser.findById('1');
+
+const Membership = connected.define('membership', [
+  { name: 'userId', type: Type.Integer, primaryKey: true },
+  { name: 'groupId', type: Type.Integer, primaryKey: true },
+]);
+Membership.findById({ userId: 1, groupId: 2 });
+
+// @ts-expect-error Composite primary keys require the complete key object.
+Membership.findById({ userId: 1 });
 
 // @ts-expect-error build() preserves FieldType value types.
 User.build({ id: '1' });

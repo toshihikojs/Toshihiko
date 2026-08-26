@@ -1,6 +1,10 @@
 import {
   Toshihiko,
   Type,
+  type Adapter,
+  type AdapterFindOptions,
+  type AdapterFindResult,
+  type AdapterQuery,
 } from '../..';
 
 const toshihiko = new Toshihiko('mysql');
@@ -20,3 +24,28 @@ void id;
 void name;
 void json;
 void jsonId;
+
+class ConsumerAdapter implements Adapter {
+  constructor(readonly options: { readonly database: string }) {}
+
+  async find(
+    query: AdapterQuery,
+    options?: AdapterFindOptions,
+  ): Promise<AdapterFindResult> {
+    void query;
+    void options;
+    return [];
+  }
+
+  getDBName(): string {
+    return this.options.database;
+  }
+}
+
+const connected = new Toshihiko(ConsumerAdapter, { database: 'consumer' });
+const ConnectedUser = connected.define('user', [
+  { name: 'id', type: Type.Integer, primaryKey: true },
+]);
+const found = ConnectedUser.findById(1);
+
+void found;

@@ -48,6 +48,11 @@ export type BuiltYukari<
   Input extends BuildInput<Schema>,
 > = Yukari<Name, Schema> & BuiltRowFromSchema<Schema, Input>;
 
+export type QueriedYukari<
+  Name extends string,
+  Schema extends SchemaDefinition,
+> = Yukari<Name, Schema> & Partial<RowFromSchema<Schema>>;
+
 export class Yukari<
   Name extends string,
   Schema extends SchemaDefinition,
