@@ -222,6 +222,12 @@ module.exports = function(name, options) {
             sql = adapter.makeWhere(model, { key1: "1", key2: "2" });
             sql.should.equal("(`id` = 1 AND `key2` = 2)");
 
+            sql = adapter.makeWhere(model, { key1: { "<=": 2 } });
+            sql.should.equal("(`id` <= 2)");
+
+            sql = adapter.makeWhere(model, { key1: { ">=": 2 } });
+            sql.should.equal("(`id` >= 2)");
+
             sql = adapter.makeWhere(model, { key1: "1", key2: "2" }, "OR");
             sql.should.equal("(`id` = 1 OR `key2` = 2)");
 
@@ -494,6 +500,12 @@ module.exports = function(name, options) {
             let sql;
             sql = adapter.makeFind(model, { fields: model.schema.map(field => field.name) });
             sql.should.equal("SELECT `id`, `key2`, `key3`, `key4`, `key5`, `key6` FROM `test`");
+        });
+
+        it("should reject an unknown field", function() {
+            (function() {
+                adapter.makeFind(model, { fields: [ "missing" ] });
+            }).should.throw("no field named \"missing\" in model \"test\"");
         });
 
         it("should count", function() {

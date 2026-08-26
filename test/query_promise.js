@@ -42,6 +42,34 @@ describe("query promise", function() {
         });
     });
 
+    describe("findById", function() {
+        it("should resolve from cache", function() {
+            const cachedModel = toshihiko.define("cached_model", [
+                { name: "key1", primaryKey: true }
+            ], {
+                cache: {
+                    getData: function(database, table, id, callback) {
+                        callback(undefined, [ { key1: id.key1 } ]);
+                    },
+                    setData: function() {},
+                    deleteData: function() {},
+                    deleteKeys: function() {}
+                }
+            });
+
+            return cachedModel.findById("cached").should.eventually.match({ key1: "cached" });
+        });
+
+        it("should reject an invalid compound id without a callback", function() {
+            const compoundModel = toshihiko.define("compound_model", [
+                { name: "key1", primaryKey: true },
+                { name: "key2", primaryKey: true }
+            ]);
+
+            return compoundModel.findById("invalid").should.be.rejectedWith("you should pass a valid IDs object");
+        });
+    });
+
     describe("update", function() {
         it("should resolve", function() {
             const query = new Query(model);

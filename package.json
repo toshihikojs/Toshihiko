@@ -3,6 +3,7 @@
   "version": "1.0.4",
   "description": "Yet another simple ORM for node.js.",
   "main": "index.js",
+  "types": "index.d.ts",
   "directories": {
     "test": "test"
   },
@@ -36,10 +37,12 @@
     "should": "13.2.2",
     "sync-runner": "^1.0.0",
     "toshihiko-memcached": "^1.0.1",
+    "typescript": "^5.5.4",
     "validate-commit-msg": "2.14.0"
   },
   "scripts": {
     "test": "make test",
+    "test:types": "tsc --noEmit -p test/types/tsconfig.json",
     "lint": "./node_modules/.bin/jshint .",
     "validate": "npm ls",
     "commit-msg": "./node_modules/.bin/validate-commit-msg",
