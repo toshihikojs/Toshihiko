@@ -37,11 +37,14 @@
     "should": "13.2.2",
     "sync-runner": "^1.0.0",
     "toshihiko-memcached": "^1.0.1",
+    "toshihiko-redis": "0.0.8",
     "typescript": "^5.5.4",
     "validate-commit-msg": "2.14.0"
   },
   "scripts": {
-    "test": "make test",
+    "test": "npm run test:unit && npm run test:types",
+    "test:unit": "_mocha -t 5000 -r ./test/util/common.js --exit test/*.js test/field_type/*.js test/yukari/*.js test/adapters/base.js",
+    "test:integration": "_mocha -t 10000 -r ./test/util/common.js --exit test/adapters/mysql.js test/integration/*.js",
     "test:types": "tsc --noEmit -p test/types/tsconfig.json",
     "lint": "./node_modules/.bin/jshint .",
     "validate": "npm ls",

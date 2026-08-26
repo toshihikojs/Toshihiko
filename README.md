@@ -2,7 +2,7 @@
 
 [![Toshihiko](http://img.shields.io/npm/v/toshihiko.svg)](https://www.npmjs.org/package/toshihiko)
 [![Toshihiko](http://img.shields.io/npm/dm/toshihiko.svg)](https://www.npmjs.org/package/toshihiko)
-[![Build Status](https://travis-ci.org/XadillaX/Toshihiko.svg?branch=feature/v1)](https://travis-ci.org/XadillaX/Toshihiko)
+[![CI](https://github.com/toshihikojs/Toshihiko/actions/workflows/ci.yml/badge.svg)](https://github.com/toshihikojs/Toshihiko/actions/workflows/ci.yml)
 [![Coverage Status](https://img.shields.io/coveralls/XadillaX/Toshihiko/feature/v1.svg)](https://coveralls.io/r/XadillaX/Toshihiko?branch=master)
 [![License](https://img.shields.io/npm/l/toshihiko.svg?style=flat)](https://www.npmjs.org/package/toshihiko)
 [![Dependency Status](https://david-dm.org/XadillaX/Toshihiko.svg)](https://david-dm.org/XadillaX/Toshihiko)
@@ -30,6 +30,8 @@ $ npm install toshihiko --save
 ## Contribute
 
 You're welcome to make Pull Request! Please read [CONTRIBUTING.md](https://github.com/XadillaX/Toshihiko/blob/master/CONTRIBUTING.md) first.
+
+The local test suite does not require Docker or external services. MySQL, Redis, and Memcached integration tests run in GitHub Actions. See [Testing](docs/misc/testing.md) for the exact baseline.
 
 ### Thanks to
 

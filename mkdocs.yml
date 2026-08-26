@@ -22,5 +22,6 @@ pages:
     - Yukari: api/yukari.md
     - Data Types: api/type.md
   - Misc:
+    - Testing: misc/testing.md
     - Changelog: misc/changelog.md
     - Imprint: misc/imprint.md
