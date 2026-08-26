@@ -1,7 +1,6 @@
 {
   "name": "toshihiko",
   "version": "2.0.0-alpha.0",
-  "private": true,
   "description": "A type-safe ORM core for Node.js.",
   "license": "MIT",
   "type": "commonjs",

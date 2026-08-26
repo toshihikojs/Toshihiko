@@ -1,0 +1,27 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/rush/v5/command-line.schema.json",
+  "commands": [
+    {
+      "commandKind": "bulk",
+      "name": "test",
+      "summary": "Run package test suites in dependency order.",
+      "enableParallelism": true,
+      "ignoreMissingScript": false
+    },
+    {
+      "commandKind": "bulk",
+      "name": "typecheck",
+      "summary": "Type-check all TypeScript packages.",
+      "enableParallelism": true,
+      "ignoreMissingScript": false
+    },
+    {
+      "commandKind": "bulk",
+      "name": "test:integration",
+      "summary": "Run service-backed integration tests for selected packages.",
+      "enableParallelism": false,
+      "ignoreMissingScript": true
+    }
+  ],
+  "parameters": []
+}

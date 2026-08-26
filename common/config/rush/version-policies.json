@@ -1,0 +1,12 @@
+[
+  {
+    "definitionName": "individualVersion",
+    "policyName": "toshihiko-v2",
+    "lockedMajor": 2
+  },
+  {
+    "definitionName": "individualVersion",
+    "policyName": "sql-utils-v1",
+    "lockedMajor": 1
+  }
+]

@@ -1,0 +1,35 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/rush/v5/rush.schema.json",
+  "rushVersion": "5.172.1",
+  "pnpmVersion": "9.15.9",
+  "nodeSupportedVersionRange": ">=22.0.0 <25.0.0",
+  "projectFolderMinDepth": 2,
+  "projectFolderMaxDepth": 2,
+  "repository": {
+    "url": "https://github.com/toshihikojs/Toshihiko",
+    "defaultBranch": "v2",
+    "defaultRemote": "origin"
+  },
+  "projects": [
+    {
+      "packageName": "toshihiko",
+      "projectFolder": "packages/toshihiko",
+      "versionPolicyName": "toshihiko-v2"
+    },
+    {
+      "packageName": "@toshihiko/base-adapter",
+      "projectFolder": "packages/base-adapter",
+      "versionPolicyName": "toshihiko-v2"
+    },
+    {
+      "packageName": "@toshihiko/mysql-adapter",
+      "projectFolder": "packages/mysql-adapter",
+      "versionPolicyName": "toshihiko-v2"
+    },
+    {
+      "packageName": "@toshihiko/sql-utils",
+      "projectFolder": "packages/sql-utils",
+      "versionPolicyName": "sql-utils-v1"
+    }
+  ]
+}

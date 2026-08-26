@@ -1,0 +1,2 @@
+pnpm-lock.yaml merge=text
+*.json linguist-language=JSON-with-Comments
