@@ -1,0 +1,35 @@
+{
+  "name": "toshihiko",
+  "version": "2.0.0-alpha.0",
+  "private": true,
+  "description": "A type-safe ORM core for Node.js.",
+  "license": "MIT",
+  "type": "commonjs",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "npm run clean && tsc -p tsconfig.build.json",
+    "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
+    "test": "npm run typecheck && npm run build && npm run test:package",
+    "test:package": "tsc -p test/package/tsconfig.json && node --test test/package/runtime.test.cjs",
+    "typecheck": "tsc -p tsconfig.json",
+    "validate": "npm ls"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.9.3"
+  }
+}
