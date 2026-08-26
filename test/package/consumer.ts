@@ -1,4 +1,10 @@
-import { MySQLAdapter, type MySQLAdapterOptions } from '../..';
+import {
+  MySQLAdapter,
+  type MySQLAdapterOptions,
+  type MySQLConnection,
+  type MySQLMutationResult,
+  type MySQLQueryResult,
+} from '../..';
 import { Toshihiko, Type } from 'toshihiko';
 
 const options: MySQLAdapterOptions = {
@@ -21,18 +27,20 @@ User.find(true).then((rows) => {
 
 const adapter = new MySQLAdapter(options);
 const database: string = adapter.database;
-const pending = adapter.execute('SELECT ?', [1]);
+const pending: Promise<MySQLQueryResult> = adapter.execute('SELECT ?', [1]);
+const transaction: Promise<MySQLConnection> = adapter.beginTransaction();
 const counted = adapter.count(User.where({ id: { $gte: 1 } }));
 const inserted = adapter.insert(User, null, [
   { field: User.fieldNamesMap.id, value: 1 },
   { field: User.fieldNamesMap.name, value: 'Alice' },
 ]);
-const updated = adapter.update(User, null, { id: 1 }, [
+const updated: Promise<MySQLMutationResult> = adapter.update(User, null, { id: 1 }, [
   { field: User.fieldNamesMap.name, value: 'Bob' },
 ]);
 
 void database;
 void pending;
+void transaction;
 void counted;
 void inserted;
 void updated;

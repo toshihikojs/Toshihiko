@@ -1,8 +1,5 @@
 import type {
-  AdapterFindResult,
   AdapterQuery,
-  AdapterRow,
-  AdapterTypeMap,
 } from '@toshihiko/base-adapter';
 import type {
   Pool,
@@ -74,19 +71,6 @@ export type MySQLExecuteArguments =
     sql: string,
     values?: MySQLValues,
   ];
-
-export interface MySQLAdapterTypeMap extends AdapterTypeMap {
-  readonly connection: PoolConnection;
-  readonly executeArguments: MySQLExecuteArguments;
-  readonly executeResult: QueryResult;
-  readonly field: MySQLField;
-  readonly fieldValue: unknown;
-  readonly findResult: AdapterFindResult;
-  readonly insertResult: AdapterRow;
-  readonly mutationResult: ResultSetHeader;
-  readonly options: MySQLAdapterOptions;
-  readonly query: MySQLQuery;
-}
 
 export type {
   Pool as MySQLPool,

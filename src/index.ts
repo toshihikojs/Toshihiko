@@ -16,7 +16,6 @@ import type {
 } from 'mysql2/promise';
 import type {
   MySQLAdapterOptions,
-  MySQLAdapterTypeMap,
   MySQLExecuteArguments,
   MySQLField,
   MySQLModel,
@@ -31,7 +30,7 @@ const defaultFindOptions: AdapterFindOptions = Object.freeze({
   single: false,
 });
 
-export class MySQLAdapter extends Adapter<MySQLAdapterTypeMap> {
+export class MySQLAdapter extends Adapter<MySQLAdapterOptions> {
   readonly database: string;
   readonly mysql: Pool;
   readonly package = 'mysql2';
@@ -485,7 +484,6 @@ function quoteIdentifier(identifier: string): string {
 export { MySQLSqlBuilder } from './sql-builder';
 export type {
   MySQLAdapterOptions,
-  MySQLAdapterTypeMap,
   MySQLConnection,
   MySQLExecuteArguments,
   MySQLField,
