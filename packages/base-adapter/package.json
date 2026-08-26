@@ -16,12 +16,13 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/toshihikojs/base-adapter.git"
+    "url": "git+https://github.com/toshihikojs/Toshihiko.git",
+    "directory": "packages/base-adapter"
   },
   "bugs": {
-    "url": "https://github.com/toshihikojs/base-adapter/issues"
+    "url": "https://github.com/toshihikojs/Toshihiko/issues"
   },
-  "homepage": "https://github.com/toshihikojs/base-adapter#readme",
+  "homepage": "https://github.com/toshihikojs/Toshihiko/tree/v2/packages/base-adapter#readme",
   "engines": {
     "node": ">=22"
   },
@@ -30,7 +31,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
-    "toshihiko": "file:../Toshihiko",
+    "toshihiko": "2.0.0-alpha.0",
     "typescript": "^5.9.3"
   },
   "scripts": {

@@ -16,27 +16,27 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/toshihikojs/mysql-adapter.git"
+    "url": "git+https://github.com/toshihikojs/Toshihiko.git",
+    "directory": "packages/mysql-adapter"
   },
   "bugs": {
-    "url": "https://github.com/toshihikojs/mysql-adapter/issues"
+    "url": "https://github.com/toshihikojs/Toshihiko/issues"
   },
-  "homepage": "https://github.com/toshihikojs/mysql-adapter#readme",
+  "homepage": "https://github.com/toshihikojs/Toshihiko/tree/v2/packages/mysql-adapter#readme",
   "engines": {
     "node": ">=22"
   },
   "peerDependencies": {
-    "@toshihiko/base-adapter": ">=2.0.0-alpha.0 <3",
     "toshihiko": ">=2.0.0-alpha.0 <3"
   },
   "dependencies": {
+    "@toshihiko/base-adapter": "2.0.0-alpha.0",
     "@toshihiko/sql-utils": "^1.1.1",
     "mysql2": "^3.24.2"
   },
   "devDependencies": {
-    "@toshihiko/base-adapter": "file:../base-adapter",
     "@types/node": "^22.0.0",
-    "toshihiko": "file:../Toshihiko",
+    "toshihiko": "2.0.0-alpha.0",
     "typescript": "^5.9.3"
   },
   "scripts": {

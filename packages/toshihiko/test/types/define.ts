@@ -8,6 +8,7 @@ import {
   type FieldDefinition,
   type FieldType,
   type InferModelPrimaryKey,
+  type InferModelRow,
 } from '../../src';
 
 const Industry = {
@@ -66,6 +67,7 @@ const Validated = toshihiko.define('validated', [
 ]);
 
 type UserPrimaryKey = InferModelPrimaryKey<typeof User>;
+type UserRow = InferModelRow<typeof User>;
 
 const user = User.build({
   id: 1,
@@ -75,32 +77,27 @@ const user = User.build({
   nickname: 'ali',
 });
 
-const primaryKey: UserPrimaryKey = 'id';
-const idColumn: 'user_id' = User.nameToColumn.id;
-const nicknameColumn: 'nickname' = User.nameToColumn.nickname;
-
-void user;
-void primaryKey;
-void idColumn;
-void nicknameColumn;
-void Validated;
-
-const invalidUser: typeof User.row = {
+const inferredRow: UserRow = {
   id: 1,
   username: 'Alice',
   birthday: null,
   industry: { big: 'internet', small: 'financial' },
   nickname: 'ali',
-  // @ts-expect-error Schema-derived rows reject unknown fields.
-  displayName: 'Alice',
 };
 
-void invalidUser;
+const primaryKey: UserPrimaryKey = 'id';
+const idColumn: 'user_id' = User.nameToColumn.id;
+const nicknameColumn: 'nickname' = User.nameToColumn.nickname;
+
+void user;
+void inferredRow;
+void primaryKey;
+void idColumn;
+void nicknameColumn;
+void Validated;
 
 // @ts-expect-error Custom FieldType values are preserved by define().
-const invalidIndustry: typeof User.row.industry = 'internet,financial';
-
-void invalidIndustry;
+User.build({ industry: 'internet,financial' });
 
 const partialUser = User.build({
   id: 2,

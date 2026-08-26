@@ -79,7 +79,6 @@ export class Model<
   Name extends string,
   Schema extends SchemaDefinition,
 > {
-  declare readonly row: RowFromSchema<Schema>;
   declare readonly $inferPrimaryKey: PrimaryKeyNames<Schema>;
 
   readonly name: Name;
@@ -245,8 +244,11 @@ function isReadonlyArray(value: unknown): value is readonly unknown[] {
   return Array.isArray(value);
 }
 
-export type InferModelRow<ModelType> = ModelType extends { readonly row: infer Row }
-  ? Row
+export type InferModelRow<ModelType> = ModelType extends Model<
+  string,
+  infer Schema
+>
+  ? RowFromSchema<Schema>
   : never;
 
 export type InferModelPrimaryKey<ModelType> = ModelType extends Model<

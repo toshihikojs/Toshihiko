@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - v2
+      - monorepo/v2
   pull_request:
   workflow_dispatch:
 
@@ -16,9 +17,9 @@ concurrency:
 
 jobs:
   verify:
-    name: Build and typecheck / Node.js ${{ matrix.node-version }}
+    name: Build and test / Node.js ${{ matrix.node-version }}
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
@@ -34,13 +35,70 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node-version }}
-          cache: npm
+
+      - name: Install Rush
+        run: npm install --global @microsoft/rush@5.172.1
 
       - name: Install dependencies
-        run: npm ci --ignore-scripts
+        run: rush install
 
-      - name: Validate dependency tree
-        run: npm run validate
+      - name: Validate dependency versions
+        run: rush check
 
-      - name: Build and typecheck
-        run: npm test
+      - name: Build packages
+        run: rush build
+
+      - name: Run package tests
+        run: rush test
+
+  mysql-integration:
+    name: MySQL integration / ${{ matrix.mysql-image }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        mysql-image:
+          - mysql:5.7
+          - mysql:8.4
+
+    services:
+      mysql:
+        image: ${{ matrix.mysql-image }}
+        env:
+          MYSQL_DATABASE: toshihiko_test
+          MYSQL_ROOT_PASSWORD: toshihiko
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --silent -h localhost -ptoshihiko"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=12
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Install Rush
+        run: npm install --global @microsoft/rush@5.172.1
+
+      - name: Install dependencies
+        run: rush install
+
+      - name: Build MySQL adapter and dependencies
+        run: rush build --to @toshihiko/mysql-adapter
+
+      - name: Run MySQL integration tests
+        run: rush test:integration --to @toshihiko/mysql-adapter
+        env:
+          MYSQL_DATABASE: toshihiko_test
+          MYSQL_HOST: 127.0.0.1
+          MYSQL_PASSWORD: toshihiko
+          MYSQL_PORT: 3306
+          MYSQL_USER: root

@@ -1,2 +1,2 @@
-pnpm-lock.yaml merge=text
+common/config/rush/npm-shrinkwrap.json merge=text
 *.json linguist-language=JSON-with-Comments

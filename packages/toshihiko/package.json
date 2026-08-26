@@ -1,8 +1,17 @@
 {
   "name": "toshihiko",
   "version": "2.0.0-alpha.0",
-  "description": "A type-safe ORM core for Node.js.",
+  "description": "Yet another simple ORM for Node.js.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/toshihikojs/Toshihiko.git",
+    "directory": "packages/toshihiko"
+  },
+  "bugs": {
+    "url": "https://github.com/toshihikojs/Toshihiko/issues"
+  },
+  "homepage": "https://github.com/toshihikojs/Toshihiko/tree/v2/packages/toshihiko#readme",
   "type": "commonjs",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -25,7 +34,8 @@
     "test": "npm run typecheck && npm run build && npm run test:package",
     "test:package": "tsc -p test/package/tsconfig.json && node --test test/package/runtime.test.cjs",
     "typecheck": "tsc -p tsconfig.json",
-    "validate": "npm ls"
+    "validate": "npm ls",
+    "prepublishOnly": "npm test"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

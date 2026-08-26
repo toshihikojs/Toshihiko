@@ -1,4 +1,5 @@
-import 'should';
+import assert from 'node:assert/strict';
+import { describe, it } from 'node:test';
 import { sqlNameToColumn } from '../src';
 
 describe('SQL Name to Column Mapper', function() {
@@ -10,7 +11,7 @@ describe('SQL Name to Column Mapper', function() {
         cc: 'c',
         dd: 'd',
       });
-      answer.should.be.eql('SELECT a FROM b WHERE c = d');
+      assert.equal(answer, 'SELECT a FROM b WHERE c = d');
     });
 
     it('should handle backticks and double quotes in column names', function() {
@@ -21,7 +22,7 @@ describe('SQL Name to Column Mapper', function() {
         dd: 'd',
         ee: 'e',
       });
-      answer.should.be.eql('SELECT `a` FROM b WHERE c = "d" AND `d` = e');
+      assert.equal(answer, 'SELECT `a` FROM b WHERE c = "d" AND `d` = e');
     });
 
     it('should handle aliases and arithmetic operations in column names', function() {
@@ -32,7 +33,7 @@ describe('SQL Name to Column Mapper', function() {
         dd: 'd',
         ee: 'e',
       });
-      answer.should.be.eql('SELECT `a` AS k FROM b WHERE c = "d" AND `d` + `e` = e + 1');
+      assert.equal(answer, 'SELECT `a` AS k FROM b WHERE c = "d" AND `d` + `e` = e + 1');
     });
 
     it('should handle complex expressions with backticks and arithmetic operations', function() {
@@ -44,7 +45,7 @@ describe('SQL Name to Column Mapper', function() {
         ee: 'e',
         f_f: 'f',
       });
-      answer.should.be.eql('SELECT `a` AS k FROM b WHERE c = "d" AND `d` + `e` = e + `f`');
+      assert.equal(answer, 'SELECT `a` AS k FROM b WHERE c = "d" AND `d` + `e` = e + `f`');
     });
 
     it('should handle nested expressions with backticks and double quotes', function() {
@@ -56,7 +57,7 @@ describe('SQL Name to Column Mapper', function() {
         ee: 'e',
         ff: 'f',
       });
-      answer.should.be.eql('SELECT a FROM b WHERE (`c` = "b\\"" AND `d` = `e`) AND `f`');
+      assert.equal(answer, 'SELECT a FROM b WHERE (`c` = "b\\"" AND `d` = `e`) AND `f`');
     });
 
     it('should handle backticks and escaped double quotes', function() {
@@ -65,7 +66,7 @@ describe('SQL Name to Column Mapper', function() {
         aa: 'a',
         cc: 'c',
       });
-      answer.should.be.eql('SELECT a FROM b WHERE `c` = "b\\""');
+      assert.equal(answer, 'SELECT a FROM b WHERE `c` = "b\\""');
     });
 
     it('should handle incomplete backtick expressions', function() {
@@ -74,7 +75,7 @@ describe('SQL Name to Column Mapper', function() {
         aa: 'a',
         cc: 'c',
       });
-      answer.should.be.eql('SELECT a FROM b WHERE `c');
+      assert.equal(answer, 'SELECT a FROM b WHERE `c');
     });
 
     it('should handle incomplete double quote expressions', function() {
@@ -83,7 +84,7 @@ describe('SQL Name to Column Mapper', function() {
         aa: 'a',
         cc: 'c',
       });
-      answer.should.be.eql('SELECT a FROM b WHERE c"1"');
+      assert.equal(answer, 'SELECT a FROM b WHERE c"1"');
     });
 
     it('should handle multiple column names in SELECT clause', function() {
@@ -92,7 +93,7 @@ describe('SQL Name to Column Mapper', function() {
         aa: 'a',
         dd: 'd',
       });
-      answer.should.be.eql('SELECT a, d FROM b WHERE `c`');
+      assert.equal(answer, 'SELECT a, d FROM b WHERE `c`');
     });
 
     it('should handle function calls with backticks in WHERE clause', function() {
@@ -102,7 +103,7 @@ describe('SQL Name to Column Mapper', function() {
         dd: 'd',
         ee: 'e',
       });
-      answer.should.be.eql('SELECT a FROM b WHERE calc(`d`) = `e`');
+      assert.equal(answer, 'SELECT a FROM b WHERE calc(`d`) = `e`');
     });
 
     it('should handle complex expressions with function calls and backticks', function() {
@@ -114,7 +115,7 @@ describe('SQL Name to Column Mapper', function() {
         ff: 'f',
         gg: 'g',
       });
-      answer.should.be.eql('SELECT a FROM b WHERE calc(`d`) = (g)e`f`');
+      assert.equal(answer, 'SELECT a FROM b WHERE calc(`d`) = (g)e`f`');
     });
 
     it('should handle unclosed quotes in SQL string', function() {
@@ -123,7 +124,7 @@ describe('SQL Name to Column Mapper', function() {
         aa: 'a',
         cc: 'c',
       });
-      answer.should.be.eql("SELECT a FROM b WHERE c = 'unclosed");
+      assert.equal(answer, "SELECT a FROM b WHERE c = 'unclosed");
     });
   });
 });

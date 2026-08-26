@@ -7,7 +7,7 @@ The Promise-only MySQL Adapter for Toshihiko v2. It uses the `mysql2` Promise Po
 ## Installation
 
 ```bash
-npm install toshihiko @toshihiko/base-adapter @toshihiko/mysql-adapter
+npm install toshihiko @toshihiko/mysql-adapter
 ```
 
 ## Usage

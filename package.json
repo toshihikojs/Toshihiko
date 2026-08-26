@@ -1,0 +1,15 @@
+{
+  "name": "toshihiko-monorepo",
+  "private": true,
+  "description": "Yet another simple ORM for Node.js.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22 <25"
+  },
+  "scripts": {
+    "build": "rush build",
+    "check": "rush check",
+    "test": "rush test",
+    "typecheck": "rush typecheck"
+  }
+}
