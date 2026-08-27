@@ -103,7 +103,7 @@ jobs:
           rush test:integration --to @toshihiko/mysql-adapter --verbose > integration.log 2>&1
           status=$?
           if [ "$status" -ne 0 ]; then
-            node -e 'const fs = require("node:fs"); const failures = fs.readFileSync("integration.log", "utf8").split("\n").filter((line) => /^\s*not ok\b/.test(line)).map((line) => line.trim()).slice(-20); const summary = failures.length ? failures.join("; ") : "Integration command failed without a named test failure."; console.log(`::error title=MySQL integration failure::${summary}`);'
+            node -e 'const fs = require("node:fs"); const output = fs.readFileSync("integration.log", "utf8"); const failures = output.split("\n").filter((line) => /^\s*not ok\b/.test(line)).map((line) => line.trim()).slice(-20); const locations = [...new Set(output.match(/\.test-dist\/integration\/[^)\s]+:\d+:\d+/g) || [])].slice(-20); const summary = [...failures, ...locations].join("; ") || "Integration command failed without a named test failure."; console.log(`::error title=MySQL integration failure::${summary}`);'
           fi
           exit "$status"
         env:
