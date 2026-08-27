@@ -76,7 +76,7 @@ test.before(async () => {
 
 test.after(async () => {
   await adapter.execute('DROP TABLE IF EXISTS `legacy_records`, `legacy_composite`, `legacy_plain`, `legacy_tx`');
-  await adapter.close();
+  await adapter.mysql.end();
 });
 
 test('v1 insert/readback restores JSON, datetime, null, and custom SQL types', async () => {
@@ -92,14 +92,10 @@ test('v1 insert/readback restores JSON, datetime, null, and custom SQL types', a
   assert.equal(row.score, 0.5);
   assert.deepEqual(row.payload, { foo: 'bar' });
   assert.equal(row.name, null);
-  const createdAt = row.created_at;
-  assert.ok(
-    typeof createdAt === 'string' ||
-      typeof createdAt === 'number' ||
-      createdAt instanceof Date,
-  );
-  assert.equal(new Date(createdAt).getTime(), legacyDate.getTime());
-  assert.equal(row.bits, '10101000');
+  const createdAt = row.createdAt;
+  assert.ok(createdAt instanceof Date);
+  assert.equal(createdAt.getTime(), legacyDate.getTime());
+  assert.deepEqual(row.bits, { dec: 168 });
 });
 
 test('v1 complex field and where operators return the intended rows', async () => {

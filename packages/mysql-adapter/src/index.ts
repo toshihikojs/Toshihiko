@@ -1,5 +1,6 @@
 import {
   Adapter,
+  extend,
   type AdapterData,
   type AdapterFindOptions,
   type AdapterRow,
@@ -32,6 +33,15 @@ const defaultFindOptions: AdapterFindOptions = Object.freeze({
   single: false,
 });
 
+interface MySQLReadbackQuery {
+  conn(connection: PoolConnection): MySQLReadbackQuery;
+  findOne(): Promise<object | null>;
+}
+
+interface MySQLReadbackModel extends MySQLModel {
+  where(condition: Readonly<Record<string, unknown>>): MySQLReadbackQuery;
+}
+
 export class MySQLAdapter extends Adapter<
   MySQLAdapterOptions,
   MySQLModel,
@@ -57,6 +67,10 @@ export class MySQLAdapter extends Adapter<
     const mysql = options.pool ?? createPool(normalized.pool);
     Object.defineProperties(this, {
       builder: { value: new MySQLSqlBuilder() },
+      format: {
+        enumerable: true,
+        value: mysql.format.bind(mysql),
+      },
       mysql: { value: mysql },
       showSql: { value: showSql },
     });
@@ -90,8 +104,8 @@ export class MySQLAdapter extends Adapter<
       compiled.sql,
       compiled.values,
     );
-    const rows = result as readonly AdapterRow[];
-    const first = rows[0];
+    const rows = result as readonly AdapterRow[] | null | undefined;
+    const first = (rows || [{ 'COUNT(0)': 0 }])[0];
     return first!['COUNT(0)'] as number;
   }
 
@@ -140,21 +154,15 @@ export class MySQLAdapter extends Adapter<
     if (model.primaryKeys.length === 0 && mutation.insertId) {
       console.error('[TOSHIHIKO WARNING] no primary key while inserting may cause some problems!');
     }
-    const findStatement = this.builder.compileFind(model, {
-      fields: model.schema.map((field) => field.name),
-      where,
-      limit: [0, 1],
-    });
-    const rows = await this.execute(
-      connection,
-      findStatement.sql,
-      findStatement.values,
-    ) as readonly AdapterRow[];
-    const row = rows[0];
-    if (row === undefined) {
+    let query = (model as MySQLReadbackModel).where(where);
+    if (connection) {
+      query = query.conn(connection);
+    }
+    const row = await query.findOne();
+    if (!row) {
       throw new Error('insert successfully but failed to read the record.');
     }
-    return row;
+    return row as AdapterRow;
   }
 
   override async update(
@@ -183,7 +191,7 @@ export class MySQLAdapter extends Adapter<
       compiled.sql,
       compiled.values,
     ) as ResultSetHeader;
-    if (mutation.affectedRows === 0) {
+    if (!mutation.affectedRows) {
       throw new Error('Out-dated yukari data.');
     }
     return mutation;
@@ -234,10 +242,6 @@ export class MySQLAdapter extends Adapter<
     connection.release();
   }
 
-  async close(): Promise<void> {
-    await this.mysql.end();
-  }
-
   format(sql: string, values?: MySQLValues): string {
     return values === undefined
       ? sql
@@ -261,16 +265,15 @@ export class MySQLAdapter extends Adapter<
     query: MySQLQuery,
     overrides: Partial<MySQLQueryOptions> = {},
   ): MySQLQueryOptions {
-    const options: MySQLQueryOptions = {
-      fields: [...query._fields],
+    const options = extend({
+      fields: query._fields,
       index: query._index,
-      limit: [...query._limit],
-      order: [...query._order],
-      update: { ...(query._updateData ?? {}) },
-      where: { ...query._where },
-      ...overrides,
-      conn: query._conn,
-    };
+      limit: query._limit,
+      order: query._order,
+      update: query._updateData,
+      where: query._where,
+    }, overrides) as MySQLQueryOptions;
+    options.conn = query._conn;
 
     if (!options.single) {
       return options;
@@ -475,7 +478,7 @@ function resolveInsertedRowWhere(
 ): Readonly<Record<string, unknown>> {
   const primaryKeys = model.primaryKeys;
   const autoIncrement = model.autoIncrementField ?? model.ai;
-  if (insertId > 0) {
+  if (insertId) {
     if (primaryKeys.length === 1) {
       const primaryKey = primaryKeys[0]!;
       return autoIncrement === null || autoIncrement.primaryKey

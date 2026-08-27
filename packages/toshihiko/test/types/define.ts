@@ -75,6 +75,17 @@ const Validated = toshihiko.define('validated', [
   },
 ]);
 
+const Fallbacks = toshihiko.define('fallbacks', [
+  { name: 'emptyColumn', column: '' },
+  { name: 'undefinedDefault', defaultValue: undefined },
+]);
+const fallbackRow = Fallbacks.build({});
+const emptyColumnName: 'emptyColumn' = Fallbacks.nameToColumn.emptyColumn;
+const undefinedDefault: string = fallbackRow.undefinedDefault;
+
+void emptyColumnName;
+void undefinedDefault;
+
 type UserPrimaryKey = InferModelPrimaryKey<typeof User>;
 type UserRow = InferModelRow<typeof User>;
 

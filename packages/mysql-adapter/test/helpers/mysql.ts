@@ -104,7 +104,8 @@ export function define<
   name: Name,
   schema: Schema & ValidatedSchema<Schema>,
 ): Model<Name, Schema, MySQLAdapter> {
-  const defineModel = new Toshihiko(adapter).define as unknown as <
+  const toshihiko = new Toshihiko(adapter);
+  const defineModel = toshihiko.define.bind(toshihiko) as unknown as <
     const ModelName extends string,
     const ModelSchema extends SchemaDefinition,
   >(

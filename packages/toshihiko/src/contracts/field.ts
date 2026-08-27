@@ -206,6 +206,9 @@ export class Field<
         | readonly FieldValidator<FieldDefinitionNonNullValue<Definition>>[]
         | undefined,
     );
+    if (typeof normalized.validators === 'function') {
+      (normalized as { validators?: unknown }).validators = validators;
+    }
     const autoIncrement = normalized.autoIncrement === undefined
       ? false
       : Boolean(normalized.autoIncrement);
@@ -217,7 +220,7 @@ export class Field<
     Object.defineProperties(this, {
       allowNull: { enumerable: true, value: Boolean(normalized.allowNull) },
       autoIncrement: { enumerable: true, value: autoIncrement },
-      column: { enumerable: true, value: normalized.column ?? normalized.name },
+      column: { enumerable: true, value: normalized.column || normalized.name },
       default: { enumerable: true, value: defaultValue },
       equal: {
         value: runtimeType.equal === undefined
@@ -296,7 +299,7 @@ function resolveDefaultValue<Definition extends FieldDefinitionShape>(
   definition: Definition,
   type: FieldTypeFromDefinition<Definition>,
 ): FieldDefinitionValue<Definition> | undefined {
-  if (Object.prototype.hasOwnProperty.call(definition, 'defaultValue')) {
+  if (definition.defaultValue !== undefined) {
     return definition.defaultValue as FieldDefinitionValue<Definition>;
   }
 

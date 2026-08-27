@@ -14,7 +14,7 @@ Node.js 22 or newer is required.
 
 ## Implementing an Adapter
 
-Pass only the Adapter's public options type to the base class. Concrete method signatures remain the single source of truth for database-specific queries, connections, and results. Every inherited operation returns a native Promise. Operations that are not overridden reject with `AdapterNotImplementedError`.
+Pass only the Adapter's public options type to the base class. Concrete method signatures remain the single source of truth for database-specific queries, connections, and results. Every inherited operation returns a native Promise. Operations that are not overridden reject with the original not-implemented error message.
 
 ```typescript
 import {
@@ -56,7 +56,7 @@ const toshihiko = new Toshihiko(MyAdapter, { database: 'app' });
 
 ## Merging Options
 
-`extend` deep-merges plain own properties without mutating either input. Arrays and dates are cloned, and prototype-pollution keys are ignored.
+`extend` preserves the v1 recursive merge order without mutating either input. Arrays, dates, and other values are cloned.
 
 ```typescript
 import { extend } from '@toshihiko/base-adapter';

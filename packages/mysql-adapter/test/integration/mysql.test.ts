@@ -32,7 +32,7 @@ test.before(async () => {
 
 test.after(async () => {
   await adapter.execute('DROP TABLE IF EXISTS `users`');
-  await adapter.close();
+  await adapter.mysql.end();
 });
 
 test('read, write, raw execution, and transactions work end to end', async () => {
@@ -51,7 +51,6 @@ test('read, write, raw execution, and transactions work end to end', async () =>
   persisted!.score = 2.5;
   const updatedYukari = await persisted!.save();
   assert.equal(updatedYukari, persisted);
-  assert.deepEqual(persisted!.changes(), []);
   const updated = await User.findById(1, true);
   assert.notEqual(updated, null);
   assert.equal(updated?.score, 2.5);

@@ -99,8 +99,9 @@ export class Query<
   _where: QueryWhere<RowFromSchema<Schema>> = {};
 
   constructor(model: Model<Name, Schema, AdapterInstance>) {
+    const adapter = model.parent.adapter;
     Object.defineProperties(this, {
-      adapter: { get: () => model.parent.getAdapter() },
+      adapter: { get: () => adapter ?? model.parent.getAdapter() },
       cache: { value: model.cache },
       field: { value: this.fields, writable: true },
       model: { value: model },
@@ -164,6 +165,11 @@ export class Query<
     const values = typeof first === 'string'
       ? first.trim() === '' ? [] : first.split(',')
       : first;
+    if (!isReadonlyArray(values)) {
+      throw new Error(
+        `query limit expected to be an array, number or string but got ${typeof first} ${String(first)}.`,
+      );
+    }
     this._limit = values.slice(0, 2).map(normalizeLimit);
     return this;
   }
@@ -225,6 +231,9 @@ export class Query<
 
   find(): Promise<readonly QueriedYukari<Name, Schema, AdapterInstance>[]>;
   find(
+    options: QueryFindOptions,
+  ): Promise<readonly QueriedYukari<Name, Schema, AdapterInstance>[]>;
+  find(
     toJSON: false,
     options?: QueryFindOptions,
   ): Promise<readonly QueriedYukari<Name, Schema, AdapterInstance>[]>;
@@ -233,12 +242,16 @@ export class Query<
     options?: QueryFindOptions,
   ): Promise<readonly QueryJsonRow<Schema>[]>;
   async find(
-    toJSON = false,
-    options: QueryFindOptions = {},
+    toJSONOrOptions: boolean | QueryFindOptions = false,
+    maybeOptions: QueryFindOptions = {},
   ): Promise<readonly QueriedYukari<Name, Schema, AdapterInstance>[] | readonly QueryJsonRow<Schema>[]> {
+    const toJSON = typeof toJSONOrOptions === 'boolean' ? toJSONOrOptions : false;
+    const options = toJSONOrOptions !== null && typeof toJSONOrOptions === 'object'
+      ? toJSONOrOptions
+      : maybeOptions;
     const normalizedOptions = options && typeof options === 'object' ? options : {};
     const result = await this.fetch({
-      noCache: normalizedOptions.noCache ?? false,
+      noCache: Boolean(normalizedOptions.noCache),
       single: false,
     });
 

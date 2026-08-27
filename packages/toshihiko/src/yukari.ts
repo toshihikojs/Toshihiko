@@ -207,11 +207,11 @@ export class Yukari<
     connection: AdapterConnection<AdapterInstance> | null = null,
   ): Promise<this> {
     if (this.$source !== 'new') {
-      throw new Error('Yukari.insert() can only be called on a new Yukari object.');
+      throw new Error('You must call this function via a new Yukari object.');
     }
     await this.validateAll();
 
-    const adapter = this.$model.parent.getAdapter() as unknown as Adapter<
+    const adapter = (this.$adapter ?? this.$model.parent.getAdapter()) as unknown as Adapter<
       AdapterModel<AdapterInstance>,
       AdapterConnection<AdapterInstance>,
       AdapterField<AdapterInstance>,
@@ -229,7 +229,7 @@ export class Yukari<
         AdapterValue<AdapterInstance>
       >[],
     );
-    if (row !== null) {
+    if (row !== null && row !== undefined) {
       for (const key of Object.keys(row)) {
         const value = (row as Readonly<Record<string, unknown>>)[key];
         if ((key.startsWith('$') && key !== '$origData') || typeof value === 'function') {
@@ -245,11 +245,9 @@ export class Yukari<
     connection: AdapterConnection<AdapterInstance> | null = null,
   ): Promise<this> {
     if (this.$source === 'new') {
-      throw new Error('Yukari.update() can only be called on a queried Yukari object.');
+      throw new Error('You must call this function via an old Yukari object.');
     }
 
-    const primaryKey = this.originalLocator();
-    await this.validateAll();
     let data = this.updateChanges();
     if (data.length === 0) {
       data = Yukari.extractAdapterData(
@@ -257,8 +255,10 @@ export class Yukari<
         this as unknown as Partial<RowFromSchema<Schema>>,
       );
     }
+    const primaryKey = this.originalLocator();
+    await this.validateAll();
 
-    const adapter = this.$model.parent.getAdapter() as unknown as Adapter<
+    const adapter = (this.$adapter ?? this.$model.parent.getAdapter()) as unknown as Adapter<
       AdapterModel<AdapterInstance>,
       AdapterConnection<AdapterInstance>,
       AdapterField<AdapterInstance>,
@@ -289,7 +289,7 @@ export class Yukari<
     connection: AdapterConnection<AdapterInstance> | null = null,
   ): Promise<true> {
     if (this.$source === 'new') {
-      throw new Error('Yukari.delete() can only be called on a queried Yukari object.');
+      throw new Error("You can't call this function via a new Yukari object.");
     }
 
     const primaryKey = this.originalLocator();
@@ -298,7 +298,7 @@ export class Yukari<
       .limit(0, 1);
     query.conn(connection);
 
-    const adapter = this.$model.parent.getAdapter() as unknown as {
+    const adapter = (this.$adapter ?? this.$model.parent.getAdapter()) as unknown as {
       readonly deleteByQuery: (
         query: AdapterDeleteQueryType<AdapterInstance>,
       ) => Promise<unknown>;
@@ -320,27 +320,6 @@ export class Yukari<
       return this.insert(connection);
     }
     return this.update(connection);
-  }
-
-  changes(): readonly YukariFieldData<Schema[number]>[] {
-    const values = this as Readonly<Record<string, unknown>>;
-    const changes: YukariFieldData<Schema[number]>[] = [];
-    const originalData = this.$origData as unknown as RuntimeOriginalData;
-
-    for (const field of this.$schema) {
-      const runtimeField = field as unknown as RuntimeField;
-      if (!Object.prototype.hasOwnProperty.call(this, runtimeField.name)) {
-        continue;
-      }
-
-      const current = values[runtimeField.name] as FieldDefinitionValue<Schema[number]>;
-      const original = originalData[runtimeField.name];
-      if (original === undefined || !runtimeField.equal(current, original.data)) {
-        changes.push({ field, value: current } as YukariFieldData<Schema[number]>);
-      }
-    }
-
-    return changes;
   }
 
   toJSON(useOriginalData = false): Partial<JsonRowFromSchema<Schema>> {
@@ -375,7 +354,7 @@ export class Yukari<
       if (name.startsWith('$')) continue;
       const fields = model.fieldNamesMap as unknown as Readonly<Record<string, Field<Schema[number]> | undefined>>;
       const field = fields[name];
-      if (field === undefined || typeof values[name] === 'function') continue;
+      if (field === undefined) continue;
       extracted.push({
         field,
         value: values[name] as FieldDefinitionValue<Schema[number]>,

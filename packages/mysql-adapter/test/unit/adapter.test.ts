@@ -125,7 +125,7 @@ test('insert reads back the generated row and update rejects stale records', asy
   const inserted = await adapter.insert(User, null, [
     { field: User.fieldNamesMap.name, value: 'Alice' },
   ]);
-  assert.deepEqual(inserted, { user_id: 4, name: 'Alice' });
+  assert.deepEqual({ ...inserted }, { id: 4, name: 'Alice' });
   assert.deepEqual(pool.calls[0], {
     method: 'execute',
     sql: 'INSERT INTO `users` SET `name` = ?',
@@ -157,9 +157,9 @@ test('insert preserves v1 empty-locator readback behavior', async () => {
     { name: 'name', type: Type.String },
   ]);
 
-  assert.deepEqual(await adapter.insert(User, null, [
+  assert.deepEqual({ ...await adapter.insert(User, null, [
     { field: User.fieldNamesMap.name, value: 'Alice' },
-  ]), { id: 9, name: 'First row' });
+  ]) }, { id: 9, name: 'First row' });
   assert.deepEqual(pool.calls[1], {
     method: 'execute',
     sql: 'SELECT `id`, `name` FROM `users` LIMIT 0, 1',

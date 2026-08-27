@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { Adapter } from '@toshihiko/base-adapter';
-import { Type, type FieldType } from 'toshihiko';
+import { Toshihiko, Type, type FieldType } from 'toshihiko';
 import {
   MySQLAdapter,
   type MySQLModel,
@@ -46,6 +46,7 @@ test('v1 construction keeps Adapter identity, public options, and credentials pr
   assert.equal(adapter.options.pool, undefined);
   assert.equal(adapter.options.username, undefined);
   assert.equal(adapter.package, 'mysql2');
+  assert.equal(Object.keys(adapter).includes('format'), true);
   assert.equal(Object.keys(adapter).includes('mysql'), false);
   assert.equal(Object.keys(adapter).includes('builder'), false);
   assert.equal(Object.keys(adapter).includes('showSql'), false);
@@ -56,11 +57,15 @@ test('v1 construction keeps Adapter identity, public options, and credentials pr
     pool,
     username: 'root',
   });
-  await adapter.close();
+  await adapter.mysql.end();
 
   const defaults = new MySQLAdapter({ pool: createPool() });
   assert.equal(defaults.options.host, 'localhost');
   assert.equal(defaults.options.port, 3306);
+
+  const connected = new Toshihiko(adapter);
+  assert.equal((adapter as MySQLAdapter & { readonly parent: unknown }).parent, connected);
+  assert.equal(connected.pool, adapter.mysql);
 });
 
 test('v1 showSql receives formatted SQL on success and failure', async () => {
@@ -121,7 +126,8 @@ test('v1 queryToOptions preserves query state and single-row limit rules', () =>
     .conn(connection);
   query._updateData = { name: 'Bob' };
 
-  assert.deepEqual(adapter.queryToOptions(query), {
+  const options = adapter.queryToOptions(query);
+  assert.deepEqual(options, {
     conn: connection,
     fields: ['id', 'name'],
     index: 'idx',
@@ -129,6 +135,17 @@ test('v1 queryToOptions preserves query state and single-row limit rules', () =>
     order: [{ name: -1 }],
     update: { name: 'Bob' },
     where: { id: { $gte: 2 } },
+  });
+  (options.where as { id: { $gte: number } }).id.$gte = 3;
+  (options.fields as string[]).push('missing');
+  assert.deepEqual(query._where, { id: { $gte: 2 } });
+  assert.deepEqual(query._fields, ['id', 'name']);
+
+  assert.deepEqual(adapter.queryToOptions(query, {
+    where: { id: { $lt: 10 }, name: 'Alice' },
+  }).where, {
+    id: { $gte: 2, $lt: 10 },
+    name: 'Alice',
   });
   assert.deepEqual(adapter.queryToOptions(User.where({}), { single: true }).limit, [0, 1]);
   assert.deepEqual(adapter.queryToOptions(User.limit(10), { single: true }).limit, [1]);
@@ -200,6 +217,11 @@ test('v1 count returns only the COUNT(0) field and keeps malformed failures', as
   assert.equal(await adapter.count(User.where({})), undefined);
   await assert.rejects(adapter.count(User.where({})), TypeError);
   await assert.rejects(adapter.count(User.where({})), TypeError);
+
+  Object.defineProperty(adapter, 'execute', {
+    value: async () => null,
+  });
+  assert.equal(await adapter.count(User.where({})), 0);
 });
 
 test('v1 insert reads auto-increment primary keys back with bound values', async () => {
@@ -213,7 +235,7 @@ test('v1 insert reads auto-increment primary keys back with bound values', async
     { name: 'name', type: Type.String },
   ]);
 
-  assert.deepEqual(await adapter.insert(User, null, dataFor(User, { name: 'Alice' })), {
+  assert.deepEqual({ ...await adapter.insert(User, null, dataFor(User, { name: 'Alice' })) }, {
     id: 4,
     name: 'Alice',
   });
@@ -358,7 +380,7 @@ test('v1 insert lets SQL and readback determine empty or ambiguous failures', as
     { name: 'name', type: Type.String },
   ]);
   assert.deepEqual(
-    await ambiguousAdapter.insert(Ambiguous, null, dataFor(Ambiguous, { name: 'Alice' })),
+    { ...await ambiguousAdapter.insert(Ambiguous, null, dataFor(Ambiguous, { name: 'Alice' })) },
     { id: 7, name: 'First row' },
   );
 
@@ -418,6 +440,11 @@ test('v1 update rejects broken state and stale records', async () => {
 
   await assert.rejects(adapter.update(Item, null, {}, data), /Broken yukari object/);
   await assert.rejects(adapter.update(Item, null, { id: 1 }, []), /Broken update data information/);
+  await assert.rejects(adapter.update(Item, null, { id: 1 }, data), /Out-dated yukari data/);
+
+  Object.defineProperty(adapter, 'execute', {
+    value: async () => ({}),
+  });
   await assert.rejects(adapter.update(Item, null, { id: 1 }, data), /Out-dated yukari data/);
 });
 

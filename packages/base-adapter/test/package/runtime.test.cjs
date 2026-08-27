@@ -5,7 +5,6 @@ const test = require('node:test');
 
 const {
   Adapter,
-  AdapterNotImplementedError,
   extend,
 } = require('../..');
 const { Toshihiko, Type } = require('toshihiko');
@@ -19,13 +18,15 @@ test('Adapter copies options and remains directly usable by Toshihiko', async ()
   assert.equal(new Adapter(null).getDBName(), '');
 
   const toshihiko = new Toshihiko(Adapter, { database: 'typed' });
+  assert.equal(toshihiko.adapter.parent, toshihiko);
   const User = toshihiko.define('user', [
     { name: 'id', type: Type.Integer, primaryKey: true },
   ]);
   await assert.rejects(
     User.find(),
-    (error) => error instanceof AdapterNotImplementedError
-      && error.method === 'find',
+    (error) => error instanceof Error
+      && error.constructor === Error
+      && error.message === "this adapter's find function is not implemented yet.",
   );
 });
 
@@ -77,8 +78,8 @@ test('base operations preserve the original not-implemented failures', async () 
     assert.equal(typeof pending.then, 'function');
     await assert.rejects(
       pending,
-      (error) => error instanceof AdapterNotImplementedError
-        && error.method === method
+      (error) => error instanceof Error
+        && error.constructor === Error
         && error.message === `this adapter's ${method} function is not implemented yet.`,
     );
   }

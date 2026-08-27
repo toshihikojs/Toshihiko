@@ -2,6 +2,7 @@
 
 const assert = require('node:assert/strict');
 const test = require('node:test');
+const moment = require('moment');
 
 const { Escaper, Toshihiko, Type } = require('../..');
 const { Yukari } = require('../../dist/yukari.js');
@@ -214,6 +215,84 @@ test('built-in field types retain v1 restore coercion for JavaScript callers', (
   assert.equal(Type.Datetime.toJSON(null), null);
 });
 
+test('built-in field types pass the direct v1 conversion matrix', () => {
+  for (const [input, expected] of [
+    [undefined, ''],
+    [null, ''],
+    [{}, '[object Object]'],
+    [1, '1'],
+  ]) {
+    assert.equal(Type.String.restore(input), expected);
+    assert.equal(Type.String.parse(input), expected);
+  }
+  assert.equal(Type.String.equal('[object Object]', {}), true);
+  assert.equal(Type.String.equal('123', '123'), true);
+  assert.equal(Type.String.equal('123', '234'), false);
+  assert.equal(Type.String.equal(null, undefined), false);
+
+  assert.equal(Type.Boolean.restore(true), 1);
+  assert.equal(Type.Boolean.restore(false), 0);
+  for (const [input, expected] of [
+    [undefined, false],
+    [null, false],
+    [1, true],
+    [0, false],
+    ['', false],
+    [-100, true],
+    [true, true],
+    [false, false],
+  ]) {
+    assert.equal(Type.Boolean.parse(input), expected);
+  }
+  assert.equal(Type.Boolean.equal(0, 0), true);
+  assert.equal(Type.Boolean.equal(10, 1), true);
+  assert.equal(Type.Boolean.equal(true, 1), true);
+  assert.equal(Type.Boolean.equal(false, 1), false);
+
+  for (const [input, integer, float] of [
+    ['1.2A', 1, 1.2],
+    [1.2, 1, 1.2],
+    [100, 100, 100],
+  ]) {
+    assert.equal(Type.Integer.restore(input), integer);
+    assert.equal(Type.Integer.parse(input), integer);
+    assert.equal(Type.Float.restore(input), float);
+    assert.equal(Type.Float.parse(input), float);
+  }
+  assert.equal(Type.Integer.equal(1.2, 1.2), true);
+  assert.equal(Type.Integer.equal('1.2', 1.2), true);
+  assert.equal(Type.Integer.equal(1.3, 1.2), true);
+  assert.equal(Type.Integer.equal('2', 1), false);
+  assert.equal(Type.Float.equal('1.2', 1.2), true);
+  assert.equal(Type.Float.equal('1.3', 1.2), false);
+
+  assert.equal(Type.Json.restore({}), '{}');
+  assert.equal(Type.Json.restore({ foo: 'bar' }), '{"foo":"bar"}');
+  assert.equal(Type.Json.restore(null), 'null');
+  assert.equal(Type.Json.restore('a'), '"a"');
+  assert.deepEqual(Type.Json.parse('{}'), {});
+  assert.equal(Type.Json.parse('null'), null);
+  assert.equal(Type.Json.parse('"a"'), 'a');
+  assert.deepEqual(Type.Json.parse('{"foo":"bar"}'), { foo: 'bar' });
+  assert.equal(Type.Json.equal('{}', null), false);
+  assert.equal(Type.Json.equal({ foo: 1 }, { foo: 1 }), true);
+  assert.equal(Type.Json.equal({ foo: undefined }, {}), true);
+
+  const date = new Date(2016, 9, 13, 17, 37, 0, 0);
+  const formatted = '2016-10-13 17:37:00';
+  assert.equal(Type.Datetime.restore(date), formatted);
+  assert.equal(Type.Datetime.restore(formatted), formatted);
+  assert.equal(Type.Datetime.restore(moment(date)), formatted);
+  assert.deepEqual(Type.Datetime.parse(formatted), date);
+  assert.equal(Type.Datetime.equal(date, formatted), true);
+  assert.equal(Type.Datetime.equal(date, moment(formatted)), true);
+  assert.equal(Type.Datetime.equal(date, '2016-10-13 17:38:00'), false);
+  const json = moment(date).format('YYYY-MM-DDTHH:mm:ss.SSSZ');
+  assert.equal(Type.Datetime.toJSON(date), json);
+  assert.equal(Type.Datetime.toJSON(moment(date)), json);
+  assert.equal(Type.Datetime.toJSON(formatted), json);
+});
+
 test('define keeps model-local options without interpreting infrastructure', () => {
   const toshihiko = new Toshihiko('mysql');
   const cache = { name: 'memcached' };
@@ -233,11 +312,36 @@ test('define rejects fields without logical names', () => {
 
 test('define preserves v1 validator normalization for JavaScript callers', () => {
   const toshihiko = new Toshihiko('mysql');
+  const validator = () => undefined;
   const ignored = toshihiko.define('ignored', [{ name: 'id', validators: 'required' }]);
   const retained = toshihiko.define('retained', [{ name: 'id', validators: ['required'] }]);
+  const normalized = toshihiko.define('normalized', [{ name: 'id', validators: validator }]);
 
   assert.deepEqual(ignored.fieldNamesMap.id.validators, []);
   assert.deepEqual(retained.fieldNamesMap.id.validators, ['required']);
+  assert.deepEqual(normalized.fieldNamesMap.id.validators, [validator]);
+  assert.equal(
+    normalized.fieldNamesMap.id.options.validators,
+    normalized.fieldNamesMap.id.validators,
+  );
+});
+
+test('Field retains v1 fallback behavior for empty columns and undefined defaults', () => {
+  const Model = new Toshihiko('mysql').define('fallbacks', [
+    { name: 'emptyColumn', column: '' },
+    { name: 'undefinedDefault', defaultValue: undefined },
+    { name: 'nullDefault', defaultValue: null, allowNull: true },
+  ], null);
+
+  assert.equal(Model.options !== null && typeof Model.options === 'object', true);
+  assert.equal(Model.fieldNamesMap.emptyColumn.column, 'emptyColumn');
+  assert.equal(Model.fieldNamesMap.undefinedDefault.defaultValue, '');
+  assert.equal(Model.fieldNamesMap.nullDefault.defaultValue, null);
+  assert.deepEqual(Model.build({}).toJSON(), {
+    emptyColumn: '',
+    undefinedDefault: '',
+    nullDefault: null,
+  });
 });
 
 test('build creates a new Yukari and clones field defaults', () => {
@@ -265,7 +369,7 @@ test('build creates a new Yukari and clones field defaults', () => {
   assert.deepEqual(Object.keys(first), ['id', 'name', 'settings', 'birthday']);
 });
 
-test('custom FieldType values keep their class and v1 fallback equality', () => {
+test('custom FieldType values keep their class and v1 fallback equality', async () => {
   class Money {
     constructor(amount) {
       this.amount = amount;
@@ -285,7 +389,8 @@ test('custom FieldType values keep their class and v1 fallback equality', () => 
       return value.amount;
     },
   };
-  const Account = new Toshihiko('mysql').define('account', [
+  const adapter = new MemoryAdapter({ database: 'toshihiko' });
+  const Account = new Toshihiko(adapter).define('account', [
     { name: 'balance', type: MoneyType },
   ]);
   const balance = new Money(12);
@@ -297,13 +402,12 @@ test('custom FieldType values keep their class and v1 fallback equality', () => 
 
   const queried = new Yukari(Account, 'query');
   queried.fillRowFromSource({ balance: 12 }, true);
-  assert.deepEqual(queried.changes().map(({ field }) => field.name), ['balance']);
-  queried.balance.amount = 15;
+  await queried.update();
   assert.equal(queried.$origData.balance.data.amount, 12);
-  assert.deepEqual(queried.changes().map(({ field, value }) => ({
-    name: field.name,
+  assert.deepEqual(adapter.updateCalls[0].data.map(({ name, value }) => ({
+    name,
     value: value.amount,
-  })), [{ name: 'balance', value: 15 }]);
+  })), [{ name: 'balance', value: 12 }]);
 });
 
 test('Field.parse delegates null coercion to the v1 FieldType', () => {
@@ -465,7 +569,10 @@ test('insert rejects old Yukari objects and adopts synchronous or empty Adapter 
   const queried = new Yukari(User, 'query');
   queried.fillRowFromSource({ id: 1 }, true);
 
-  await assert.rejects(queried.insert(), /only be called on a new Yukari/);
+  await assert.rejects(
+    queried.insert(),
+    /You must call this function via a new Yukari object/,
+  );
 
   adapter.insert = function synchronousInsert() {
     return { id: 3 };
@@ -480,6 +587,13 @@ test('insert rejects old Yukari objects and adopts synchronous or empty Adapter 
   const empty = User.build({ id: 4 });
   assert.equal(await empty.insert(), empty);
   assert.equal(empty.id, 4);
+
+  adapter.insert = async function undefinedInsert() {
+    return undefined;
+  };
+  const missing = User.build({ id: 5 });
+  assert.equal(await missing.insert(), missing);
+  assert.equal(missing.id, 5);
 });
 
 test('queried Yukari updates changed fields with its original primary key', async () => {
@@ -523,7 +637,6 @@ test('queried Yukari updates changed fields with its original primary key', asyn
     table: 'user',
   }]);
   assert.deepEqual(validationCalls, ['Bob']);
-  assert.deepEqual(user.changes(), []);
   assert.deepEqual(user.toJSON(true), {
     id: 8,
     name: 'Bob',
@@ -553,10 +666,7 @@ test('update failures preserve original snapshots and pending changes', async ()
 
   await assert.rejects(user.update(), (error) => error === updateError);
   assert.deepEqual(user.toJSON(true), { id: 1, name: 'Alice' });
-  assert.deepEqual(user.changes().map(({ field, value }) => ({
-    name: field.name,
-    value,
-  })), [{ name: 'name', value: 'Bob' }]);
+  assert.deepEqual(user.toJSON(), { id: 1, name: 'Bob' });
 
   const Invalid = new Toshihiko(new MemoryAdapter({ database: 'toshihiko' }))
     .define('invalid', [
@@ -584,7 +694,10 @@ test('update preserves v1 source and locator fallbacks', async () => {
     { name: 'name' },
   ]);
 
-  await assert.rejects(User.build({ id: 1, name: 'Alice' }).update(), /queried Yukari/);
+  await assert.rejects(
+    User.build({ id: 1, name: 'Alice' }).update(),
+    /You must call this function via an old Yukari object/,
+  );
   const deleted = new Yukari(User, 'delete');
   deleted.fillRowFromSource({ id: 2, name: 'Deleted' }, true);
   await deleted.update();
@@ -667,7 +780,10 @@ test('delete failures and invalid records preserve their state', async () => {
   await assert.rejects(user.delete(), (error) => error === deleteError);
   assert.equal(user.$source, 'query');
   adapter.options.deleteError = null;
-  await assert.rejects(User.build({ id: 1 }).delete(), /queried Yukari/);
+  await assert.rejects(
+    User.build({ id: 1 }).delete(),
+    /You can't call this function via a new Yukari object/,
+  );
 
   const Keyless = toshihiko.define('keyless', [{ name: 'name' }]);
   const keyless = new Yukari(Keyless, 'query');
@@ -844,10 +960,9 @@ test('Yukari restores database columns without applying build defaults', () => {
   assert.equal(yukari.createdAt.toISOString(), '2026-08-26T01:02:03.000Z');
   assert.equal(yukari.fieldIndex('id'), 0);
   assert.equal(yukari.fieldIndex('name'), -1);
-  assert.deepEqual(yukari.changes(), []);
 });
 
-test('Yukari serializes current and original rows and extracts changes', () => {
+test('Yukari serializes current and original rows and extracts Adapter data', () => {
   const toshihiko = new Toshihiko('mysql');
   const User = toshihiko.define('user', [
     { name: 'id', column: 'user_id', type: Type.Integer },
@@ -858,6 +973,7 @@ test('Yukari serializes current and original rows and extracts changes', () => {
       type: Type.Datetime,
       allowNull: true,
     },
+    { name: 'handler' },
   ]);
   const yukari = new Yukari(User, 'query');
   yukari.fillRowFromSource({
@@ -869,6 +985,8 @@ test('Yukari serializes current and original rows and extracts changes', () => {
   yukari.id = 8;
   yukari.settings.theme = 'light';
   yukari.custom = 'visible';
+  const handler = () => undefined;
+  yukari.handler = handler;
   assert.deepEqual(yukari.toJSON(), {
     id: 8,
     settings: { theme: 'light' },
@@ -883,14 +1001,6 @@ test('Yukari serializes current and original rows and extracts changes', () => {
 
   yukari.createdAt = null;
   assert.deepEqual(
-    yukari.changes().map(({ field, value }) => ({ name: field.name, value })),
-    [
-      { name: 'id', value: 8 },
-      { name: 'settings', value: { theme: 'light' } },
-      { name: 'createdAt', value: null },
-    ],
-  );
-  assert.deepEqual(
     Yukari.extractAdapterData(User, yukari).map(({ field, value }) => ({
       name: field.name,
       value,
@@ -899,6 +1009,7 @@ test('Yukari serializes current and original rows and extracts changes', () => {
       { name: 'id', value: 8 },
       { name: 'settings', value: { theme: 'light' } },
       { name: 'createdAt', value: null },
+      { name: 'handler', value: handler },
     ],
   );
 });
@@ -969,6 +1080,107 @@ test('a Promise Adapter plugs directly into the original Model query API', async
     noCache: true,
     single: false,
   });
+
+  const withoutCache = await User.find({ noCache: 'yes' });
+  assert.equal(withoutCache[0] instanceof Yukari, true);
+  assert.deepEqual(toshihiko.adapter.calls[4].options, {
+    noCache: true,
+    single: false,
+  });
+});
+
+test('Query and Model configuration retains the v1 argument behavior', () => {
+  const adapter = new MemoryAdapter({ database: 'toshihiko', rows: [] });
+  const toshihiko = new Toshihiko(adapter);
+  const User = toshihiko.define('user', [
+    { name: 'id', column: 'user_id', primaryKey: true },
+    { name: 'tenantId', column: 'tenant_id', primaryKey: true },
+    { name: 'name' },
+  ]);
+  const query = User.where({});
+
+  const condition = { name: 'Alice' };
+  assert.equal(query.where(condition), query);
+  assert.equal(query._where, condition);
+  assert.throws(() => query.where(1), /query condition expected to be an object/);
+
+  assert.equal(query.fields('id, name, , '), query);
+  assert.deepEqual(query._fields, ['id', 'name']);
+  const fields = ['tenantId', 'name'];
+  assert.equal(query.fields(fields), query);
+  assert.equal(query._fields, fields);
+  assert.throws(() => query.fields(1), /query fields expected to be an array or string/);
+
+  for (const [input, expected] of [
+    ['1,2', [1, 2]],
+    ['   1,2    ,3,', [1, 2]],
+    ['1,invalid', [1, 0]],
+    ['1', [1]],
+    ['', []],
+    ['invalid', [0]],
+    [['1', 2], [1, 2]],
+    [[1, 2, '3'], [1, 2]],
+    [[1, 'invalid'], [1, 0]],
+    [[], []],
+    [123, [123]],
+    [-1, [-1]],
+  ]) {
+    assert.equal(query.limit(input), query);
+    assert.deepEqual(query._limit, expected);
+  }
+  assert.equal(query.limit('1', 'invalid'), query);
+  assert.deepEqual(query._limit, [1, 0]);
+  assert.throws(
+    () => query.limit(true),
+    /query limit expected to be an array, number or string but got boolean true/,
+  );
+
+  assert.equal(query.order('   name, tenantId aSc    , id     desc'), query);
+  assert.deepEqual(query._order, [
+    { name: 1 },
+    { tenantId: 1 },
+    { id: -1 },
+  ]);
+  assert.deepEqual(query.order('  ')._order, []);
+  assert.deepEqual(query.order([
+    'name',
+    'tenantId DeSc',
+    { id: 'aSc' },
+    { other: -1 },
+  ])._order, [
+    { name: 1 },
+    { tenantId: -1 },
+    { id: 1 },
+    { other: -1 },
+  ]);
+  assert.deepEqual(query.order({
+    name: 1,
+    tenantId: 'DesC',
+    id: 'aSc',
+    other: -1,
+  })._order, [
+    { name: 1 },
+    { tenantId: -1 },
+    { id: 1 },
+    { other: -1 },
+  ]);
+
+  const connection = { transaction: true };
+  assert.equal(query.conn(connection), query);
+  assert.equal(query._conn, connection);
+  assert.equal(query.index(connection), query);
+  assert.equal(query._index, connection);
+
+  assert.deepEqual(User.limit(1, 2)._limit, [1, 2]);
+  assert.deepEqual(User.limit([1, 2])._limit, [1, 2]);
+  assert.deepEqual(User.convertColumnToName(['user_id', 'name']), ['id', 'name']);
+  assert.deepEqual(User.convertColumnToName({ user_id: 1, name: 'Alice' }), {
+    id: 1,
+    name: 'Alice',
+  });
+  assert.equal(User.convertColumnToName(1), undefined);
+  assert.deepEqual(User.getPrimaryKeysName(), ['id', 'tenantId']);
+  assert.deepEqual(User.getPrimaryKeysColumn(), ['user_id', 'tenant_id']);
 });
 
 test('findById preserves v1 composite-key object forwarding', async () => {
@@ -1025,4 +1237,22 @@ test('Query preserves v1 pass-through behavior for unusual Adapter result shapes
 
   assert.deepEqual(await User.find(), { id: 1 });
   assert.deepEqual((await User.findOne()).toJSON(), {});
+});
+
+test('Query and Yukari retain the Adapter captured at construction like v1', async () => {
+  const first = new MemoryAdapter({ database: 'first', rows: [] });
+  const second = new MemoryAdapter({ database: 'second', rows: [] });
+  const toshihiko = new Toshihiko(first);
+  const User = toshihiko.define('user', [{ name: 'id' }]);
+  const query = User.where({ id: 1 });
+  const built = User.build({ id: 2 });
+
+  toshihiko.adapter = second;
+  await query.find();
+  await built.insert();
+  await User.where({ id: 3 }).find();
+
+  assert.equal(first.calls.length, 1);
+  assert.equal(first.insertCalls.length, 1);
+  assert.equal(second.calls.length, 1);
 });

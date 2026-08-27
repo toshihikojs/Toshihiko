@@ -104,6 +104,9 @@ export class Toshihiko<
   readonly adapter: AdapterInstance | null;
   readonly dialect: string | null;
   readonly options: Options;
+  declare readonly pool: AdapterInstance extends { readonly mysql: infer Pool }
+    ? Pool
+    : undefined;
 
   constructor(
     adapter: AdapterSource<Options, AdapterInstance>,
@@ -117,18 +120,16 @@ export class Toshihiko<
     if (typeof adapter === 'string') {
       this.adapter = null;
       this.dialect = adapter;
-      return;
-    }
-
-    if (typeof adapter === 'function') {
+    } else if (typeof adapter === 'function') {
       const Constructor = adapter as AdapterConstructor<Options, AdapterInstance>;
       this.adapter = new Constructor(this.options);
       this.dialect = Constructor.name || null;
-      return;
+    } else {
+      this.adapter = adapter;
+      this.dialect = adapter.constructor.name || null;
     }
 
-    this.adapter = adapter;
-    this.dialect = adapter.constructor.name || null;
+    attachAdapterCompatibility(this, this.adapter);
   }
 
   get database(): string {
@@ -173,5 +174,33 @@ export class Toshihiko<
       schema,
       options,
     );
+  }
+}
+
+function attachAdapterCompatibility(
+  parent: Toshihiko<AdapterLike, object>,
+  adapter: AdapterLike | null,
+): void {
+  if (adapter === null) return;
+
+  if (!Object.prototype.hasOwnProperty.call(adapter, 'parent')) {
+    try {
+      Object.defineProperty(adapter, 'parent', {
+        configurable: false,
+        enumerable: false,
+        value: parent,
+        writable: false,
+      });
+    } catch {
+      // Some directly injected Adapter instances may be non-extensible.
+    }
+  }
+
+  if ('mysql' in adapter) {
+    Object.defineProperty(parent, 'pool', {
+      configurable: true,
+      enumerable: false,
+      get: () => (adapter as AdapterLike & { readonly mysql: unknown }).mysql,
+    });
   }
 }

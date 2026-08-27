@@ -13,16 +13,6 @@ export type { AdapterData } from 'toshihiko';
 
 export type DefaultAdapterOptions = Readonly<Record<string, unknown>>;
 
-export class AdapterNotImplementedError extends Error {
-  readonly method: string;
-
-  constructor(method: string) {
-    super(`this adapter's ${method} function is not implemented yet.`);
-    this.name = 'AdapterNotImplementedError';
-    this.method = method;
-  }
-}
-
 export class Adapter<
   Options extends object = DefaultAdapterOptions,
   Model = unknown,
@@ -132,7 +122,9 @@ export class Adapter<
 
   protected notImplemented(method: string): Promise<never> {
     return new Promise((_resolve, reject) => {
-      process.nextTick(() => reject(new AdapterNotImplementedError(method)));
+      process.nextTick(() => reject(
+        new Error(`this adapter's ${method} function is not implemented yet.`),
+      ));
     });
   }
 }

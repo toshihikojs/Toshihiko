@@ -43,7 +43,7 @@ export interface ModelOptions {
 
 type ColumnName<Definition extends FieldDefinitionShape> =
   Definition extends { readonly column: infer Column extends string }
-    ? Column
+    ? Column extends '' ? Definition['name'] : Column
     : Definition['name'];
 
 export type CompiledSchema<Schema extends SchemaDefinition> = {
@@ -62,12 +62,15 @@ export type FieldNamesMap<Schema extends SchemaDefinition> = {
 
 export type BuildInput<Schema extends SchemaDefinition> = Partial<RowFromSchema<Schema>>;
 
+type TypeDefaultedDefinition<Definition extends FieldDefinitionShape> =
+  FieldTypeFromDefinition<Definition> extends { readonly defaultValue: infer Value }
+    ? undefined extends Value ? never : Definition
+    : never;
+
 type DefaultedDefinition<Definition extends FieldDefinitionShape> =
   Definition extends { readonly defaultValue: infer Value }
-      ? undefined extends Value ? never : Definition
-      : FieldTypeFromDefinition<Definition> extends { readonly defaultValue: infer Value }
-        ? undefined extends Value ? never : Definition
-        : never;
+    ? undefined extends Value ? TypeDefaultedDefinition<Definition> : Definition
+    : TypeDefaultedDefinition<Definition>;
 
 type DefaultedFieldNames<Schema extends SchemaDefinition> =
   DefaultedDefinition<Schema[number]>['name'];
@@ -126,6 +129,7 @@ export class Model<
     options: ModelOptions = {},
   ) {
     super();
+    const resolvedOptions = options || {};
     const compiled = schema.map((definition) => new Field(
       definition as Schema[number] & ValidatedFieldDefinition<Schema[number]>,
     )) as CompiledSchema<Schema>;
@@ -161,7 +165,7 @@ export class Model<
       fieldNamesMap: { value: typedFieldNamesMap },
       name: { enumerable: true, value: name },
       nameToColumn: { value: typedNameToColumn },
-      options: { value: options },
+      options: { value: resolvedOptions },
       originalSchema: { value: schema },
       parent: { value: parent },
       primaryKeys: { enumerable: true, value: primaryKeys },
@@ -286,6 +290,9 @@ export class Model<
 
   find(): Promise<readonly QueriedYukari<Name, Schema, AdapterInstance>[]>;
   find(
+    options: QueryFindOptions,
+  ): Promise<readonly QueriedYukari<Name, Schema, AdapterInstance>[]>;
+  find(
     toJSON: false,
     options?: QueryFindOptions,
   ): Promise<readonly QueriedYukari<Name, Schema, AdapterInstance>[]>;
@@ -294,10 +301,13 @@ export class Model<
     options?: QueryFindOptions,
   ): Promise<readonly QueryJsonRow<Schema>[]>;
   find(
-    toJSON = false,
+    toJSONOrOptions: boolean | QueryFindOptions = false,
     options: QueryFindOptions = {},
   ): Promise<readonly QueriedYukari<Name, Schema, AdapterInstance>[]> | Promise<readonly QueryJsonRow<Schema>[]> {
-    return toJSON
+    if (typeof toJSONOrOptions !== 'boolean') {
+      return new Query(this).find(toJSONOrOptions);
+    }
+    return toJSONOrOptions
       ? new Query(this).find(true, options)
       : new Query(this).find(false, options);
   }
