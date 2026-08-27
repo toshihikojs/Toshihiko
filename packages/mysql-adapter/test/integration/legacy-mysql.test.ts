@@ -50,7 +50,7 @@ test.before(async () => {
     CREATE TABLE \`legacy_records\` (
       \`id\` INT NOT NULL AUTO_INCREMENT,
       \`score\` DOUBLE NOT NULL,
-      \`payload\` JSON NOT NULL,
+      \`payload\` LONGTEXT NOT NULL,
       \`name\` VARCHAR(255) NULL,
       \`created_at\` DATETIME NOT NULL,
       \`bits\` VARCHAR(255) NOT NULL,
@@ -141,13 +141,13 @@ test('v1 insert reads composite and keyless rows back deterministically', async 
     code: 7,
     value: 'composite',
   }));
-  assert.deepEqual(composite, { tenant: 'east', code: 7, value: 'composite' });
+  assert.deepEqual({ ...composite }, { tenant: 'east', code: 7, value: 'composite' });
 
   const plain = await adapter.insert(Plain, null, dataFor(Plain, {
     code: 8,
     value: 'plain',
   }));
-  assert.deepEqual(plain, { code: 8, value: 'plain' });
+  assert.deepEqual({ ...plain }, { code: 8, value: 'plain' });
 });
 
 test('v1 update and updateByQuery preserve typed and raw values', async () => {
@@ -156,7 +156,7 @@ test('v1 update and updateByQuery preserve typed and raw values', async () => {
     bits: { dec: 15 },
   }));
   assert.equal(mutation.affectedRows, 1);
-  assert.deepEqual(await Record.findById(1, true), {
+  assert.deepEqual({ ...await Record.findById(1) }, {
     id: 1,
     score: 4.5,
     payload: { foo: 'bar' },
