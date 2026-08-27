@@ -16,7 +16,6 @@ Version 2 carries that original philosophy into a TypeScript codebase. It keeps 
 
 - **Deliberately narrow scope.** Toshihiko is an ORM, not a schema manager, migration framework, or relationship graph.
 - **Schema-derived TypeScript types.** Model rows, query fields, primary keys, defaults, and custom field values are inferred directly from `define()`.
-- **No `as const` requirement.** Define a schema with an ordinary array literal and retain field-level inference.
 - **Promise APIs.** Queries, adapters, validators, writes, and transactions use native Promises.
 - **The original model API.** Existing concepts such as Model, Query, Yukari, field types, `where()`, `find()`, and `findById()` remain recognizable.
 - **Explicit adapter boundaries.** Database-specific connections and result types stay inside adapter packages instead of leaking into the ORM core.
@@ -80,7 +79,7 @@ const userCount = await User.where({ name: { $like: 'A%' } }).count();
 await persistedUser?.delete();
 ```
 
-The schema is an ordinary array literal. `build()` returns a typed Yukari instance, so Toshihiko infers `id` as `number`, `name` as `string`, and the primary key as `id` without requiring a separately maintained row interface or type alias. `insert()` validates the Yukari, persists it through the configured Adapter, and hydrates database-generated values back into the same instance. As in v1, an inserted Yukari remains a new row; query it before updating or deleting it. `update()` validates queried data and writes changed fields using the original primary key. `save()` inserts new rows and updates queried rows, while `delete()` removes a queried row using its original primary key.
+`build()` returns a typed Yukari instance, so Toshihiko infers `id` as `number`, `name` as `string`, and the primary key as `id` directly from the schema without requiring a separately maintained row interface or type alias. `insert()` validates the Yukari, persists it through the configured Adapter, and hydrates database-generated values back into the same instance. As in v1, an inserted Yukari remains a new row; query it before updating or deleting it. `update()` validates queried data and writes changed fields using the original primary key. `save()` inserts new rows and updates queried rows, while `delete()` removes a queried row using its original primary key.
 
 ## Packages
 
