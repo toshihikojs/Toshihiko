@@ -1,14 +1,13 @@
-<p align="center">
-  <img src="assets/toshihiko-logo.png" alt="Toshihiko" width="280">
-</p>
-
-# Toshihiko
-
-[![CI](https://github.com/toshihikojs/Toshihiko/actions/workflows/ci.yml/badge.svg?branch=v2)](https://github.com/toshihikojs/Toshihiko/actions/workflows/ci.yml)
-[![Node.js](https://img.shields.io/badge/Node.js-22%20%7C%2024-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-
-Yet another simple ORM for Node.js.
+<div align="center">
+  <img src="assets/toshihiko-logo.png" alt="Toshihiko" width="220">
+  <h1>Toshihiko</h1>
+  <p>Yet another simple ORM for Node.js.</p>
+  <p>
+    <a href="https://github.com/toshihikojs/Toshihiko/actions/workflows/ci.yml"><img src="https://github.com/toshihikojs/Toshihiko/actions/workflows/ci.yml/badge.svg?branch=v2" alt="CI"></a>
+    <a href="https://nodejs.org/"><img src="https://img.shields.io/badge/Node.js-22%20%7C%2024-339933?logo=node.js&amp;logoColor=white" alt="Node.js 22 and 24"></a>
+    <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License"></a>
+  </p>
+</div>
 
 Toshihiko is deliberately simple. It maps rows to models, builds predictable queries, and stays out of database design. It does not try to manage foreign keys, table relationships, schema creation, or schema migrations. Create and evolve your tables explicitly; use Toshihiko for the CRUD work around them.
 
