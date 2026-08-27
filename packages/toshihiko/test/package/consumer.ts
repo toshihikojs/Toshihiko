@@ -22,6 +22,8 @@ const json = user.toJSON();
 const jsonId: number | undefined = json.id;
 const inserted: Promise<typeof user> = user.insert();
 const updated: Promise<typeof user> = inserted.then((row) => row.update());
+const saved: Promise<typeof user> = user.save();
+const deleted: Promise<true> = updated.then((row) => row.delete());
 
 void user;
 void id;
@@ -30,6 +32,8 @@ void json;
 void jsonId;
 void inserted;
 void updated;
+void saved;
+void deleted;
 
 class ConsumerAdapter implements Adapter {
   constructor(readonly options: { readonly database: string }) {}
@@ -64,6 +68,10 @@ class ConsumerAdapter implements Adapter {
     void connection;
     void primaryKey;
     void data;
+  }
+
+  async deleteByQuery(query: AdapterQuery): Promise<void> {
+    void query;
   }
 
   getDBName(): string {

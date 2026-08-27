@@ -10,6 +10,7 @@ class MemoryAdapter {
   constructor(options) {
     this.options = options;
     this.calls = [];
+    this.deleteCalls = [];
     this.insertCalls = [];
     this.updateCalls = [];
   }
@@ -57,6 +58,19 @@ class MemoryAdapter {
       throw this.options.updateError;
     }
     return this.options.updateResult;
+  }
+
+  async deleteByQuery(query) {
+    this.deleteCalls.push({
+      connection: query._conn,
+      limit: [...query._limit],
+      table: query.model.name,
+      where: query._where,
+    });
+    if (this.options.deleteError) {
+      throw this.options.deleteError;
+    }
+    return this.options.deleteResult;
   }
 }
 
@@ -206,7 +220,16 @@ test('Field.parse rejects null for non-null fields and preserves allowed nulls',
 test('define rejects field names reserved by Yukari', () => {
   const toshihiko = new Toshihiko('mysql');
 
-  for (const name of ['insert', 'toJSON', 'changes', 'constructor', '$model']) {
+  for (const name of [
+    'insert',
+    'update',
+    'delete',
+    'save',
+    'toJSON',
+    'changes',
+    'constructor',
+    '$model',
+  ]) {
     assert.throws(
       () => toshihiko.define(`reserved-${name}`, [{ name }]),
       /is reserved by Yukari/,
@@ -491,6 +514,109 @@ test('update enforces source, primary-key, and Promise boundaries', async () => 
     return {};
   };
   await assert.rejects(synchronous.update(), /must return a Promise/);
+});
+
+test('queried Yukari deletes by original primary key and enters delete state', async () => {
+  const connection = { transaction: 3 };
+  const adapter = new MemoryAdapter({ database: 'toshihiko' });
+  const User = new Toshihiko(adapter).define('user', [
+    { name: 'id', type: Type.Integer, primaryKey: true },
+    { name: 'name' },
+  ]);
+  const user = new Yukari(User, 'query');
+  user.fillRowFromSource({ id: 7, name: 'Alice' }, true);
+  user.id = 8;
+  user.name = 'Changed locally';
+
+  const deleted = await user.delete(connection);
+
+  assert.equal(deleted, true);
+  assert.equal(user.$source, 'delete');
+  assert.deepEqual(adapter.deleteCalls, [{
+    connection,
+    limit: [0, 1],
+    table: 'user',
+    where: { id: 7 },
+  }]);
+  assert.deepEqual(user.toJSON(true), { id: 7, name: 'Alice' });
+  await assert.rejects(user.delete(connection), /queried Yukari/);
+
+  const Membership = new Toshihiko(adapter).define('membership', [
+    { name: 'userId', type: Type.Integer, primaryKey: true },
+    { name: 'groupId', type: Type.Integer, primaryKey: true },
+    { name: 'role' },
+  ]);
+  const membership = new Yukari(Membership, 'query');
+  membership.fillRowFromSource({ userId: 2, groupId: 3, role: 'member' }, true);
+  await membership.delete();
+  assert.deepEqual(adapter.deleteCalls[1], {
+    connection: null,
+    limit: [0, 1],
+    table: 'membership',
+    where: { userId: 2, groupId: 3 },
+  });
+});
+
+test('delete failures and invalid records preserve their state', async () => {
+  const deleteError = new Error('delete failed');
+  const adapter = new MemoryAdapter({ database: 'toshihiko', deleteError });
+  const toshihiko = new Toshihiko(adapter);
+  const User = toshihiko.define('user', [
+    { name: 'id', type: Type.Integer, primaryKey: true },
+    { name: 'name' },
+  ]);
+  const user = new Yukari(User, 'query');
+  user.fillRowFromSource({ id: 1, name: 'Alice' }, true);
+
+  await assert.rejects(user.delete(), (error) => error === deleteError);
+  assert.equal(user.$source, 'query');
+  await assert.rejects(User.build({ id: 1 }).delete(), /queried Yukari/);
+
+  const Keyless = toshihiko.define('keyless', [{ name: 'name' }]);
+  const keyless = new Yukari(Keyless, 'query');
+  keyless.fillRowFromSource({ name: 'Alice' }, true);
+  await assert.rejects(keyless.delete(), /has no primary key for delete/);
+
+  const projected = new Yukari(User, 'query');
+  projected.fillRowFromSource({ name: 'Alice' }, true);
+  await assert.rejects(projected.delete(), /missing original primary key id/);
+
+  const synchronousAdapter = new MemoryAdapter({ database: 'toshihiko' });
+  const SyncUser = new Toshihiko(synchronousAdapter).define('sync-user', [
+    { name: 'id', type: Type.Integer, primaryKey: true },
+  ]);
+  const synchronous = new Yukari(SyncUser, 'query');
+  synchronous.fillRowFromSource({ id: 1 }, true);
+  synchronousAdapter.deleteByQuery = function synchronousDelete() {
+    return {};
+  };
+  await assert.rejects(synchronous.delete(), /must return a Promise/);
+  assert.equal(synchronous.$source, 'query');
+});
+
+test('save dispatches new and queried Yukari objects through their lifecycle', async () => {
+  const connection = { transaction: 4 };
+  const adapter = new MemoryAdapter({
+    database: 'toshihiko',
+    insertRow: { id: 1, name: 'Alice' },
+  });
+  const User = new Toshihiko(adapter).define('user', [
+    { name: 'id', type: Type.Integer, primaryKey: true },
+    { name: 'name' },
+  ]);
+  const user = User.build({ id: 1, name: 'Alice' });
+
+  assert.equal(await user.save(connection), user);
+  assert.equal(user.$source, 'query');
+  assert.equal(adapter.insertCalls[0].connection, connection);
+
+  user.name = 'Bob';
+  assert.equal(await user.save(connection), user);
+  assert.equal(adapter.updateCalls[0].connection, connection);
+  assert.deepEqual(user.toJSON(true), { id: 1, name: 'Bob' });
+
+  await user.delete(connection);
+  await assert.rejects(user.save(connection), /deleted Yukari/);
 });
 
 test('Yukari restores database columns without applying build defaults', () => {

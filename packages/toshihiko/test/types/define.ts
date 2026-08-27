@@ -157,6 +157,10 @@ class TestAdapter implements Adapter {
     void data;
   }
 
+  async deleteByQuery(query: AdapterQuery): Promise<void> {
+    void query;
+  }
+
   getDBName(): string {
     return this.options.database;
   }
@@ -228,6 +232,12 @@ class TypedConnectionAdapter implements Adapter<
     void data;
   }
 
+  async deleteByQuery(
+    query: AdapterQuery<TypedModel, TypedConnection>,
+  ): Promise<void> {
+    void query;
+  }
+
   getDBName(): string {
     return this.options.database;
   }
@@ -237,7 +247,12 @@ const typedConnections = new Toshihiko(TypedConnectionAdapter, { database: 'type
 const TypedConnectionModel = typedConnections.define('typed-connections', [{ name: 'id' }]);
 TypedConnectionModel.conn({ transaction: 1 });
 TypedConnectionModel.build({ id: '1' }).insert({ transaction: 1 });
-TypedConnectionModel.findOne().then((row) => row?.update({ transaction: 1 }));
+TypedConnectionModel.build({ id: '1' }).save({ transaction: 1 });
+TypedConnectionModel.findOne().then((row) => {
+  row?.update({ transaction: 1 });
+  row?.save({ transaction: 1 });
+  row?.delete({ transaction: 1 });
+});
 const concreteAdapter: TypedConnectionAdapter = TypedConnectionModel.parent.getAdapter();
 void concreteAdapter;
 
@@ -253,6 +268,10 @@ TypedConnectionModel.build({ id: '1' }).insert({ transaction: '1' });
 TypedConnectionModel.findOne().then((row) => {
   // @ts-expect-error Yukari.update() preserves the Adapter connection type.
   row?.update({ transaction: '1' });
+  // @ts-expect-error Yukari.save() preserves the Adapter connection type.
+  row?.save({ transaction: '1' });
+  // @ts-expect-error Yukari.delete() preserves the Adapter connection type.
+  row?.delete({ transaction: '1' });
 });
 
 interface UnsupportedModel {
@@ -289,6 +308,10 @@ class UnsupportedModelAdapter implements Adapter<UnsupportedModel> {
     void data;
   }
 
+  async deleteByQuery(query: AdapterQuery<UnsupportedModel>): Promise<void> {
+    void query;
+  }
+
   getDBName(): string {
     return 'unsupported-model';
   }
@@ -319,6 +342,10 @@ class UnsupportedQueryAdapter implements Adapter<
   }
 
   async update(): Promise<void> {}
+
+  async deleteByQuery(query: UnsupportedQuery): Promise<void> {
+    void query;
+  }
 
   getDBName(): string {
     return 'unsupported-query';
@@ -362,6 +389,10 @@ class UnsupportedFieldAdapter implements Adapter<unknown, unknown, UnsupportedFi
     void data;
   }
 
+  async deleteByQuery(query: AdapterQuery): Promise<void> {
+    void query;
+  }
+
   getDBName(): string {
     return 'unsupported-field';
   }
@@ -400,6 +431,10 @@ class UnsupportedUpdateAdapter {
     void data;
   }
 
+  async deleteByQuery(query: AdapterQuery): Promise<void> {
+    void query;
+  }
+
   getDBName(): string {
     return 'unsupported-update';
   }
@@ -408,6 +443,52 @@ class UnsupportedUpdateAdapter {
 const unsupportedUpdate = new Toshihiko(new UnsupportedUpdateAdapter());
 // @ts-expect-error Core update inputs must satisfy the update contract declared by the Adapter.
 unsupportedUpdate.define('unsupported-update', [{ name: 'id' }]);
+
+interface UnsupportedDeleteQuery extends AdapterQuery {
+  readonly requiredByDelete: true;
+}
+
+class UnsupportedDeleteAdapter {
+  async find(query: AdapterQuery): Promise<AdapterFindResult> {
+    void query;
+    return [];
+  }
+
+  async insert(
+    model: unknown,
+    connection: unknown,
+    data: readonly AdapterData[],
+  ): Promise<AdapterRow> {
+    void model;
+    void connection;
+    void data;
+    return {};
+  }
+
+  async update(
+    model: unknown,
+    connection: unknown,
+    primaryKey: Readonly<Record<string, unknown>>,
+    data: readonly AdapterData[],
+  ): Promise<void> {
+    void model;
+    void connection;
+    void primaryKey;
+    void data;
+  }
+
+  async deleteByQuery(query: UnsupportedDeleteQuery): Promise<void> {
+    void query;
+  }
+
+  getDBName(): string {
+    return 'unsupported-delete';
+  }
+}
+
+const unsupportedDelete = new Toshihiko(new UnsupportedDeleteAdapter());
+// @ts-expect-error Core Queries must satisfy the delete contract declared by the Adapter.
+unsupportedDelete.define('unsupported-delete', [{ name: 'id' }]);
 
 class StringValueAdapter implements Adapter<unknown, unknown, unknown, string> {
   async find(): Promise<AdapterFindResult> {
@@ -435,6 +516,10 @@ class StringValueAdapter implements Adapter<unknown, unknown, unknown, string> {
     void connection;
     void primaryKey;
     void data;
+  }
+
+  async deleteByQuery(query: AdapterQuery): Promise<void> {
+    void query;
   }
 
   getDBName(): string {

@@ -36,7 +36,8 @@ test.after(async () => {
 });
 
 test('read, write, raw execution, and transactions work end to end', async () => {
-  const inserted = await User.build({ name: 'Alice', score: 1.5 }).insert();
+  const inserted = User.build({ name: 'Alice', score: 1.5 });
+  assert.equal(await inserted.save(), inserted);
   assert.equal(inserted.$source, 'query');
   assert.deepEqual(inserted.toJSON(), { id: 1, name: 'Alice', score: 1.5 });
   assert.deepEqual(inserted.changes(), []);
@@ -46,7 +47,7 @@ test('read, write, raw execution, and transactions work end to end', async () =>
   assert.equal(await adapter.count(User.where({ name: 'Alice' })), 1);
 
   inserted.score = 2.5;
-  const updatedYukari = await inserted.update();
+  const updatedYukari = await inserted.save();
   assert.equal(updatedYukari, inserted);
   assert.deepEqual(inserted.changes(), []);
   const updated = await User.findById(1, true);
@@ -58,12 +59,14 @@ test('read, write, raw execution, and transactions work end to end', async () =>
   await adapter.rollback(connection);
   assert.equal(await adapter.count(User.where({ name: 'Rolled back' })), 0);
 
-  const query = User.where({ id: 1 });
-  const deletion = await adapter.deleteByQuery(query);
-  assert.equal(deletion.affectedRows, 1);
+  const stale = await User.findById(1);
+  assert.notEqual(stale, null);
+  assert.equal(await inserted.delete(), true);
+  assert.equal(inserted.$source, 'delete');
   assert.equal(await User.findById(1, true), null);
+  await assert.rejects(inserted.save(), /deleted Yukari/);
 
-  inserted.name = 'Stale';
-  await assert.rejects(inserted.update(), /Out-dated yukari data/);
-  assert.deepEqual(inserted.toJSON(true), { id: 1, name: 'Alice', score: 2.5 });
+  stale!.name = 'Stale';
+  await assert.rejects(stale!.update(), /Out-dated yukari data/);
+  assert.deepEqual(stale!.toJSON(true), { id: 1, name: 'Alice', score: 2.5 });
 });

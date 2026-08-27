@@ -3,6 +3,7 @@ import type {
   Adapter,
   AdapterConnection,
   AdapterData,
+  AdapterDeleteQueryType,
   AdapterField,
   AdapterLike,
   AdapterModel,
@@ -22,6 +23,7 @@ import type {
   BuiltRowFromSchema,
   Model,
 } from './contracts/model';
+import type { QueryWhere } from './query';
 
 export type YukariSource = 'delete' | 'new' | 'query';
 
@@ -268,6 +270,50 @@ export class Yukari<
     return this;
   }
 
+  async delete(
+    connection: AdapterConnection<AdapterInstance> | null = null,
+  ): Promise<true> {
+    if (this.$source !== 'query') {
+      throw new Error('Yukari.delete() can only be called on a queried Yukari object.');
+    }
+
+    const primaryKey = this.originalPrimaryKey('delete');
+    const query = this.$model
+      .where(primaryKey as QueryWhere<RowFromSchema<Schema>>)
+      .limit(0, 1);
+    if (connection !== null) {
+      query.conn(connection);
+    }
+
+    const adapter = this.$model.parent.getAdapter() as unknown as {
+      readonly deleteByQuery: (
+        query: AdapterDeleteQueryType<AdapterInstance>,
+      ) => Promise<unknown>;
+    };
+    const pending = adapter.deleteByQuery(
+      query as unknown as AdapterDeleteQueryType<AdapterInstance>,
+    );
+    if (!isPromiseLike(pending)) {
+      throw new TypeError('Adapter.deleteByQuery() must return a Promise.');
+    }
+
+    await pending;
+    Reflect.set(this, '$source', 'delete');
+    return true;
+  }
+
+  async save(
+    connection: AdapterConnection<AdapterInstance> | null = null,
+  ): Promise<this> {
+    if (this.$source === 'new') {
+      return this.insert(connection);
+    }
+    if (this.$source === 'query') {
+      return this.update(connection);
+    }
+    throw new Error('Yukari.save() cannot be called on a deleted Yukari object.');
+  }
+
   changes(): readonly YukariFieldData<Schema[number]>[] {
     const values = this as Readonly<Record<string, unknown>>;
     const changes: YukariFieldData<Schema[number]>[] = [];
@@ -338,9 +384,11 @@ export class Yukari<
     return extracted;
   }
 
-  private originalPrimaryKey(): Readonly<Record<string, unknown>> {
+  private originalPrimaryKey(
+    operation: 'delete' | 'update' = 'update',
+  ): Readonly<Record<string, unknown>> {
     if (this.$model.primaryKeys.length === 0) {
-      throw new Error(`Model ${this.$model.name} has no primary key for update().`);
+      throw new Error(`Model ${this.$model.name} has no primary key for ${operation}().`);
     }
 
     const originalData = this.$origData as unknown as RuntimeOriginalData;
@@ -348,7 +396,7 @@ export class Yukari<
     for (const field of this.$model.primaryKeys) {
       const original = originalData[field.name];
       if (original === undefined) {
-        throw new Error(`Yukari.update() is missing original primary key ${field.name}.`);
+        throw new Error(`Yukari.${operation}() is missing original primary key ${field.name}.`);
       }
       primaryKey[field.name] = original.data;
     }

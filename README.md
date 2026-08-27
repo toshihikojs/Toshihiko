@@ -64,16 +64,18 @@ const user = User.build({
 await user.insert();
 
 user.name = 'Updated Alice';
-await user.update();
+await user.save();
 
 const users = await User
   .where({ id: { $gte: 1 }, name: { $like: 'A%' } })
   .orderBy({ id: 'desc' })
   .limit(10)
   .find(true);
+
+await user.delete();
 ```
 
-The schema is an ordinary array literal. `build()` returns a typed Yukari instance, so Toshihiko infers `id` as `number`, `name` as `string`, and the primary key as `id` without requiring a separately maintained row interface or type alias. `insert()` validates the Yukari, persists it through the configured Adapter, and hydrates database-generated values back into the same instance. `update()` validates queried data and writes only changed fields using the original primary key.
+The schema is an ordinary array literal. `build()` returns a typed Yukari instance, so Toshihiko infers `id` as `number`, `name` as `string`, and the primary key as `id` without requiring a separately maintained row interface or type alias. `insert()` validates the Yukari, persists it through the configured Adapter, and hydrates database-generated values back into the same instance. `update()` validates queried data and writes only changed fields using the original primary key. `save()` selects insert or update from the Yukari state, while `delete()` removes a queried row using its original primary key.
 
 ## Packages
 

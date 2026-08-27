@@ -13,6 +13,7 @@ export type {
   AdapterConnection,
   AdapterConstructor,
   AdapterData,
+  AdapterDeleteQueryType,
   AdapterFindOptions,
   AdapterFindResult,
   AdapterLike,

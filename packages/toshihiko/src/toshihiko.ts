@@ -12,6 +12,7 @@ import type {
   Adapter,
   AdapterConnection,
   AdapterConstructor,
+  AdapterDeleteQueryType,
   AdapterField,
   AdapterLike,
   AdapterModel,
@@ -63,7 +64,12 @@ type IsAdapterCompatible<
               ? IsAssignableWhenUsed<
                 FieldDefinitionValue<Schema[number]>,
                 AdapterUpdateValue<AdapterInstance>
-              >
+              > extends true
+                ? IsAssignableWhenUsed<
+                  Query<Name, Schema, AdapterInstance>,
+                  AdapterDeleteQueryType<AdapterInstance>
+                >
+                : false
               : false
             : false
           : false

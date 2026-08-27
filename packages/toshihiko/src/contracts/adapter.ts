@@ -49,6 +49,9 @@ export interface Adapter<
     primaryKey: Readonly<Record<string, unknown>>,
     data: readonly AdapterData<Field, Value>[],
   ) => Promise<unknown>;
+  readonly deleteByQuery: (
+    query: Query,
+  ) => Promise<unknown>;
   getDBName(): string;
 }
 
@@ -67,6 +70,9 @@ export interface AdapterLike {
     connection: never,
     primaryKey: Readonly<Record<string, unknown>>,
     data: readonly never[],
+  ) => Promise<unknown>;
+  readonly deleteByQuery: (
+    query: never,
   ) => Promise<unknown>;
   getDBName(): string;
 }
@@ -105,6 +111,9 @@ export type AdapterUpdateValue<Instance extends AdapterLike> =
   Parameters<Instance['update']>[3][number] extends AdapterData<unknown, infer Value>
     ? Value
     : never;
+
+export type AdapterDeleteQueryType<Instance extends AdapterLike> =
+  Parameters<Instance['deleteByQuery']>[0];
 
 export interface AdapterConstructor<
   Options extends object = ToshihikoOptions,
