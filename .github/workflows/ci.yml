@@ -46,10 +46,13 @@ jobs:
         run: rush check
 
       - name: Build packages
-        run: rush build
+        run: rush build --verbose
+
+      - name: Type-check packages
+        run: rush typecheck --verbose
 
       - name: Run package tests
-        run: rush test
+        run: rush test --verbose
 
   mysql-integration:
     name: MySQL integration / ${{ matrix.mysql-image }}
@@ -92,10 +95,10 @@ jobs:
         run: rush install
 
       - name: Build MySQL adapter and dependencies
-        run: rush build --to @toshihiko/mysql-adapter
+        run: rush build --to @toshihiko/mysql-adapter --verbose
 
       - name: Run MySQL integration tests
-        run: rush test:integration --to @toshihiko/mysql-adapter
+        run: rush test:integration --to @toshihiko/mysql-adapter --verbose
         env:
           MYSQL_DATABASE: toshihiko_test
           MYSQL_HOST: 127.0.0.1
