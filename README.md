@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/toshihiko-logo.png" alt="Toshihiko" width="280">
+</p>
+
 # Toshihiko
 
 [![CI](https://github.com/toshihikojs/Toshihiko/actions/workflows/ci.yml/badge.svg?branch=v2)](https://github.com/toshihikojs/Toshihiko/actions/workflows/ci.yml)
