@@ -98,7 +98,14 @@ jobs:
         run: rush build --to @toshihiko/mysql-adapter --verbose
 
       - name: Run MySQL integration tests
-        run: rush test:integration --to @toshihiko/mysql-adapter --verbose
+        run: |
+          set +e
+          rush test:integration --to @toshihiko/mysql-adapter --verbose > integration.log 2>&1
+          status=$?
+          if [ "$status" -ne 0 ]; then
+            node -e 'const fs = require("node:fs"); const failures = fs.readFileSync("integration.log", "utf8").split("\n").filter((line) => /^\s*not ok\b/.test(line)).map((line) => line.trim()).slice(-20); const summary = failures.length ? failures.join("; ") : "Integration command failed without a named test failure."; console.log(`::error title=MySQL integration failure::${summary}`);'
+          fi
+          exit "$status"
         env:
           MYSQL_DATABASE: toshihiko_test
           MYSQL_HOST: 127.0.0.1
