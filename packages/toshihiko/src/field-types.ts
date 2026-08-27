@@ -81,6 +81,9 @@ const JsonType = Object.freeze({
   restore(value: JsonValue): string {
     return JSON.stringify(value);
   },
+  clone(value: JsonValue): JsonValue {
+    return structuredClone(value);
+  },
   equal(left: JsonValue, right: JsonValue): boolean {
     return JSON.stringify(left) === JSON.stringify(right);
   },
@@ -94,6 +97,9 @@ const DatetimeType = Object.freeze({
   },
   restore(value: Date): string {
     return formatDateTime(value);
+  },
+  clone(value: Date): Date {
+    return new Date(value.getTime());
   },
   equal(left: Date, right: Date): boolean {
     return left.getTime() === right.getTime();

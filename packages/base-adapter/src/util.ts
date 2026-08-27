@@ -1,5 +1,55 @@
 type UnknownRecord = Record<string, unknown>;
 
+type Defined<Value> = Exclude<Value, undefined>;
+
+type MergeDefined<DefaultValue, OptionValue> =
+  DefaultValue extends object
+    ? DefaultValue extends BuiltInObject ? OptionValue
+      : OptionValue extends object
+        ? OptionValue extends BuiltInObject ? OptionValue
+          : Merge<DefaultValue, OptionValue>
+        : OptionValue
+    : OptionValue;
+
+type BuiltInObject =
+  | Date
+  | RegExp
+  | readonly unknown[]
+  | ((...arguments_: readonly never[]) => unknown)
+  | ReadonlyMap<unknown, unknown>
+  | ReadonlySet<unknown>;
+
+type MergeValue<DefaultValue, OptionValue> =
+  undefined extends OptionValue
+    ? DefaultValue | MergeDefined<DefaultValue, Defined<OptionValue>>
+    : MergeDefined<DefaultValue, OptionValue>;
+
+type RequiredKeys<Value extends object> = {
+  [Key in keyof Value]-?: {} extends Pick<Value, Key> ? never : Key;
+}[keyof Value];
+
+type MergeKeys<Defaults extends object, Options extends object> =
+  keyof Defaults | keyof Options;
+
+type MergeProperty<Defaults extends object, Options extends object, Key> =
+  Key extends keyof Options
+    ? Key extends keyof Defaults
+      ? MergeValue<Defaults[Key], Options[Key]>
+      : Options[Key]
+    : Key extends keyof Defaults ? Defaults[Key] : never;
+
+type RequiredMergeKeys<Defaults extends object, Options extends object> = Extract<
+  RequiredKeys<Defaults> | RequiredKeys<Options>,
+  MergeKeys<Defaults, Options>
+>;
+
+export type Merge<Defaults extends object, Options extends object> = {
+  [Key in RequiredMergeKeys<Defaults, Options>]-?: MergeProperty<Defaults, Options, Key>;
+} & {
+  [Key in Exclude<MergeKeys<Defaults, Options>, RequiredMergeKeys<Defaults, Options>>]?:
+    MergeProperty<Defaults, Options, Key>;
+};
+
 const unsafeKeys = new Set(['__proto__', 'constructor', 'prototype']);
 
 export function extend<
@@ -8,11 +58,11 @@ export function extend<
 >(
   defaultOptions?: Defaults,
   options?: Options,
-): Defaults & Options {
+): Merge<Defaults, Options> {
   return mergeRecords(
     toRecord(defaultOptions),
     toRecord(options),
-  ) as Defaults & Options;
+  ) as Merge<Defaults, Options>;
 }
 
 function mergeRecords(defaults: UnknownRecord, options: UnknownRecord): UnknownRecord {
@@ -73,11 +123,9 @@ function toRecord(value: object | undefined): UnknownRecord {
     return {};
   }
 
-  const result: UnknownRecord = {};
-  for (const key of Object.keys(value)) {
-    if (!unsafeKeys.has(key)) {
-      result[key] = (value as UnknownRecord)[key];
-    }
+  if (!isPlainRecord(value)) {
+    throw new TypeError('extend() options must be plain objects.');
   }
-  return result;
+
+  return value;
 }

@@ -4,6 +4,7 @@ import {
   Toshihiko,
   type Model,
   type SchemaDefinition,
+  type ValidatedSchema,
 } from 'toshihiko';
 import type {
   MySQLAdapter,
@@ -101,7 +102,14 @@ export function define<
 >(
   adapter: MySQLAdapter,
   name: Name,
-  schema: Schema,
-): Model<Name, Schema> {
-  return new Toshihiko(adapter).define(name, schema);
+  schema: Schema & ValidatedSchema<Schema>,
+): Model<Name, Schema, MySQLAdapter> {
+  const defineModel = new Toshihiko(adapter).define as unknown as <
+    const ModelName extends string,
+    const ModelSchema extends SchemaDefinition,
+  >(
+    modelName: ModelName,
+    modelSchema: ModelSchema,
+  ) => Model<ModelName, ModelSchema, MySQLAdapter>;
+  return defineModel<Name, Schema>(name, schema);
 }

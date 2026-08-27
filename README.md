@@ -8,7 +8,7 @@ Yet another simple ORM for Node.js.
 
 Toshihiko is deliberately simple. It maps rows to models, builds predictable queries, and stays out of database design. It does not try to manage foreign keys, table relationships, schema creation, or schema migrations. Create and evolve your tables explicitly; use Toshihiko for the CRUD work around them.
 
-Version 2 carries that original philosophy into a TypeScript codebase. It keeps the familiar `Toshihiko.define()` model API, derives types directly from schemas, and replaces callback-based extension points with native Promises.
+Version 2 carries that original philosophy into a TypeScript codebase. It keeps the familiar `Toshihiko.define()` model API, derives types directly from schemas, and uses native Promises throughout its extension points.
 
 > **Project status:** Toshihiko v2 is under active development. The current packages use prerelease versions and require Node.js 22 or newer.
 
@@ -17,7 +17,7 @@ Version 2 carries that original philosophy into a TypeScript codebase. It keeps 
 - **Deliberately narrow scope.** Toshihiko is an ORM, not a schema manager, migration framework, or relationship graph.
 - **Schema-derived TypeScript types.** Model rows, query fields, primary keys, defaults, and custom field values are inferred directly from `define()`.
 - **No `as const` requirement.** Define a schema with an ordinary array literal and retain field-level inference.
-- **Promise-only APIs.** Queries, adapters, validators, writes, and transactions use native Promises; v2 does not provide callback overloads.
+- **Promise APIs.** Queries, adapters, validators, writes, and transactions use native Promises.
 - **The original model API.** Existing concepts such as Model, Query, Yukari, field types, `where()`, `find()`, and `findById()` remain recognizable.
 - **Explicit adapter boundaries.** Database-specific connections and result types stay inside adapter packages instead of leaking into the ORM core.
 - **Real compatibility tests.** GitHub Actions covers Node.js 22 and 24, plus MySQL 5.7 and 8.4 integration jobs.
@@ -61,7 +61,7 @@ const user = User.build({
   name: 'Alice',
 });
 
-await user.validateAll();
+await user.insert();
 
 const users = await User
   .where({ id: { $gte: 1 }, name: { $like: 'A%' } })
@@ -70,7 +70,7 @@ const users = await User
   .find(true);
 ```
 
-The schema is an ordinary array literal. `build()` returns a typed Yukari instance, so Toshihiko infers `id` as `number`, `name` as `string`, and the primary key as `id` without requiring a separately maintained row interface or type alias.
+The schema is an ordinary array literal. `build()` returns a typed Yukari instance, so Toshihiko infers `id` as `number`, `name` as `string`, and the primary key as `id` without requiring a separately maintained row interface or type alias. `insert()` validates the Yukari, persists it through the configured Adapter, and hydrates database-generated values back into the same instance.
 
 ## Packages
 
@@ -214,7 +214,7 @@ Issues and pull requests are welcome. Before opening a pull request:
 3. Add or update tests for behavioral changes.
 4. Add a Rush change file when the change affects a published package.
 
-Please keep public API compatibility intentional. Toshihiko v2 removes callbacks, but it preserves the original model vocabulary and `define()` shape wherever the Promise-only architecture allows it.
+Please keep public API compatibility intentional. Toshihiko v2 preserves the original model vocabulary and `define()` shape within its Promise architecture.
 
 ## About the name
 

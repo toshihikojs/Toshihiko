@@ -51,6 +51,10 @@ const rawStatement: MySQLStatement = new MySQLSqlBuilder().compileSet(Binary, {
 const database: string = adapter.database;
 const pending: Promise<MySQLQueryResult> = adapter.execute('SELECT ?', [1]);
 const transaction: Promise<MySQLConnection> = adapter.beginTransaction();
+transaction.then((connection) => {
+  User.conn(connection);
+  User.build({ id: 1, name: 'Alice' }).insert(connection);
+});
 const counted = adapter.count(User.where({ id: { $gte: 1 } }));
 const inserted = adapter.insert(User, null, [
   { field: User.fieldNamesMap.id, value: 1 },
@@ -72,5 +76,5 @@ void updated;
 // @ts-expect-error Port remains numeric.
 new MySQLAdapter({ port: '3306' });
 
-// @ts-expect-error Callback execution is not part of the v2 API.
-adapter.execute('SELECT 1', () => undefined);
+// @ts-expect-error MySQL queries only accept MySQL transaction connections.
+User.conn({ transaction: 1 });

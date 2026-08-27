@@ -33,7 +33,7 @@ const User = toshihiko.define('users', [
 const users = await User.where({ id: { $gte: 1 } }).find(true);
 ```
 
-No callback overloads are provided. `find`, `count`, writes, raw execution, and transaction methods all return native Promises.
+`find`, `count`, writes, raw execution, and transaction methods all return native Promises.
 
 ## Raw SQL
 

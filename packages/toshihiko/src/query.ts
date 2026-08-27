@@ -1,7 +1,10 @@
 import type {
   Adapter,
+  AdapterConnection,
   AdapterFindOptions,
   AdapterFindResult,
+  AdapterLike,
+  AdapterQueryType,
   AdapterRow,
 } from './contracts/adapter';
 import type { FieldName } from './contracts/common';
@@ -80,12 +83,13 @@ export type FindByIdInput<Schema extends SchemaDefinition> =
 export class Query<
   Name extends string,
   Schema extends SchemaDefinition,
+  AdapterInstance extends AdapterLike = Adapter,
 > {
   readonly cache = null;
-  readonly model: Model<Name, Schema>;
-  readonly toshihiko: Model<Name, Schema>['parent'];
+  readonly model: Model<Name, Schema, AdapterInstance>;
+  readonly toshihiko: Model<Name, Schema, AdapterInstance>['parent'];
 
-  _conn: unknown = null;
+  _conn: AdapterConnection<AdapterInstance> | null = null;
   _fields: string[];
   _index = '';
   _limit: number[] = [];
@@ -93,13 +97,13 @@ export class Query<
   _updateData: Partial<RowFromSchema<Schema>> = {};
   _where: QueryWhere<RowFromSchema<Schema>> = {};
 
-  constructor(model: Model<Name, Schema>) {
+  constructor(model: Model<Name, Schema, AdapterInstance>) {
     this.model = model;
     this.toshihiko = model.parent;
     this._fields = model.schema.map((field) => field.name);
   }
 
-  get adapter(): Adapter {
+  get adapter(): AdapterInstance {
     return this.toshihiko.getAdapter();
   }
 
@@ -162,16 +166,16 @@ export class Query<
     return this.order(order);
   }
 
-  conn(connection: unknown): this {
+  conn(connection: AdapterConnection<AdapterInstance>): this {
     this._conn = connection;
     return this;
   }
 
-  find(): Promise<readonly QueriedYukari<Name, Schema>[]>;
+  find(): Promise<readonly QueriedYukari<Name, Schema, AdapterInstance>[]>;
   find(
     toJSON: false,
     options?: QueryFindOptions,
-  ): Promise<readonly QueriedYukari<Name, Schema>[]>;
+  ): Promise<readonly QueriedYukari<Name, Schema, AdapterInstance>[]>;
   find(
     toJSON: true,
     options?: QueryFindOptions,
@@ -179,7 +183,7 @@ export class Query<
   async find(
     toJSON = false,
     options: QueryFindOptions = {},
-  ): Promise<readonly QueriedYukari<Name, Schema>[] | readonly QueryJsonRow<Schema>[]> {
+  ): Promise<readonly QueriedYukari<Name, Schema, AdapterInstance>[] | readonly QueryJsonRow<Schema>[]> {
     const result = await this.fetch({
       noCache: options.noCache ?? false,
       single: false,
@@ -193,12 +197,12 @@ export class Query<
     return toJSON ? rows.map((row) => row.toJSON()) : rows;
   }
 
-  findOne(): Promise<QueriedYukari<Name, Schema> | null>;
-  findOne(toJSON: false): Promise<QueriedYukari<Name, Schema> | null>;
+  findOne(): Promise<QueriedYukari<Name, Schema, AdapterInstance> | null>;
+  findOne(toJSON: false): Promise<QueriedYukari<Name, Schema, AdapterInstance> | null>;
   findOne(toJSON: true): Promise<QueryJsonRow<Schema> | null>;
   async findOne(
     toJSON = false,
-  ): Promise<QueriedYukari<Name, Schema> | QueryJsonRow<Schema> | null> {
+  ): Promise<QueriedYukari<Name, Schema, AdapterInstance> | QueryJsonRow<Schema> | null> {
     const result = await this.fetch({ noCache: false, single: true });
     if (result === null) {
       return null;
@@ -213,11 +217,11 @@ export class Query<
 
   findById(
     id: FindByIdInput<Schema>,
-  ): Promise<QueriedYukari<Name, Schema> | null>;
+  ): Promise<QueriedYukari<Name, Schema, AdapterInstance> | null>;
   findById(
     id: FindByIdInput<Schema>,
     toJSON: false,
-  ): Promise<QueriedYukari<Name, Schema> | null>;
+  ): Promise<QueriedYukari<Name, Schema, AdapterInstance> | null>;
   findById(
     id: FindByIdInput<Schema>,
     toJSON: true,
@@ -225,19 +229,24 @@ export class Query<
   async findById(
     id: FindByIdInput<Schema>,
     toJSON = false,
-  ): Promise<QueriedYukari<Name, Schema> | QueryJsonRow<Schema> | null> {
+  ): Promise<QueriedYukari<Name, Schema, AdapterInstance> | QueryJsonRow<Schema> | null> {
     const condition = this.primaryKeyCondition(id);
     this.where(condition);
     return toJSON ? await this.findOne(true) : await this.findOne(false);
   }
 
   private async fetch(options: AdapterFindOptions): Promise<AdapterFindResult> {
-    const adapter = this.adapter;
-    if (adapter.find.length >= 3) {
-      throw new TypeError('callback Adapters are not supported in Toshihiko v2.');
-    }
-
-    const pending = adapter.find(this, options);
+    const adapter = this.adapter as unknown as Adapter<
+      unknown,
+      unknown,
+      unknown,
+      unknown,
+      AdapterQueryType<AdapterInstance>
+    >;
+    const pending = adapter.find(
+      this as unknown as AdapterQueryType<AdapterInstance>,
+      options,
+    );
     if (!isPromiseLike(pending)) {
       throw new TypeError('Adapter.find() must return a Promise.');
     }
@@ -245,18 +254,18 @@ export class Query<
     return pending;
   }
 
-  private hydrate(row: AdapterRow): QueriedYukari<Name, Schema> {
+  private hydrate(row: AdapterRow): QueriedYukari<Name, Schema, AdapterInstance> {
     if (row instanceof Yukari) {
-      return row as QueriedYukari<Name, Schema>;
+      return row as QueriedYukari<Name, Schema, AdapterInstance>;
     }
 
     if (row === null || typeof row !== 'object' || Array.isArray(row)) {
       throw new TypeError('Adapter.find() returned an invalid row.');
     }
 
-    const yukari = new Yukari(this.model, 'query');
+    const yukari = new Yukari<Name, Schema, AdapterInstance>(this.model, 'query');
     yukari.fillRowFromSource(row, true);
-    return yukari as QueriedYukari<Name, Schema>;
+    return yukari as QueriedYukari<Name, Schema, AdapterInstance>;
   }
 
   private primaryKeyCondition(

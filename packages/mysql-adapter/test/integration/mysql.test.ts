@@ -36,11 +36,10 @@ test.after(async () => {
 });
 
 test('read, write, raw execution, and transactions work end to end', async () => {
-  const inserted = await adapter.insert(User, null, [
-    { field: User.fieldNamesMap.name, value: 'Alice' },
-    { field: User.fieldNamesMap.score, value: 1.5 },
-  ]);
-  assert.equal(inserted.display_name, 'Alice');
+  const inserted = await User.build({ name: 'Alice', score: 1.5 }).insert();
+  assert.equal(inserted.$source, 'query');
+  assert.deepEqual(inserted.toJSON(), { id: 1, name: 'Alice', score: 1.5 });
+  assert.deepEqual(inserted.changes(), []);
 
   const rows = await User.where({ score: { $gte: 1 } }).order({ id: -1 }).find(true);
   assert.deepEqual(rows, [{ id: 1, name: 'Alice', score: 1.5 }]);

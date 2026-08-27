@@ -1,5 +1,7 @@
 import { EventEmitter } from 'eventemitter3';
 import type {
+  Adapter as AdapterContract,
+  AdapterData,
   AdapterFindOptions,
   AdapterFindResult,
   AdapterQuery,
@@ -7,10 +9,7 @@ import type {
 } from 'toshihiko';
 import { extend } from './util';
 
-export interface AdapterData<Field = unknown, Value = unknown> {
-  readonly field: Field;
-  readonly value: Value;
-}
+export type { AdapterData } from 'toshihiko';
 
 export type DefaultAdapterOptions = Readonly<Record<string, unknown>>;
 
@@ -26,16 +25,31 @@ export class AdapterNotImplementedError extends Error {
 
 export class Adapter<
   Options extends object = DefaultAdapterOptions,
-> extends EventEmitter {
+  Model = unknown,
+  Connection = unknown,
+  Field = unknown,
+  Value = unknown,
+  Query extends AdapterQuery<Model, Connection> = AdapterQuery<Model, Connection>,
+> extends EventEmitter implements AdapterContract<
+  Model,
+  Connection,
+  Field,
+  Value,
+  Query
+> {
   readonly options: Options;
 
-  constructor(options?: Options | null) {
+  constructor(
+    ...[options]: {} extends Options
+      ? readonly [options?: Options | null]
+      : readonly [options: Options]
+  ) {
     super();
     this.options = copyOptions(options);
   }
 
   async find(
-    query: AdapterQuery,
+    query: Query,
     options?: AdapterFindOptions,
   ): Promise<AdapterFindResult> {
     void query;
@@ -43,29 +57,29 @@ export class Adapter<
     return this.notImplemented('find');
   }
 
-  async count(query: AdapterQuery): Promise<number> {
+  async count(query: Query): Promise<number> {
     void query;
     return this.notImplemented('count');
   }
 
   async updateByQuery(
-    query: AdapterQuery,
+    query: Query,
   ): Promise<unknown> {
     void query;
     return this.notImplemented('updateByQuery');
   }
 
   async deleteByQuery(
-    query: AdapterQuery,
+    query: Query,
   ): Promise<unknown> {
     void query;
     return this.notImplemented('deleteByQuery');
   }
 
   async insert(
-    model: unknown,
-    connection: unknown,
-    data: readonly AdapterData[],
+    model: Model,
+    connection: Connection | null,
+    data: readonly AdapterData<Field, Value>[],
   ): Promise<AdapterRow | null> {
     void model;
     void connection;
@@ -74,10 +88,10 @@ export class Adapter<
   }
 
   async update(
-    model: unknown,
-    connection: unknown,
+    model: Model,
+    connection: Connection | null,
     primaryKey: Readonly<Record<string, unknown>>,
-    data: readonly AdapterData[],
+    data: readonly AdapterData<Field, Value>[],
   ): Promise<unknown> {
     void model;
     void connection;
@@ -97,16 +111,16 @@ export class Adapter<
     return '';
   }
 
-  async beginTransaction(): Promise<unknown> {
+  async beginTransaction(): Promise<Connection> {
     return this.notImplemented('beginTransaction');
   }
 
-  async commit(connection: unknown): Promise<void> {
+  async commit(connection: Connection): Promise<void> {
     void connection;
     return this.notImplemented('commit');
   }
 
-  async rollback(connection: unknown): Promise<void> {
+  async rollback(connection: Connection): Promise<void> {
     void connection;
     return this.notImplemented('rollback');
   }
@@ -119,7 +133,14 @@ export class Adapter<
 function copyOptions<Options extends object>(
   options: Options | null | undefined,
 ): Options {
-  return { ...(options ?? {}) } as Options;
+  if (options === null || options === undefined) {
+    return {} as Options;
+  }
+
+  const prototype = Object.getPrototypeOf(options) as unknown;
+  return prototype === Object.prototype || prototype === null
+    ? { ...options }
+    : options;
 }
 
 export { extend };

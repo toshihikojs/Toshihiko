@@ -2,9 +2,11 @@ import {
   Toshihiko,
   Type,
   type Adapter,
+  type AdapterData,
   type AdapterFindOptions,
   type AdapterFindResult,
   type AdapterQuery,
+  type AdapterRow,
 } from '../..';
 
 const toshihiko = new Toshihiko('mysql');
@@ -18,12 +20,14 @@ const id: number = user.id;
 const name: string = user.name;
 const json = user.toJSON();
 const jsonId: number | undefined = json.id;
+const inserted: Promise<typeof user> = user.insert();
 
 void user;
 void id;
 void name;
 void json;
 void jsonId;
+void inserted;
 
 class ConsumerAdapter implements Adapter {
   constructor(readonly options: { readonly database: string }) {}
@@ -35,6 +39,17 @@ class ConsumerAdapter implements Adapter {
     void query;
     void options;
     return [];
+  }
+
+  async insert(
+    model: unknown,
+    connection: unknown,
+    data: readonly AdapterData[],
+  ): Promise<AdapterRow | null> {
+    void model;
+    void connection;
+    void data;
+    return {};
   }
 
   getDBName(): string {

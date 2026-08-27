@@ -10,6 +10,7 @@ class MemoryAdapter {
   constructor(options) {
     this.options = options;
     this.calls = [];
+    this.insertCalls = [];
   }
 
   getDBName() {
@@ -30,6 +31,18 @@ class MemoryAdapter {
 
     const rows = this.options.rows;
     return options.single ? rows[0] ?? null : rows;
+  }
+
+  async insert(model, connection, data) {
+    this.insertCalls.push({
+      connection,
+      data: data.map(({ field, value }) => ({ name: field.name, value })),
+      table: model.name,
+    });
+    if (this.options.insertError) {
+      throw this.options.insertError;
+    }
+    return this.options.insertRow ?? null;
   }
 }
 
@@ -92,21 +105,6 @@ test('define rejects fields without logical names', () => {
   );
 });
 
-test('define rejects callback validators', () => {
-  const toshihiko = new Toshihiko('mysql');
-
-  assert.throws(
-    () => toshihiko.define('user', [{
-      name: 'id',
-      type: Type.Integer,
-      validators(value, callback) {
-        callback(value < 0 ? new Error('invalid id') : undefined);
-      },
-    }]),
-    /callback validators are not supported/,
-  );
-});
-
 test('define rejects non-function validators from JavaScript callers', () => {
   const toshihiko = new Toshihiko('mysql');
 
@@ -138,6 +136,68 @@ test('build creates a new Yukari and clones field defaults', () => {
   assert.deepEqual(second.settings, {});
   assert.notEqual(first.settings, second.settings);
   assert.deepEqual(Object.keys(first), ['id', 'name', 'settings', 'birthday']);
+});
+
+test('custom FieldType values keep their class and independent change snapshots', () => {
+  class Money {
+    constructor(amount) {
+      this.amount = amount;
+    }
+
+    format() {
+      return `$${this.amount}`;
+    }
+  }
+
+  const MoneyType = {
+    name: 'Money',
+    parse(value) {
+      return value instanceof Money ? value : new Money(Number(value));
+    },
+    restore(value) {
+      return value.amount;
+    },
+  };
+  const Account = new Toshihiko('mysql').define('account', [
+    { name: 'balance', type: MoneyType },
+  ]);
+  const balance = new Money(12);
+  const account = Account.build({ balance });
+
+  assert.notEqual(account.balance, balance);
+  assert.equal(account.balance instanceof Money, true);
+  assert.equal(account.balance.format(), '$12');
+
+  const queried = new Yukari(Account, 'query');
+  queried.fillRowFromSource({ balance: 12 }, true);
+  assert.deepEqual(queried.changes(), []);
+  queried.balance.amount = 15;
+  assert.equal(queried.$origData.balance.data.amount, 12);
+  assert.deepEqual(queried.changes().map(({ field, value }) => ({
+    name: field.name,
+    value: value.amount,
+  })), [{ name: 'balance', value: 15 }]);
+});
+
+test('Field.parse rejects null for non-null fields and preserves allowed nulls', () => {
+  const Model = new Toshihiko('mysql').define('nullable', [
+    { name: 'required', type: Type.Integer },
+    { name: 'optional', type: Type.Integer, allowNull: true },
+  ]);
+
+  assert.throws(() => Model.schema[0].parse(null), /can't be null/);
+  assert.equal(Model.schema[1].parse(null), null);
+});
+
+test('define rejects field names reserved by Yukari', () => {
+  const toshihiko = new Toshihiko('mysql');
+
+  for (const name of ['insert', 'toJSON', 'changes', 'constructor', '$model']) {
+    assert.throws(
+      () => toshihiko.define(`reserved-${name}`, [{ name }]),
+      /is reserved by Yukari/,
+    );
+  }
 });
 
 test('Yukari validation is Promise-only and runs validators in order', async () => {
@@ -181,6 +241,121 @@ test('Yukari validation rejects nulls and synchronous validators', async () => {
   await assert.rejects(
     User.build({ legacy: 'value' }).validateAll(),
     /must return a Promise/,
+  );
+});
+
+test('build().insert() validates, writes, and hydrates the same Yukari', async () => {
+  const validationCalls = [];
+  const connection = { transaction: 1 };
+  const toshihiko = new Toshihiko(MemoryAdapter, {
+    database: 'toshihiko',
+    insertRow: {
+      user_id: '41',
+      display_name: 'Stored Alice',
+      profile: '{"role":"admin"}',
+    },
+  });
+  const User = toshihiko.define('user', [
+    {
+      name: 'id',
+      column: 'user_id',
+      type: Type.Integer,
+      primaryKey: true,
+      autoIncrement: true,
+    },
+    {
+      name: 'name',
+      column: 'display_name',
+      type: Type.String,
+      async validators(value) {
+        validationCalls.push(value);
+      },
+    },
+    { name: 'profile', type: Type.Json },
+  ]);
+  const user = User.build({
+    name: 'Input Alice',
+    profile: { role: 'writer' },
+    ignored: true,
+  });
+
+  const inserted = await user.insert(connection);
+
+  assert.equal(inserted, user);
+  assert.equal(user.$source, 'query');
+  assert.equal(user.id, 41);
+  assert.equal(user.name, 'Stored Alice');
+  assert.deepEqual(user.profile, { role: 'admin' });
+  assert.deepEqual(user.changes(), []);
+  assert.deepEqual(user.toJSON(true), {
+    id: 41,
+    name: 'Stored Alice',
+    profile: { role: 'admin' },
+  });
+  assert.deepEqual(validationCalls, ['Input Alice']);
+  assert.deepEqual(toshihiko.adapter.insertCalls, [{
+    connection,
+    data: [
+      { name: 'id', value: 0 },
+      { name: 'name', value: 'Input Alice' },
+      { name: 'profile', value: { role: 'writer' } },
+    ],
+    table: 'user',
+  }]);
+});
+
+test('insert failures leave a new Yukari unchanged', async () => {
+  const validationAdapter = new MemoryAdapter({ database: 'toshihiko' });
+  const validating = new Toshihiko(validationAdapter);
+  const Invalid = validating.define('invalid', [{
+    name: 'score',
+    type: Type.Integer,
+    async validators() {
+      return 'invalid score';
+    },
+  }]);
+  const invalid = Invalid.build({ score: -1 });
+
+  await assert.rejects(invalid.insert(), /invalid score/);
+  assert.equal(invalid.$source, 'new');
+  assert.equal(validationAdapter.insertCalls.length, 0);
+
+  const adapterError = new Error('insert readback failed');
+  const failingAdapter = new MemoryAdapter({
+    database: 'toshihiko',
+    insertError: adapterError,
+  });
+  const failing = new Toshihiko(failingAdapter);
+  const Failure = failing.define('failure', [{ name: 'name' }]);
+  const failure = Failure.build({ name: 'Alice' });
+
+  await assert.rejects(failure.insert(), (error) => error === adapterError);
+  assert.equal(failure.$source, 'new');
+});
+
+test('insert rejects old Yukari objects, synchronous Adapters, and invalid rows', async () => {
+  const adapter = new MemoryAdapter({ database: 'toshihiko' });
+  const toshihiko = new Toshihiko(adapter);
+  const User = toshihiko.define('user', [{ name: 'id', type: Type.Integer }]);
+  const queried = new Yukari(User, 'query');
+  queried.fillRowFromSource({ id: 1 }, true);
+
+  await assert.rejects(queried.insert(), /only be called on a new Yukari/);
+
+  adapter.insert = function synchronousInsert() {
+    return { id: 3 };
+  };
+  await assert.rejects(
+    User.build({ id: 3 }).insert(),
+    /must return a Promise/,
+  );
+
+  adapter.insert = async function invalidInsert() {
+    return null;
+  };
+  await assert.rejects(
+    User.build({ id: 4 }).insert(),
+    /returned an invalid row/,
   );
 });
 
@@ -345,7 +520,7 @@ test('findById validates composite keys before invoking the Adapter', async () =
   assert.equal(adapter.calls.length, 1);
 });
 
-test('v2 rejects unresolved, callback, and synchronous Adapters clearly', async () => {
+test('v2 rejects unresolved and synchronous Adapters clearly', async () => {
   const unresolved = new Toshihiko('mysql');
   const User = unresolved.define('user', [
     { name: 'id', type: Type.Integer, primaryKey: true },
@@ -353,34 +528,6 @@ test('v2 rejects unresolved, callback, and synchronous Adapters clearly', async 
   await assert.rejects(
     User.find(),
     /Pass an Adapter constructor or instance instead/,
-  );
-
-  class LegacyConstructorAdapter {
-    constructor(parent, options) {
-      void parent;
-      void options;
-    }
-  }
-  assert.throws(
-    () => new Toshihiko(LegacyConstructorAdapter),
-    /legacy callback Adapter constructors are not supported/,
-  );
-
-  const callbackAdapter = {
-    find(query, callback, options) {
-      void query;
-      void callback;
-      void options;
-    },
-    getDBName() {
-      return 'callback';
-    },
-  };
-  await assert.rejects(
-    new Toshihiko(callbackAdapter)
-      .define('user', [{ name: 'id', primaryKey: true }])
-      .find(),
-    /callback Adapters are not supported/,
   );
 
   const synchronousAdapter = {

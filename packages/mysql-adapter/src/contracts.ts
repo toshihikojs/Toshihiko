@@ -50,7 +50,7 @@ export interface MySQLModel {
   readonly schema: readonly MySQLField[];
 }
 
-export interface MySQLQuery extends AdapterQuery<MySQLModel> {
+export interface MySQLQuery extends AdapterQuery<MySQLModel, PoolConnection> {
   readonly _updateData?: Readonly<Record<string, unknown>>;
 }
 

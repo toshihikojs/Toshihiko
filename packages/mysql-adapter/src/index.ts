@@ -32,7 +32,14 @@ const defaultFindOptions: AdapterFindOptions = Object.freeze({
   single: false,
 });
 
-export class MySQLAdapter extends Adapter<MySQLAdapterOptions> {
+export class MySQLAdapter extends Adapter<
+  MySQLAdapterOptions,
+  MySQLModel,
+  PoolConnection,
+  MySQLField,
+  unknown,
+  MySQLQuery
+> {
   readonly database: string;
   readonly mysql: Pool;
   readonly username: string;
@@ -269,7 +276,7 @@ export class MySQLAdapter extends Adapter<MySQLAdapterOptions> {
     overrides: Partial<MySQLQueryOptions> = {},
   ): MySQLQueryOptions {
     const options: MySQLQueryOptions = {
-      connection: query._conn as PoolConnection | null,
+      connection: query._conn,
       fields: [...query._fields],
       index: query._index,
       limit: [...query._limit],

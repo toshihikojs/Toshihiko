@@ -8,7 +8,7 @@ import {
   createPool,
 } from '../helpers/mysql';
 
-test('find and count execute through the Promise pool without callbacks', async () => {
+test('find and count execute through the Promise pool', async () => {
   const pool = createPool([
     [{ user_id: 1, name: 'Alice' }],
     [{ 'COUNT(0)': 3 }],

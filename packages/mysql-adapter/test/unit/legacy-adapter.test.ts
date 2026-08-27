@@ -109,7 +109,7 @@ test('v1 queryToOptions preserves query state and single-row limit rules', () =>
     { name: 'id', type: Type.Integer, primaryKey: true },
     { name: 'name', type: Type.String },
   ]);
-  const connection = { marker: true };
+  const connection = asConnection({ marker: true });
   const query = User.where({ id: { $gte: 2 } })
     .fields('id,name')
     .order({ name: -1 })

@@ -1,5 +1,15 @@
 import type { FieldName } from './contracts/common';
 import type {
+  Adapter,
+  AdapterConnection,
+  AdapterData,
+  AdapterField,
+  AdapterLike,
+  AdapterModel,
+  AdapterRow,
+  AdapterValue,
+} from './contracts/adapter';
+import type {
   Field,
   FieldDefinitionValue,
   FieldValidator,
@@ -22,14 +32,18 @@ export type YukariOriginalData<Schema extends SchemaDefinition> = Partial<{
   };
 }>;
 
-export interface YukariFieldData<Definition extends SchemaDefinition[number]> {
-  readonly field: Field<Definition>;
-  readonly value: FieldDefinitionValue<Definition>;
-}
+export type YukariFieldData<Definition extends SchemaDefinition[number]> =
+  Definition extends SchemaDefinition[number]
+    ? {
+        readonly field: Field<Definition>;
+        readonly value: FieldDefinitionValue<Definition>;
+      }
+    : never;
 
 interface RuntimeField {
   readonly column: string;
   readonly name: string;
+  clone(value: unknown): unknown;
   equal(left: unknown, right: unknown): boolean;
   parse(value: unknown): unknown;
   toJSON(value: unknown): unknown;
@@ -46,23 +60,28 @@ export type BuiltYukari<
   Name extends string,
   Schema extends SchemaDefinition,
   Input extends BuildInput<Schema>,
-> = Yukari<Name, Schema> & BuiltRowFromSchema<Schema, Input>;
+  AdapterInstance extends AdapterLike = Adapter,
+> = Yukari<Name, Schema, AdapterInstance>
+  & Omit<BuiltRowFromSchema<Schema, Input>, keyof Yukari<Name, Schema, AdapterInstance>>;
 
 export type QueriedYukari<
   Name extends string,
   Schema extends SchemaDefinition,
-> = Yukari<Name, Schema> & Partial<RowFromSchema<Schema>>;
+  AdapterInstance extends AdapterLike = Adapter,
+> = Yukari<Name, Schema, AdapterInstance>
+  & Omit<Partial<RowFromSchema<Schema>>, keyof Yukari<Name, Schema, AdapterInstance>>;
 
 export class Yukari<
   Name extends string,
   Schema extends SchemaDefinition,
+  AdapterInstance extends AdapterLike = Adapter,
 > {
-  declare readonly $model: Model<Name, Schema>;
-  declare readonly $schema: Model<Name, Schema>['schema'];
+  declare readonly $model: Model<Name, Schema, AdapterInstance>;
+  declare readonly $schema: Model<Name, Schema, AdapterInstance>['schema'];
   declare readonly $source: YukariSource;
   declare $origData: YukariOriginalData<Schema>;
 
-  constructor(model: Model<Name, Schema>, source: YukariSource) {
+  constructor(model: Model<Name, Schema, AdapterInstance>, source: YukariSource) {
     Object.defineProperties(this, {
       $model: { value: model },
       $schema: { value: model.schema },
@@ -76,6 +95,7 @@ export class Yukari<
     const input = fields as Readonly<Record<string, unknown>>;
 
     for (const field of this.$schema) {
+      const runtimeField = field as unknown as RuntimeField;
       const suppliedValue = input[field.name];
       const value = suppliedValue === undefined
         ? field.defaultValue
@@ -88,7 +108,7 @@ export class Yukari<
       Object.defineProperty(this, field.name, {
         configurable: false,
         enumerable: true,
-        value: cloneValue(value),
+        value: runtimeField.clone(value),
         writable: true,
       });
     }
@@ -117,12 +137,17 @@ export class Yukari<
         data: parsed,
       };
 
-      Object.defineProperty(this, runtimeField.name, {
-        configurable: false,
-        enumerable: true,
-        value: cloneValue(parsed),
-        writable: true,
-      });
+      const value = runtimeField.clone(parsed);
+      if (Object.prototype.hasOwnProperty.call(this, runtimeField.name)) {
+        Reflect.set(this, runtimeField.name, value);
+      } else {
+        Object.defineProperty(this, runtimeField.name, {
+          configurable: false,
+          enumerable: true,
+          value,
+          writable: true,
+        });
+      }
     }
 
     this.$origData = originalData as YukariOriginalData<Schema>;
@@ -156,6 +181,46 @@ export class Yukari<
     }
   }
 
+  async insert(
+    connection: AdapterConnection<AdapterInstance> | null = null,
+  ): Promise<this> {
+    if (this.$source !== 'new') {
+      throw new Error('Yukari.insert() can only be called on a new Yukari object.');
+    }
+    await this.validateAll();
+
+    const adapter = this.$model.parent.getAdapter() as unknown as Adapter<
+      AdapterModel<AdapterInstance>,
+      AdapterConnection<AdapterInstance>,
+      AdapterField<AdapterInstance>,
+      AdapterValue<AdapterInstance>
+    >;
+    const data = Yukari.extractAdapterData(
+      this.$model,
+      this as unknown as Partial<RowFromSchema<Schema>>,
+    );
+    const pending = adapter.insert(
+      this.$model as unknown as AdapterModel<AdapterInstance>,
+      connection,
+      data as unknown as readonly AdapterData<
+        AdapterField<AdapterInstance>,
+        AdapterValue<AdapterInstance>
+      >[],
+    );
+    if (!isPromiseLike(pending)) {
+      throw new TypeError('Adapter.insert() must return a Promise.');
+    }
+
+    const row = await pending;
+    if (!isAdapterRow(row)) {
+      throw new TypeError('Adapter.insert() returned an invalid row.');
+    }
+
+    this.fillRowFromSource(row, true);
+    Reflect.set(this, '$source', 'query');
+    return this;
+  }
+
   changes(): readonly YukariFieldData<Schema[number]>[] {
     const values = this as Readonly<Record<string, unknown>>;
     const changes: YukariFieldData<Schema[number]>[] = [];
@@ -170,7 +235,7 @@ export class Yukari<
       const current = values[runtimeField.name] as FieldDefinitionValue<Schema[number]>;
       const original = originalData[runtimeField.name];
       if (original === undefined || !runtimeField.equal(current, original.data)) {
-        changes.push({ field, value: current });
+        changes.push({ field, value: current } as YukariFieldData<Schema[number]>);
       }
     }
 
@@ -205,8 +270,9 @@ export class Yukari<
   static extractAdapterData<
     Name extends string,
     Schema extends SchemaDefinition,
+    AdapterInstance extends AdapterLike,
   >(
-    model: Model<Name, Schema>,
+    model: Model<Name, Schema, AdapterInstance>,
     data: Partial<RowFromSchema<Schema>>,
   ): readonly YukariFieldData<Schema[number]>[] {
     const values = data as Readonly<Record<string, unknown>>;
@@ -219,7 +285,7 @@ export class Yukari<
       extracted.push({
         field,
         value: values[field.name] as FieldDefinitionValue<Schema[number]>,
-      });
+      } as YukariFieldData<Schema[number]>);
     }
 
     return extracted;
@@ -267,19 +333,21 @@ function callValidator<Value>(
   return callable.call(model, value);
 }
 
-function isPromiseLike(
-  value: unknown,
-): value is PromiseLike<string | void> {
+function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
   return typeof value === 'object'
     && value !== null
     && 'then' in value
     && typeof value.then === 'function';
 }
 
-function cloneValue<Value>(value: Value): Value {
-  if (value === null || typeof value !== 'object') {
-    return value;
-  }
+function isAdapterRow(value: unknown): value is AdapterRow {
+  return value !== null
+    && typeof value === 'object'
+    && !Array.isArray(value);
+}
 
-  return structuredClone(value);
+export function isReservedYukariFieldName(name: unknown): boolean {
+  return typeof name === 'string'
+    && (name.startsWith('$')
+      || Object.prototype.hasOwnProperty.call(Yukari.prototype, name));
 }

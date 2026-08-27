@@ -1,18 +1,81 @@
-import { Model, type ModelOptions } from './contracts/model';
-import type { SchemaDefinition } from './contracts/field';
+import {
+  Model,
+  type ModelOptions,
+} from './contracts/model';
+import type {
+  Field,
+  FieldDefinitionValue,
+  SchemaDefinition,
+  ValidatedSchema,
+} from './contracts/field';
 import type {
   Adapter,
   AdapterConstructor,
+  AdapterField,
+  AdapterLike,
+  AdapterModel,
+  AdapterQueryType,
   AdapterSource,
+  AdapterValue,
 } from './contracts/adapter';
+import type { Query } from './query';
+import type { Yukari } from './yukari';
 
-export interface ToshihikoOptions {
-  readonly [key: string]: unknown;
-}
+export type ToshihikoOptions = object;
+
+type IsAdapterCompatible<
+  Name extends string,
+  Schema extends SchemaDefinition,
+  AdapterInstance extends AdapterLike,
+> = IsAssignableWhenUsed<
+  Model<Name, Schema, AdapterInstance>,
+  AdapterModel<AdapterInstance>
+> extends true
+  ? IsAssignableWhenUsed<
+    Query<Name, Schema, AdapterInstance>,
+    AdapterQueryType<AdapterInstance>
+  > extends true
+    ? IsAssignableWhenUsed<
+      Field<Schema[number]>,
+      AdapterField<AdapterInstance>
+    > extends true
+      ? IsAssignableWhenUsed<
+        FieldDefinitionValue<Schema[number]>,
+        AdapterValue<AdapterInstance>
+      > extends true
+        ? true
+        : false
+      : false
+    : false
+  : false;
+
+type IsAssignableWhenUsed<Actual, Expected> = [Expected] extends [never]
+  ? true
+  : Actual extends Expected ? true : false;
+
+type ReservedYukariFieldName =
+  | Extract<keyof Yukari<string, SchemaDefinition, Adapter>, string>
+  | 'constructor'
+  | `$${string}`;
+
+type HasReservedFieldName<Schema extends SchemaDefinition> =
+  Extract<Schema[number]['name'], ReservedYukariFieldName> extends never
+    ? false
+    : true;
+
+type IsValidDefinition<
+  Name extends string,
+  Schema extends SchemaDefinition,
+  AdapterInstance extends AdapterLike,
+> = NoInfer<Schema> extends ValidatedSchema<NoInfer<Schema>>
+  ? HasReservedFieldName<NoInfer<Schema>> extends false
+    ? IsAdapterCompatible<Name, NoInfer<Schema>, AdapterInstance>
+    : false
+  : false;
 
 export class Toshihiko<
-  AdapterInstance extends Adapter = Adapter,
-  Options extends ToshihikoOptions = ToshihikoOptions,
+  AdapterInstance extends AdapterLike = Adapter,
+  Options extends object = ToshihikoOptions,
 > {
   readonly adapter: AdapterInstance | null;
   readonly dialect: string | null;
@@ -20,9 +83,11 @@ export class Toshihiko<
 
   constructor(
     adapter: AdapterSource<Options, AdapterInstance>,
-    options: Options = {} as Options,
+    ...[options]: {} extends Options
+      ? readonly [options?: Options]
+      : readonly [options: Options]
   ) {
-    this.options = options;
+    this.options = (options ?? {}) as Options;
 
     if (typeof adapter === 'string') {
       this.adapter = null;
@@ -31,14 +96,8 @@ export class Toshihiko<
     }
 
     if (typeof adapter === 'function') {
-      if (adapter.length > 1) {
-        throw new TypeError(
-          'legacy callback Adapter constructors are not supported in Toshihiko v2.',
-        );
-      }
-
       const Constructor = adapter as AdapterConstructor<Options, AdapterInstance>;
-      this.adapter = new Constructor(options);
+      this.adapter = new Constructor(this.options);
       this.dialect = Constructor.name || null;
       return;
     }
@@ -69,7 +128,16 @@ export class Toshihiko<
     collectionName: Name,
     schema: Schema,
     options: ModelOptions = {},
-  ): Model<Name, Schema> {
-    return new Model<Name, Schema>(collectionName, this, schema, options);
+    ..._validation: IsValidDefinition<Name, Schema, AdapterInstance> extends true
+      ? readonly []
+      : readonly [schemaTypeError: never]
+  ): Model<Name, Schema, AdapterInstance> {
+    void _validation;
+    return new Model<Name, Schema, AdapterInstance>(
+      collectionName,
+      this,
+      schema,
+      options,
+    );
   }
 }

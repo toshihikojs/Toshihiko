@@ -29,6 +29,24 @@ test('Adapter copies options and remains directly usable by Toshihiko', async ()
   );
 });
 
+test('Adapter preserves non-plain option objects instead of erasing their prototype', () => {
+  class OptionsWithMethod {
+    constructor() {
+      this.database = 'typed';
+    }
+
+    getDatabase() {
+      return this.database;
+    }
+  }
+
+  const options = new OptionsWithMethod();
+  const adapter = new Adapter(options);
+
+  assert.equal(adapter.options, options);
+  assert.equal(adapter.options.getDatabase(), 'typed');
+});
+
 test('all base operations reject through the Promise-only boundary', async () => {
   const adapter = new Adapter({});
   const query = {
@@ -88,12 +106,27 @@ test('extend deep-merges own data without mutating its inputs', () => {
   assert.deepEqual(options, { nested: { fromOptions: true } });
 });
 
-test('extend ignores inherited and prototype-pollution keys', () => {
-  const defaults = Object.create({ inherited: true });
-  defaults.own = true;
+test('extend rejects non-plain roots and ignores prototype-pollution keys', () => {
+  const inherited = Object.create({ inherited: true });
+  inherited.own = true;
+  assert.throws(() => extend(inherited, {}), /must be plain objects/);
+
+  const defaults = { own: true };
   const malicious = JSON.parse('{"__proto__":{"polluted":true},"safe":1}');
   const result = extend(defaults, malicious);
 
   assert.deepEqual(result, { own: true, safe: 1 });
   assert.equal({}.polluted, undefined);
+});
+
+test('extend types follow option-overrides-default runtime semantics', () => {
+  const result = extend(
+    { nested: { fromDefault: true }, port: 3306 },
+    { nested: { fromOptions: 'yes' }, port: '3307' },
+  );
+
+  assert.deepEqual(result, {
+    nested: { fromDefault: true, fromOptions: 'yes' },
+    port: '3307',
+  });
 });

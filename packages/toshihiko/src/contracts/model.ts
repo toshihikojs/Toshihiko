@@ -1,5 +1,11 @@
 import type { FieldName } from './common';
+import type {
+  Adapter,
+  AdapterConnection,
+  AdapterLike,
+} from './adapter';
 import {
+  isReservedYukariFieldName,
   Yukari,
   type BuiltYukari,
   type QueriedYukari,
@@ -50,19 +56,25 @@ export type FieldNamesMap<Schema extends SchemaDefinition> = {
 export type BuildInput<Schema extends SchemaDefinition> = Partial<RowFromSchema<Schema>>;
 
 type DefaultedDefinition<Definition extends FieldDefinitionShape> =
-  Definition extends { readonly default: unknown } | { readonly defaultValue: unknown }
-    ? Definition
-    : FieldTypeFromDefinition<Definition> extends { readonly defaultValue: unknown }
-      ? Definition
-      : never;
+  Definition extends { readonly default: infer Value }
+    ? undefined extends Value ? never : Definition
+    : Definition extends { readonly defaultValue: infer Value }
+      ? undefined extends Value ? never : Definition
+      : FieldTypeFromDefinition<Definition> extends { readonly defaultValue: infer Value }
+        ? undefined extends Value ? never : Definition
+        : never;
 
 type DefaultedFieldNames<Schema extends SchemaDefinition> =
   DefaultedDefinition<Schema[number]>['name'];
 
+type RequiredKeys<Input extends object> = {
+  [Name in keyof Input]-?: {} extends Pick<Input, Name> ? never : Name;
+}[keyof Input];
+
 type KnownBuiltFieldNames<
   Schema extends SchemaDefinition,
   Input extends BuildInput<Schema>,
-> = Extract<keyof Input | DefaultedFieldNames<Schema>, keyof RowFromSchema<Schema>>;
+> = Extract<RequiredKeys<Input> | DefaultedFieldNames<Schema>, keyof RowFromSchema<Schema>>;
 
 export type BuiltRowFromSchema<
   Schema extends SchemaDefinition,
@@ -78,11 +90,12 @@ type NoUnknownBuildFields<
 export class Model<
   Name extends string,
   Schema extends SchemaDefinition,
+  AdapterInstance extends AdapterLike = Adapter,
 > {
   declare readonly $inferPrimaryKey: PrimaryKeyNames<Schema>;
 
   readonly name: Name;
-  readonly parent: Toshihiko;
+  readonly parent: Toshihiko<AdapterInstance>;
   readonly originalSchema: Schema;
   readonly options: ModelOptions;
   readonly schema: CompiledSchema<Schema>;
@@ -95,7 +108,7 @@ export class Model<
 
   constructor(
     name: Name,
-    parent: Toshihiko,
+    parent: Toshihiko<AdapterInstance>,
     schema: Schema,
     options: ModelOptions = {},
   ) {
@@ -103,6 +116,12 @@ export class Model<
     this.parent = parent;
     this.originalSchema = schema;
     this.options = options;
+
+    for (const definition of schema) {
+      if (isReservedYukariFieldName(definition.name)) {
+        throw new TypeError(`Field name ${definition.name} is reserved by Yukari.`);
+      }
+    }
 
     const compiled = schema.map((definition) => new Field(
       definition as Schema[number] & ValidatedFieldDefinition<Schema[number]>,
@@ -137,61 +156,61 @@ export class Model<
 
   build<const Input extends BuildInput<Schema>>(
     fields: NoUnknownBuildFields<Schema, Input>,
-  ): BuiltYukari<Name, Schema, Input> {
-    const yukari = new Yukari<Name, Schema>(this, 'new');
+  ): BuiltYukari<Name, Schema, Input, AdapterInstance> {
+    const yukari = new Yukari<Name, Schema, AdapterInstance>(this, 'new');
     yukari.buildNewRow(fields);
-    return yukari as BuiltYukari<Name, Schema, Input>;
+    return yukari as BuiltYukari<Name, Schema, Input, AdapterInstance>;
   }
 
-  where(condition: QueryWhere<RowFromSchema<Schema>>): Query<Name, Schema> {
+  where(condition: QueryWhere<RowFromSchema<Schema>>): Query<Name, Schema, AdapterInstance> {
     return new Query(this).where(condition);
   }
 
   field(
     fields: string | readonly FieldName<RowFromSchema<Schema>>[],
-  ): Query<Name, Schema> {
+  ): Query<Name, Schema, AdapterInstance> {
     return new Query(this).fields(fields);
   }
 
   fields(
     fields: string | readonly FieldName<RowFromSchema<Schema>>[],
-  ): Query<Name, Schema> {
+  ): Query<Name, Schema, AdapterInstance> {
     return new Query(this).fields(fields);
   }
 
-  limit(limit: number | string | readonly (number | string)[]): Query<Name, Schema>;
-  limit(offset: number | string, count: number | string): Query<Name, Schema>;
+  limit(limit: number | string | readonly (number | string)[]): Query<Name, Schema, AdapterInstance>;
+  limit(offset: number | string, count: number | string): Query<Name, Schema, AdapterInstance>;
   limit(
     first: number | string | readonly (number | string)[],
     second?: number | string,
-  ): Query<Name, Schema> {
+  ): Query<Name, Schema, AdapterInstance> {
     const query = new Query(this);
     return second === undefined
       ? query.limit(first)
       : query.limit(normalizeModelLimit(first), second);
   }
 
-  index(indexName: string): Query<Name, Schema> {
+  index(indexName: string): Query<Name, Schema, AdapterInstance> {
     return new Query(this).index(indexName);
   }
 
-  order(order: QueryOrder<RowFromSchema<Schema>>): Query<Name, Schema> {
+  order(order: QueryOrder<RowFromSchema<Schema>>): Query<Name, Schema, AdapterInstance> {
     return new Query(this).order(order);
   }
 
-  orderBy(order: QueryOrder<RowFromSchema<Schema>>): Query<Name, Schema> {
+  orderBy(order: QueryOrder<RowFromSchema<Schema>>): Query<Name, Schema, AdapterInstance> {
     return new Query(this).orderBy(order);
   }
 
-  conn(connection: unknown): Query<Name, Schema> {
+  conn(connection: AdapterConnection<AdapterInstance>): Query<Name, Schema, AdapterInstance> {
     return new Query(this).conn(connection);
   }
 
-  find(): Promise<readonly QueriedYukari<Name, Schema>[]>;
+  find(): Promise<readonly QueriedYukari<Name, Schema, AdapterInstance>[]>;
   find(
     toJSON: false,
     options?: QueryFindOptions,
-  ): Promise<readonly QueriedYukari<Name, Schema>[]>;
+  ): Promise<readonly QueriedYukari<Name, Schema, AdapterInstance>[]>;
   find(
     toJSON: true,
     options?: QueryFindOptions,
@@ -199,28 +218,28 @@ export class Model<
   find(
     toJSON = false,
     options: QueryFindOptions = {},
-  ): Promise<readonly QueriedYukari<Name, Schema>[]> | Promise<readonly QueryJsonRow<Schema>[]> {
+  ): Promise<readonly QueriedYukari<Name, Schema, AdapterInstance>[]> | Promise<readonly QueryJsonRow<Schema>[]> {
     return toJSON
       ? new Query(this).find(true, options)
       : new Query(this).find(false, options);
   }
 
-  findOne(): Promise<QueriedYukari<Name, Schema> | null>;
-  findOne(toJSON: false): Promise<QueriedYukari<Name, Schema> | null>;
+  findOne(): Promise<QueriedYukari<Name, Schema, AdapterInstance> | null>;
+  findOne(toJSON: false): Promise<QueriedYukari<Name, Schema, AdapterInstance> | null>;
   findOne(toJSON: true): Promise<QueryJsonRow<Schema> | null>;
   findOne(
     toJSON = false,
-  ): Promise<QueriedYukari<Name, Schema> | null> | Promise<QueryJsonRow<Schema> | null> {
+  ): Promise<QueriedYukari<Name, Schema, AdapterInstance> | null> | Promise<QueryJsonRow<Schema> | null> {
     return toJSON ? new Query(this).findOne(true) : new Query(this).findOne(false);
   }
 
   findById(
     id: FindByIdInput<Schema>,
-  ): Promise<QueriedYukari<Name, Schema> | null>;
+  ): Promise<QueriedYukari<Name, Schema, AdapterInstance> | null>;
   findById(
     id: FindByIdInput<Schema>,
     toJSON: false,
-  ): Promise<QueriedYukari<Name, Schema> | null>;
+  ): Promise<QueriedYukari<Name, Schema, AdapterInstance> | null>;
   findById(
     id: FindByIdInput<Schema>,
     toJSON: true,
@@ -228,7 +247,7 @@ export class Model<
   findById(
     id: FindByIdInput<Schema>,
     toJSON = false,
-  ): Promise<QueriedYukari<Name, Schema> | null> | Promise<QueryJsonRow<Schema> | null> {
+  ): Promise<QueriedYukari<Name, Schema, AdapterInstance> | null> | Promise<QueryJsonRow<Schema> | null> {
     const query = new Query(this);
     return toJSON ? query.findById(id, true) : query.findById(id, false);
   }
@@ -246,14 +265,16 @@ function isReadonlyArray(value: unknown): value is readonly unknown[] {
 
 export type InferModelRow<ModelType> = ModelType extends Model<
   string,
-  infer Schema
+  infer Schema,
+  AdapterLike
 >
   ? RowFromSchema<Schema>
   : never;
 
 export type InferModelPrimaryKey<ModelType> = ModelType extends Model<
   string,
-  infer Schema
+  infer Schema,
+  AdapterLike
 >
   ? PrimaryKeyNames<Schema>
   : never;

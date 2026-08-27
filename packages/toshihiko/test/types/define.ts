@@ -2,14 +2,22 @@ import {
   Toshihiko,
   Type,
   type Adapter,
+  type AdapterModel,
+  type AdapterData,
   type AdapterFindOptions,
   type AdapterFindResult,
   type AdapterQuery,
+  type AdapterRow,
   type FieldDefinition,
   type FieldType,
   type InferModelPrimaryKey,
   type InferModelRow,
+  type YukariFieldData,
+  type ValidatedSchema,
 } from '../../src';
+
+const defaultAdapterModel: AdapterModel<Adapter> = {};
+void defaultAdapterModel;
 
 const Industry = {
   name: 'Industry',
@@ -58,8 +66,9 @@ const Validated = toshihiko.define('validated', [
     name: 'score',
     type: Type.Integer,
     default: 0,
-    async validators(value: number) {
-      if (value < 0) {
+    validators: async (value: number) => {
+      const typedValue: number = value;
+      if (typedValue < 0) {
         return 'score must not be negative';
       }
     },
@@ -125,6 +134,17 @@ class TestAdapter implements Adapter {
     return [];
   }
 
+  async insert(
+    model: unknown,
+    connection: unknown,
+    data: readonly AdapterData[],
+  ): Promise<AdapterRow | null> {
+    void model;
+    void connection;
+    void data;
+    return {};
+  }
+
   getDBName(): string {
     return this.options.database;
   }
@@ -142,6 +162,183 @@ const foundUsers = ConnectedUser
   .find();
 const foundUser = ConnectedUser.findById(1);
 const foundJson = ConnectedUser.findById(1, true);
+const builtConnectedUser = ConnectedUser.build({ id: 1, name: 'Alice' });
+const insertedConnectedUser: Promise<typeof builtConnectedUser> = builtConnectedUser.insert({
+  transaction: 1,
+});
+
+void insertedConnectedUser;
+
+interface TypedConnection {
+  readonly transaction: number;
+}
+
+interface TypedModel {
+  readonly name: string;
+}
+
+class TypedConnectionAdapter implements Adapter<
+  TypedModel,
+  TypedConnection,
+  unknown,
+  unknown,
+  AdapterQuery<TypedModel, TypedConnection>
+> {
+  constructor(readonly options: { readonly database: string }) {}
+
+  async find(
+    query: AdapterQuery<TypedModel, TypedConnection>,
+  ): Promise<AdapterFindResult> {
+    void query;
+    return [];
+  }
+
+  async insert(
+    model: TypedModel,
+    connection: TypedConnection | null,
+    data: readonly AdapterData[],
+  ): Promise<AdapterRow> {
+    void model;
+    void connection;
+    void data;
+    return {};
+  }
+
+  getDBName(): string {
+    return this.options.database;
+  }
+}
+
+const typedConnections = new Toshihiko(TypedConnectionAdapter, { database: 'typed' });
+const TypedConnectionModel = typedConnections.define('typed-connections', [{ name: 'id' }]);
+TypedConnectionModel.conn({ transaction: 1 });
+TypedConnectionModel.build({ id: '1' }).insert({ transaction: 1 });
+const concreteAdapter: TypedConnectionAdapter = TypedConnectionModel.parent.getAdapter();
+void concreteAdapter;
+
+// @ts-expect-error Required Adapter constructor options cannot be omitted.
+new Toshihiko(TypedConnectionAdapter);
+
+// @ts-expect-error Query.conn() preserves the Adapter connection type.
+TypedConnectionModel.conn({ transaction: '1' });
+
+// @ts-expect-error Yukari.insert() preserves the Adapter connection type.
+TypedConnectionModel.build({ id: '1' }).insert({ transaction: '1' });
+
+interface UnsupportedModel {
+  readonly name: string;
+  readonly requiredByAdapter: true;
+}
+
+class UnsupportedModelAdapter implements Adapter<UnsupportedModel> {
+  async find(query: AdapterQuery<UnsupportedModel>): Promise<AdapterFindResult> {
+    void query;
+    return [];
+  }
+
+  async insert(
+    model: UnsupportedModel,
+    connection: unknown,
+    data: readonly AdapterData[],
+  ): Promise<AdapterRow> {
+    void model;
+    void connection;
+    void data;
+    return {};
+  }
+
+  getDBName(): string {
+    return 'unsupported-model';
+  }
+}
+
+const unsupportedModel = new Toshihiko(new UnsupportedModelAdapter());
+// @ts-expect-error Core Models must satisfy the Model contract declared by the Adapter.
+unsupportedModel.define('unsupported-model', [{ name: 'id' }]);
+
+interface UnsupportedQuery extends AdapterQuery {
+  readonly requiredByAdapter: true;
+}
+
+class UnsupportedQueryAdapter implements Adapter<
+  unknown,
+  unknown,
+  unknown,
+  unknown,
+  UnsupportedQuery
+> {
+  async find(query: UnsupportedQuery): Promise<AdapterFindResult> {
+    void query;
+    return [];
+  }
+
+  async insert(): Promise<AdapterRow> {
+    return {};
+  }
+
+  getDBName(): string {
+    return 'unsupported-query';
+  }
+}
+
+const unsupportedQuery = new Toshihiko(new UnsupportedQueryAdapter());
+// @ts-expect-error Core Queries must satisfy the Query contract declared by the Adapter.
+unsupportedQuery.define('unsupported-query', [{ name: 'id' }]);
+
+interface UnsupportedField {
+  readonly requiredByAdapter: true;
+}
+
+class UnsupportedFieldAdapter implements Adapter<unknown, unknown, UnsupportedField> {
+  async find(query: AdapterQuery): Promise<AdapterFindResult> {
+    void query;
+    return [];
+  }
+
+  async insert(
+    model: unknown,
+    connection: unknown,
+    data: readonly AdapterData<UnsupportedField>[],
+  ): Promise<AdapterRow> {
+    void model;
+    void connection;
+    void data;
+    return {};
+  }
+
+  getDBName(): string {
+    return 'unsupported-field';
+  }
+}
+
+const unsupportedField = new Toshihiko(new UnsupportedFieldAdapter());
+// @ts-expect-error Compiled Fields must satisfy the Field contract declared by the Adapter.
+unsupportedField.define('unsupported-field', [{ name: 'id' }]);
+
+class StringValueAdapter implements Adapter<unknown, unknown, unknown, string> {
+  async find(): Promise<AdapterFindResult> {
+    return [];
+  }
+
+  async insert(
+    model: unknown,
+    connection: unknown,
+    data: readonly AdapterData<unknown, string>[],
+  ): Promise<AdapterRow> {
+    void model;
+    void connection;
+    void data;
+    return {};
+  }
+
+  getDBName(): string {
+    return 'string-values';
+  }
+}
+
+const stringValues = new Toshihiko(new StringValueAdapter());
+// @ts-expect-error Every schema value must satisfy the Value contract declared by the Adapter.
+stringValues.define('numeric-values', [{ name: 'id', type: Type.Integer }]);
 
 foundUsers.then((rows) => {
   const foundId: number | undefined = rows[0]?.id;
@@ -191,6 +388,96 @@ const invalidDefault: FieldDefinition<'score', typeof Type.Integer> = {
 
 void invalidDefault;
 
+const invalidInlineSchema = [{
+  name: 'score',
+  type: Type.Integer,
+  default: 'zero',
+}] as const;
+
+// @ts-expect-error Schema validation reconnects defaults to their FieldType values.
+const invalidValidatedSchema: ValidatedSchema<typeof invalidInlineSchema> = invalidInlineSchema;
+void invalidValidatedSchema;
+
+// @ts-expect-error define() validates defaults against the sibling FieldType.
+toshihiko.define('invalid-inline-default', [{
+  name: 'score',
+  type: Type.Integer,
+  default: 'zero',
+}]);
+
+// @ts-expect-error define() validates validators against the sibling FieldType.
+toshihiko.define('invalid-inline-validator', [{
+  name: 'score',
+  type: Type.Integer,
+  async validators(value: string) {
+    void value;
+  },
+}]);
+
+const brokenFieldType = {
+  name: 'Broken',
+  parse(value: string): number {
+    return Number(value);
+  },
+  restore(value: { readonly unrelated: true }): string {
+    return String(value.unrelated);
+  },
+};
+
+// @ts-expect-error A FieldType must use one Value type across parse() and restore().
+toshihiko.define('invalid-field-type', [{ name: 'broken', type: brokenFieldType }]);
+
+const optionalInput: { birthday?: Date | null } = {};
+const optionalBuilt = User.build(optionalInput);
+const optionalBuiltBirthday: Date | null | undefined = optionalBuilt.birthday;
+void optionalBuiltBirthday;
+
+const UndefinedDefault = toshihiko.define('undefined-default', [{
+  name: 'label',
+  type: Type.String,
+  default: undefined,
+}]);
+const undefinedDefaultValue: string | undefined = UndefinedDefault.build({}).label;
+void undefinedDefaultValue;
+
+const dateType: FieldType<Date, string, string> = {
+  name: 'DateString',
+  parse: (value) => new Date(value),
+  restore: (value) => value.toISOString(),
+  toJSON: (value) => value.toISOString(),
+};
+const Dated = toshihiko.define('dated', [{ name: 'date', type: dateType }]);
+const serializedDate: string | undefined = Dated.build({
+  date: new Date(),
+}).toJSON().date;
+void serializedDate;
+
+// @ts-expect-error A distinct JsonValue requires a runtime toJSON implementation.
+const missingDateSerializer: FieldType<Date, string, string> = {
+  name: 'MissingDateSerializer',
+  parse: (value) => new Date(value),
+  restore: (value) => value.toISOString(),
+};
+void missingDateSerializer;
+
+const distributedData: YukariFieldData<(typeof User.originalSchema)[number]> = {
+  field: User.schema[0],
+  value: 1,
+};
+void distributedData;
+
+const nullableValidator = User.schema[2].validators[0];
+if (nullableValidator !== undefined) {
+  // @ts-expect-error Validators receive the non-null FieldType value only.
+  nullableValidator(null);
+}
+
+// @ts-expect-error Yukari API names are rejected before a Model can be created.
+toshihiko.define('collision', [{ name: 'insert', type: Type.String }]);
+
+// @ts-expect-error Prototype constructor names are reserved too.
+toshihiko.define('constructor-collision', [{ name: 'constructor' }]);
+
 const syncValidator = (value: number): string | void => {
   if (value < 0) {
     return 'score must not be negative';
@@ -199,13 +486,3 @@ const syncValidator = (value: number): string | void => {
 
 // @ts-expect-error v2 validators must return Promise objects.
 toshihiko.define('invalid-sync-validator', [{ name: 'score', type: Type.Integer, validators: syncValidator }]);
-
-const callbackValidator = (
-  value: number,
-  callback: (error?: Error) => void,
-): void => {
-  callback(value < 0 ? new Error('score must not be negative') : undefined);
-};
-
-// @ts-expect-error v2 does not support callback validators.
-toshihiko.define('invalid-callback-validator', [{ name: 'score', type: Type.Integer, validators: callbackValidator }]);
