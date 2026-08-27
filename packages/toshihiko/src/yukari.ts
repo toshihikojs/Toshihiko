@@ -18,6 +18,7 @@ import type {
   RowFromSchema,
   SchemaDefinition,
 } from './contracts/field';
+import { cloneValue } from './contracts/field';
 import type {
   BuildInput,
   BuiltRowFromSchema,
@@ -45,7 +46,6 @@ export type YukariFieldData<Definition extends SchemaDefinition[number]> =
 interface RuntimeField {
   readonly column: string;
   readonly name: string;
-  clone(value: unknown): unknown;
   equal(left: unknown, right: unknown): boolean;
   parse(value: unknown): unknown;
   toJSON(value: unknown): unknown;
@@ -79,26 +79,41 @@ export class Yukari<
   AdapterInstance extends AdapterLike = Adapter,
 > {
   declare readonly $model: Model<Name, Schema, AdapterInstance>;
+  declare readonly $toshihiko: Model<Name, Schema, AdapterInstance>['parent'];
   declare readonly $schema: Model<Name, Schema, AdapterInstance>['schema'];
   declare readonly $source: YukariSource;
   declare $origData: YukariOriginalData<Schema>;
+  declare readonly $dbName: string;
+  declare readonly $tableName: string;
+  declare readonly $cache: unknown;
+  declare $fromCache: boolean;
+  declare readonly $adapter: AdapterInstance | null;
 
   constructor(model: Model<Name, Schema, AdapterInstance>, source: YukariSource) {
     Object.defineProperties(this, {
       $model: { value: model },
+      $toshihiko: { value: model.parent },
       $schema: { value: model.schema },
       $source: { value: source, writable: true },
       $origData: { value: {}, writable: true },
+      $dbName: { value: model.parent.database },
+      $tableName: { value: model.name },
+      $cache: { value: model.cache },
+      $fromCache: { value: false, writable: true },
+      $adapter: { value: model.parent.adapter },
+      _initRow: { value: undefined },
+      _buildRow: { value: this.buildNewRow },
+      _fieldAt: { value: this.fieldIndex },
     });
   }
 
-  buildNewRow(fields: BuildInput<Schema>): void {
+  buildNewRow(fields: BuildInput<Schema>, rowInOriginalName = false): void {
     this.$origData = {};
     const input = fields as Readonly<Record<string, unknown>>;
 
     for (const field of this.$schema) {
       const runtimeField = field as unknown as RuntimeField;
-      const suppliedValue = input[field.name];
+      const suppliedValue = input[rowInOriginalName ? field.column : field.name];
       const value = suppliedValue === undefined
         ? field.defaultValue
         : suppliedValue;
@@ -110,9 +125,12 @@ export class Yukari<
       Object.defineProperty(this, field.name, {
         configurable: false,
         enumerable: true,
-        value: runtimeField.clone(value),
+        value: cloneValue(value),
         writable: true,
       });
+    }
+    if (input.$fromCache) {
+      Reflect.set(this, '$fromCache', true);
     }
   }
 
@@ -133,26 +151,26 @@ export class Yukari<
         continue;
       }
 
-      const parsed = runtimeField.parse(sourceValue) as FieldDefinitionValue<Schema[number]>;
+      const parsed = (sourceValue === null
+        ? null
+        : runtimeField.parse(sourceValue)) as FieldDefinitionValue<Schema[number]>;
       originalData[runtimeField.name] = {
         fieldIdx,
         data: parsed,
       };
 
-      const value = runtimeField.clone(parsed);
-      if (Object.prototype.hasOwnProperty.call(this, runtimeField.name)) {
-        Reflect.set(this, runtimeField.name, value);
-      } else {
-        Object.defineProperty(this, runtimeField.name, {
-          configurable: false,
-          enumerable: true,
-          value,
-          writable: true,
-        });
-      }
+      Object.defineProperty(this, runtimeField.name, {
+        configurable: false,
+        enumerable: true,
+        value: cloneValue(parsed),
+        writable: true,
+      });
     }
 
     this.$origData = originalData as YukariOriginalData<Schema>;
+    if (row.$fromCache) {
+      Reflect.set(this, '$fromCache', true);
+    }
   }
 
   fieldIndex(name: string): number {
@@ -173,13 +191,15 @@ export class Yukari<
 
   async validateAll(): Promise<void> {
     const values = this as Readonly<Record<string, unknown>>;
-
-    for (const field of this.$schema) {
-      if (!Object.prototype.hasOwnProperty.call(this, field.name)) {
-        continue;
-      }
-
-      await this.validateField(field.name, values[field.name]);
+    const names = Object.keys(this).filter((name) => (
+      !name.startsWith('$')
+      && typeof values[name] !== 'function'
+      && this.fieldIndex(name) !== -1
+    ));
+    for (let index = 0; index < names.length; index += 10) {
+      await Promise.all(names.slice(index, index + 10).map(async (name) => {
+        await this.validateField(name, values[name]);
+      }));
     }
   }
 
@@ -201,7 +221,7 @@ export class Yukari<
       this.$model,
       this as unknown as Partial<RowFromSchema<Schema>>,
     );
-    const pending = adapter.insert(
+    const row = await adapter.insert(
       this.$model as unknown as AdapterModel<AdapterInstance>,
       connection,
       data as unknown as readonly AdapterData<
@@ -209,32 +229,33 @@ export class Yukari<
         AdapterValue<AdapterInstance>
       >[],
     );
-    if (!isPromiseLike(pending)) {
-      throw new TypeError('Adapter.insert() must return a Promise.');
+    if (row !== null) {
+      for (const key of Object.keys(row)) {
+        const value = (row as Readonly<Record<string, unknown>>)[key];
+        if ((key.startsWith('$') && key !== '$origData') || typeof value === 'function') {
+          continue;
+        }
+        Reflect.set(this, key, key === '$origData' ? value : cloneValue(value));
+      }
     }
-
-    const row = await pending;
-    if (!isAdapterRow(row)) {
-      throw new TypeError('Adapter.insert() returned an invalid row.');
-    }
-
-    this.fillRowFromSource(row, true);
-    Reflect.set(this, '$source', 'query');
     return this;
   }
 
   async update(
     connection: AdapterConnection<AdapterInstance> | null = null,
   ): Promise<this> {
-    if (this.$source !== 'query') {
+    if (this.$source === 'new') {
       throw new Error('Yukari.update() can only be called on a queried Yukari object.');
     }
 
-    const primaryKey = this.originalPrimaryKey();
+    const primaryKey = this.originalLocator();
     await this.validateAll();
-    const data = this.changes();
+    let data = this.updateChanges();
     if (data.length === 0) {
-      return this;
+      data = Yukari.extractAdapterData(
+        this.$model,
+        this as unknown as Partial<RowFromSchema<Schema>>,
+      );
     }
 
     const adapter = this.$model.parent.getAdapter() as unknown as Adapter<
@@ -243,7 +264,7 @@ export class Yukari<
       AdapterField<AdapterInstance>,
       AdapterValue<AdapterInstance>
     >;
-    const pending = adapter.update(
+    await adapter.update(
       this.$model as unknown as AdapterModel<AdapterInstance>,
       connection,
       primaryKey,
@@ -252,52 +273,42 @@ export class Yukari<
         AdapterValue<AdapterInstance>
       >[],
     );
-    if (!isPromiseLike(pending)) {
-      throw new TypeError('Adapter.update() must return a Promise.');
-    }
-
-    await pending;
     const originalData = this.$origData as unknown as RuntimeOriginalData;
     for (const entry of data) {
       const field = entry.field as Field<Schema[number]>;
-      originalData[field.name] = {
-        fieldIdx: this.$schema.indexOf(field),
-        data: field.clone(
-          entry.value as FieldDefinitionValue<Schema[number]>,
-        ),
-      };
+      const original = originalData[field.name];
+      if (original !== undefined) {
+        original.data = entry.value;
+      }
     }
+    Reflect.set(this, '$source', 'query');
     return this;
   }
 
   async delete(
     connection: AdapterConnection<AdapterInstance> | null = null,
   ): Promise<true> {
-    if (this.$source !== 'query') {
+    if (this.$source === 'new') {
       throw new Error('Yukari.delete() can only be called on a queried Yukari object.');
     }
 
-    const primaryKey = this.originalPrimaryKey('delete');
+    const primaryKey = this.originalLocator();
     const query = this.$model
       .where(primaryKey as QueryWhere<RowFromSchema<Schema>>)
       .limit(0, 1);
-    if (connection !== null) {
-      query.conn(connection);
-    }
+    query.conn(connection);
 
     const adapter = this.$model.parent.getAdapter() as unknown as {
       readonly deleteByQuery: (
         query: AdapterDeleteQueryType<AdapterInstance>,
       ) => Promise<unknown>;
     };
-    const pending = adapter.deleteByQuery(
+    const result = await adapter.deleteByQuery(
       query as unknown as AdapterDeleteQueryType<AdapterInstance>,
     );
-    if (!isPromiseLike(pending)) {
-      throw new TypeError('Adapter.deleteByQuery() must return a Promise.');
+    if (!result) {
+      throw new Error('unknown error.');
     }
-
-    await pending;
     Reflect.set(this, '$source', 'delete');
     return true;
   }
@@ -308,10 +319,7 @@ export class Yukari<
     if (this.$source === 'new') {
       return this.insert(connection);
     }
-    if (this.$source === 'query') {
-      return this.update(connection);
-    }
-    throw new Error('Yukari.save() cannot be called on a deleted Yukari object.');
+    return this.update(connection);
   }
 
   changes(): readonly YukariFieldData<Schema[number]>[] {
@@ -340,21 +348,13 @@ export class Yukari<
     const values = this as Readonly<Record<string, unknown>>;
     const originalData = this.$origData as unknown as RuntimeOriginalData;
 
-    for (const field of this.$schema) {
-      const runtimeField = field as unknown as RuntimeField;
-      const original = originalData[runtimeField.name];
-      if (useOriginalData) {
-        if (original === undefined) {
-          continue;
-        }
-        result[runtimeField.name] = runtimeField.toJSON(original.data);
-        continue;
-      }
-
-      if (!Object.prototype.hasOwnProperty.call(this, runtimeField.name)) {
-        continue;
-      }
-      result[runtimeField.name] = runtimeField.toJSON(values[runtimeField.name]);
+    const names = useOriginalData ? Object.keys(originalData) : Object.keys(this);
+    for (const name of names) {
+      const value = useOriginalData ? originalData[name]?.data : values[name];
+      if (!useOriginalData && (name.startsWith('$') || typeof value === 'function')) continue;
+      const fieldIdx = useOriginalData ? originalData[name]?.fieldIdx ?? -1 : this.fieldIndex(name);
+      const field = this.$schema[fieldIdx] as unknown as RuntimeField | undefined;
+      result[name] = field === undefined ? value : field.toJSON(value);
     }
 
     return result as Partial<JsonRowFromSchema<Schema>>;
@@ -371,45 +371,66 @@ export class Yukari<
     const values = data as Readonly<Record<string, unknown>>;
     const extracted: YukariFieldData<Schema[number]>[] = [];
 
-    for (const field of model.schema) {
-      if (!Object.prototype.hasOwnProperty.call(data, field.name)) {
-        continue;
-      }
+    for (const name of Object.keys(data)) {
+      if (name.startsWith('$')) continue;
+      const fields = model.fieldNamesMap as unknown as Readonly<Record<string, Field<Schema[number]> | undefined>>;
+      const field = fields[name];
+      if (field === undefined || typeof values[name] === 'function') continue;
       extracted.push({
         field,
-        value: values[field.name] as FieldDefinitionValue<Schema[number]>,
+        value: values[name] as FieldDefinitionValue<Schema[number]>,
       } as YukariFieldData<Schema[number]>);
     }
 
     return extracted;
   }
 
-  private originalPrimaryKey(
-    operation: 'delete' | 'update' = 'update',
-  ): Readonly<Record<string, unknown>> {
-    if (this.$model.primaryKeys.length === 0) {
-      throw new Error(`Model ${this.$model.name} has no primary key for ${operation}().`);
-    }
-
+  private originalLocator(): Readonly<Record<string, unknown>> {
     const originalData = this.$origData as unknown as RuntimeOriginalData;
     const primaryKey: Record<string, unknown> = {};
-    for (const field of this.$model.primaryKeys) {
-      const original = originalData[field.name];
-      if (original === undefined) {
-        throw new Error(`Yukari.${operation}() is missing original primary key ${field.name}.`);
+    if (this.$model.primaryKeys.length > 0) {
+      for (const field of this.$model.primaryKeys) {
+        const original = originalData[field.name];
+        if (original !== undefined) primaryKey[field.name] = original.data;
       }
-      primaryKey[field.name] = original.data;
+      return primaryKey;
+    }
+    for (const [name, original] of Object.entries(originalData)) {
+      if (original !== undefined) primaryKey[name] = original.data;
     }
     return primaryKey;
   }
 
+  private updateChanges(): readonly YukariFieldData<Schema[number]>[] {
+    const values = this as Readonly<Record<string, unknown>>;
+    const originalData = this.$origData as unknown as RuntimeOriginalData;
+    const changes: YukariFieldData<Schema[number]>[] = [];
+    for (const name of Object.keys(this)) {
+      if (name.startsWith('$') || typeof values[name] === 'function') continue;
+      const fields = this.$model.fieldNamesMap as unknown as Readonly<Record<string, Field<Schema[number]> | undefined>>;
+      const field = fields[name];
+      if (field === undefined) continue;
+      const original = originalData[name];
+      // v1 reads the original snapshot directly and lets JavaScript surface a
+      // native TypeError when a queried row contains a field absent from it.
+      const originalValue = original!.data;
+      const current = values[name] as FieldDefinitionValue<Schema[number]>;
+      if ((current === null || originalValue === null)
+        && current !== originalValue
+        && field.allowNull) {
+        changes.push({ field, value: current } as YukariFieldData<Schema[number]>);
+      } else if (!field.equal(current, originalValue as FieldDefinitionValue<Schema[number]>)) {
+        changes.push({ field, value: current } as YukariFieldData<Schema[number]>);
+      }
+    }
+    return changes;
+  }
+
   private async validateField(name: string, value: unknown): Promise<void> {
-    const fieldNamesMap = this.$model.fieldNamesMap as unknown as Readonly<
-      Record<string, Field<Schema[number]> | undefined>
-    >;
-    const field = fieldNamesMap[name];
+    const fieldIndex = this.fieldIndex(name);
+    const field = fieldIndex === -1 ? undefined : this.$schema[fieldIndex];
     if (field === undefined) {
-      throw new Error(`No such field ${name}.`);
+      throw new Error(`No such field ${name}`);
     }
 
     if (value === null) {
@@ -420,12 +441,7 @@ export class Yukari<
     }
 
     for (const validator of field.validators) {
-      const result = callValidator(validator, this.$model, value);
-      if (!isPromiseLike(result)) {
-        throw new TypeError(`Validator for field ${name} must return a Promise.`);
-      }
-
-      const message = await result;
+      const message = await callValidator(validator, this.$model, value);
       if (typeof message === 'string' && message.length > 0) {
         throw new Error(message);
       }
@@ -443,23 +459,4 @@ function callValidator<Value>(
     input: unknown,
   ) => unknown;
   return callable.call(model, value);
-}
-
-function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
-  return typeof value === 'object'
-    && value !== null
-    && 'then' in value
-    && typeof value.then === 'function';
-}
-
-function isAdapterRow(value: unknown): value is AdapterRow {
-  return value !== null
-    && typeof value === 'object'
-    && !Array.isArray(value);
-}
-
-export function isReservedYukariFieldName(name: unknown): boolean {
-  return typeof name === 'string'
-    && (name.startsWith('$')
-      || Object.prototype.hasOwnProperty.call(Yukari.prototype, name));
 }

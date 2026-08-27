@@ -41,19 +41,28 @@ export class MySQLAdapter extends Adapter<
   MySQLQuery
 > {
   readonly database: string;
-  readonly mysql: Pool;
+  declare readonly mysql: Pool;
+  readonly package = 'mysql2';
   readonly username: string;
 
-  private readonly builder = new MySQLSqlBuilder();
-  private readonly showSql: ((sql: string) => void) | null;
+  declare private readonly builder: MySQLSqlBuilder;
+  declare private readonly showSql: ((sql: string) => void) | null;
 
   constructor(options: MySQLAdapterOptions = {}) {
     super(sanitizePublicOptions(options));
     const normalized = normalizeOptions(options);
     this.database = normalized.database;
     this.username = normalized.user;
-    this.showSql = normalizeShowSql(options.showSql);
-    this.mysql = options.pool ?? createPool(normalized.pool);
+    const showSql = normalizeShowSql(options.showSql);
+    const mysql = options.pool ?? createPool(normalized.pool);
+    Object.defineProperties(this, {
+      builder: { value: new MySQLSqlBuilder() },
+      mysql: { value: mysql },
+      showSql: { value: showSql },
+    });
+    if (options.showSql === true) {
+      (this.options as { showSql?: MySQLAdapterOptions['showSql'] }).showSql = showSql ?? undefined;
+    }
     this.mysql.on('connection', () => {
       this.emit('log', 'A new MySQL connection from Toshihiko is set. ⁽⁽ଘ( ˙꒳˙ )ଓ⁾⁾');
     });
@@ -77,42 +86,33 @@ export class MySQLAdapter extends Adapter<
     const options = this.queryToOptions(query);
     const compiled = this.builder.compileSql('count', query.model, options);
     const result = await this.execute(
-      options.connection ?? null,
+      options.conn ?? null,
       compiled.sql,
       compiled.values,
     );
-    const rows = assertRows(result, 'count');
+    const rows = result as readonly AdapterRow[];
     const first = rows[0];
-    if (first === undefined) {
-      return 0;
-    }
-    return Number(first['COUNT(0)'] ?? first.count ?? 0);
+    return first!['COUNT(0)'] as number;
   }
 
   override async updateByQuery(query: MySQLQuery): Promise<ResultSetHeader> {
     const options = this.queryToOptions(query);
     const compiled = this.builder.compileSql('update', query.model, options);
-    return assertMutationResult(
-      await this.execute(
-        options.connection ?? null,
-        compiled.sql,
-        compiled.values,
-      ),
-      'updateByQuery',
-    );
+    return await this.execute(
+      options.conn ?? null,
+      compiled.sql,
+      compiled.values,
+    ) as ResultSetHeader;
   }
 
   override async deleteByQuery(query: MySQLQuery): Promise<ResultSetHeader> {
     const options = this.queryToOptions(query);
     const compiled = this.builder.compileSql('delete', query.model, options);
-    return assertMutationResult(
-      await this.execute(
-        options.connection ?? null,
-        compiled.sql,
-        compiled.values,
-      ),
-      'deleteByQuery',
-    );
+    return await this.execute(
+      options.conn ?? null,
+      compiled.sql,
+      compiled.values,
+    ) as ResultSetHeader;
   }
 
   override async insert(
@@ -120,10 +120,6 @@ export class MySQLAdapter extends Adapter<
     connection: PoolConnection | null,
     data: readonly AdapterData<MySQLField, unknown>[],
   ): Promise<AdapterRow> {
-    if (data.length === 0) {
-      throw new Error('no insert data.');
-    }
-
     const primaryValues: Record<string, unknown> = {};
     const assignments: MySQLStatement[] = data.map((entry) => {
       if (entry.field.primaryKey || model.primaryKeys.length === 0) {
@@ -137,24 +133,23 @@ export class MySQLAdapter extends Adapter<
     });
     const insertSet = joinStatements(assignments, ', ');
     const sql = `INSERT INTO ${quoteIdentifier(model.name)} SET ${insertSet.sql}`;
-    const mutation = assertMutationResult(
-      await this.execute(connection, sql, insertSet.values),
-      'insert',
-    );
+    const mutation = await this.execute(connection, sql, insertSet.values) as ResultSetHeader;
+    if (!mutation) throw new Error('no row inserted.');
 
     const where = resolveInsertedRowWhere(model, primaryValues, mutation.insertId);
-    if (Object.keys(where).length === 0) {
-      throw new Error('insert successfully but no unique readback condition is available.');
+    if (model.primaryKeys.length === 0 && mutation.insertId) {
+      console.error('[TOSHIHIKO WARNING] no primary key while inserting may cause some problems!');
     }
     const findStatement = this.builder.compileFind(model, {
       fields: model.schema.map((field) => field.name),
       where,
       limit: [0, 1],
     });
-    const rows = assertRows(
-      await this.execute(connection, findStatement.sql, findStatement.values),
-      'insert readback',
-    );
+    const rows = await this.execute(
+      connection,
+      findStatement.sql,
+      findStatement.values,
+    ) as readonly AdapterRow[];
     const row = rows[0];
     if (row === undefined) {
       throw new Error('insert successfully but failed to read the record.');
@@ -183,10 +178,11 @@ export class MySQLAdapter extends Adapter<
       update: updateData,
       where: primaryKey,
     });
-    const mutation = assertMutationResult(
-      await this.execute(connection, compiled.sql, compiled.values),
-      'update',
-    );
+    const mutation = await this.execute(
+      connection,
+      compiled.sql,
+      compiled.values,
+    ) as ResultSetHeader;
     if (mutation.affectedRows === 0) {
       throw new Error('Out-dated yukari data.');
     }
@@ -198,7 +194,6 @@ export class MySQLAdapter extends Adapter<
   ): Promise<QueryResult> {
     const parsed = parseExecuteArguments(arguments_);
     const sqlForLog = this.format(parsed.sql, parsed.values);
-    this.emit('sql', sqlForLog);
     this.showSql?.(sqlForLog);
 
     const target = parsed.connection ?? this.mysql;
@@ -230,19 +225,13 @@ export class MySQLAdapter extends Adapter<
   }
 
   override async commit(connection: PoolConnection): Promise<void> {
-    try {
-      await connection.commit();
-    } finally {
-      connection.release();
-    }
+    await connection.commit();
+    connection.release();
   }
 
   override async rollback(connection: PoolConnection): Promise<void> {
-    try {
-      await connection.rollback();
-    } finally {
-      connection.release();
-    }
+    await connection.rollback();
+    connection.release();
   }
 
   async close(): Promise<void> {
@@ -260,14 +249,11 @@ export class MySQLAdapter extends Adapter<
     options: MySQLQueryOptions = {},
   ): Promise<AdapterRow | readonly AdapterRow[] | null> {
     const compiled = this.builder.compileSql('find', model, options);
-    const rows = assertRows(
-      await this.execute(
-        options.connection ?? null,
-        compiled.sql,
-        compiled.values,
-      ),
-      'find',
-    );
+    const rows = (await this.execute(
+      options.conn ?? null,
+      compiled.sql,
+      compiled.values,
+    ) || []) as readonly AdapterRow[];
     return options.single ? rows[0] ?? null : rows;
   }
 
@@ -276,7 +262,6 @@ export class MySQLAdapter extends Adapter<
     overrides: Partial<MySQLQueryOptions> = {},
   ): MySQLQueryOptions {
     const options: MySQLQueryOptions = {
-      connection: query._conn,
       fields: [...query._fields],
       index: query._index,
       limit: [...query._limit],
@@ -284,6 +269,7 @@ export class MySQLAdapter extends Adapter<
       update: { ...(query._updateData ?? {}) },
       where: { ...query._where },
       ...overrides,
+      conn: query._conn,
     };
 
     if (!options.single) {
@@ -327,7 +313,7 @@ export class MySQLAdapter extends Adapter<
 
   makeOrder(
     model: MySQLModel,
-    order: readonly Readonly<Record<string, 1 | -1>>[],
+    order: readonly Readonly<Record<string, number>>[],
   ): string {
     return this.builder.makeOrder(model, order);
   }
@@ -364,9 +350,12 @@ export class MySQLAdapter extends Adapter<
     model: MySQLModel,
     options?: MySQLQueryOptions,
   ): string {
+    if (type === 'count') {
+      options!.count = true;
+    }
     switch (type) {
       case 'count':
-        return this.makeFind(model, { ...options, count: true });
+        return this.makeFind(model, options);
       case 'delete':
         return this.makeDelete(model, options);
       case 'update':
@@ -388,6 +377,7 @@ function normalizeOptions(options: MySQLAdapterOptions): ResolvedOptions {
     database = 'toshihiko',
     host = 'localhost',
     password = '',
+    package: _package,
     pool: _pool,
     port = 3306,
     showSql: _showSql,
@@ -478,30 +468,6 @@ function normalizeExecuteValues(
   return normalized as ExecuteValues;
 }
 
-function assertRows(result: QueryResult, operation: string): readonly AdapterRow[] {
-  if (!Array.isArray(result) || result.some((row) => !isRow(row))) {
-    throw new TypeError(`MySQL ${operation} did not return rows.`);
-  }
-  return result as RowDataPacket[];
-}
-
-function isRow(value: unknown): value is AdapterRow {
-  return value !== null && typeof value === 'object' && !Array.isArray(value);
-}
-
-function assertMutationResult(
-  result: QueryResult,
-  operation: string,
-): ResultSetHeader {
-  if (result === null || typeof result !== 'object' || Array.isArray(result)) {
-    throw new TypeError(`MySQL ${operation} did not return a mutation result.`);
-  }
-  if (!('affectedRows' in result) || typeof result.affectedRows !== 'number') {
-    throw new TypeError(`MySQL ${operation} returned an invalid mutation result.`);
-  }
-  return result as ResultSetHeader;
-}
-
 function resolveInsertedRowWhere(
   model: MySQLModel,
   primaryValues: Readonly<Record<string, unknown>>,
@@ -529,7 +495,7 @@ function resolveInsertedRowWhere(
 }
 
 function quoteIdentifier(identifier: string): string {
-  return `\`${identifier.replaceAll('`', '``')}\``;
+  return `\`${identifier}\``;
 }
 
 function joinStatements(

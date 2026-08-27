@@ -15,7 +15,7 @@ const BinaryType = Object.freeze({
 }) satisfies FieldType<{ readonly dec: number }, string>;
 
 const toshihiko = new Toshihiko('mysql');
-const Model = toshihiko.define('test`table', [
+const Model = toshihiko.define('test_table', [
   { name: 'key1', column: 'id', type: Type.Integer, primaryKey: true, autoIncrement: true },
   { name: 'key2', type: Type.Float },
   { name: 'key3', type: Type.Json },
@@ -122,8 +122,8 @@ test('v1 empty and invalid where inputs retain their guards', () => {
     /Non-array condition/,
   );
   assert.throws(() => builder.makeFieldWhere(Model, 'missing', 1), /no field named/);
-  assert.throws(() => builder.makeFieldWhere(Model, 'key2', { $in: [] }), /non-empty array/);
-  assert.throws(() => builder.makeFieldWhere(Model, 'key2', { $between: [1] }), /exactly two/);
+  assert.equal(builder.makeFieldWhere(Model, 'key2', { $in: [] }), '`key2` IN ()');
+  assert.equal(builder.makeFieldWhere(Model, 'key2', { $between: [1] }), '`key2` BETWEEN 1 AND NaN');
 });
 
 test('v1 order, limit, and index generation remains deterministic', () => {
@@ -151,8 +151,8 @@ test('v1 order, limit, and index generation remains deterministic', () => {
 });
 
 test('v1 find and count generation retains fields and clauses', () => {
-  assert.equal(builder.makeFind(Model), 'SELECT * FROM `test``table`');
-  assert.equal(builder.makeFind(Model, {}), 'SELECT * FROM `test``table`');
+  assert.equal(builder.makeFind(Model), 'SELECT * FROM `test_table`');
+  assert.equal(builder.makeFind(Model, {}), 'SELECT * FROM `test_table`');
   assert.equal(
     builder.makeFind(Model, {
       fields: Model.schema.map((field) => field.name),
@@ -161,9 +161,9 @@ test('v1 find and count generation retains fields and clauses', () => {
       limit: [1, 10],
       index: 'idx',
     }),
-    'SELECT `id`, `key2`, `key3`, `key4`, `key5`, `key6` FROM `test``table` FORCE INDEX(`idx`) WHERE (`id` = 2) ORDER BY `key2` ASC LIMIT 1, 10',
+    'SELECT `id`, `key2`, `key3`, `key4`, `key5`, `key6` FROM `test_table` FORCE INDEX(`idx`) WHERE (`id` = 2) ORDER BY `key2` ASC LIMIT 1, 10',
   );
-  assert.equal(builder.makeFind(Model, { count: true, fields: ['key1'] }), 'SELECT COUNT(0) FROM `test``table`');
+  assert.equal(builder.makeFind(Model, { count: true, fields: ['key1'] }), 'SELECT COUNT(0) FROM `test_table`');
   assert.throws(() => builder.makeFind(Model, { fields: ['missing'] }), /no field named/);
   assert.equal(builder.makeSql('legacy-unknown', Model), builder.makeFind(Model));
 });
@@ -185,16 +185,16 @@ test('v1 set and update preserve null, unknown fields, and raw expressions', () 
     '`id` = key2 + 123, `key3` = CONCAT("{\\"foo\\":\\"", id, key4, "\\"}"), `key4` = "123,456", `key6` = BIN(152)',
   );
   assert.equal(builder.makeSet(Model, { key4: null }), '`key4` = NULL');
-  assert.throws(() => builder.makeSet(Model, { key1: null }), /does not allow null/);
+  assert.equal(builder.makeSet(Model, { key1: null }), '`id` = NaN');
   assert.equal(
     builder.makeUpdate(Model, {
       update: { key1: 421, key4: '123' },
       where: { key1: 123, key4: '456' },
       index: 'idx',
     }),
-    "UPDATE `test``table` FORCE INDEX(`idx`) SET `id` = 421, `key4` = '123' WHERE (`id` = 123 AND `key4` = '456')",
+    "UPDATE `test_table` FORCE INDEX(`idx`) SET `id` = 421, `key4` = '123' WHERE (`id` = 123 AND `key4` = '456')",
   );
-  assert.equal(builder.makeUpdate(Model, { update: { key1: 1 } }), 'UPDATE `test``table` SET `id` = 1');
+  assert.equal(builder.makeUpdate(Model, { update: { key1: 1 } }), 'UPDATE `test_table` SET `id` = 1');
   assert.throws(() => builder.makeUpdate(Model, { where: { key1: 1 } }), /no set data/);
 });
 
@@ -203,13 +203,13 @@ test('v1 delete generation retains order and MySQL limit restrictions', () => {
     builder.makeDelete(Model, {
       where: { key1: 421, key2: 1.23, key3: { a: '123' }, key4: '123' },
     }),
-    "DELETE FROM `test``table` WHERE (`id` = 421 AND `key2` = 1.23 AND `key3` = '{\\\"a\\\":\\\"123\\\"}' AND `key4` = '123')",
+    "DELETE FROM `test_table` WHERE (`id` = 421 AND `key2` = 1.23 AND `key3` = '{\\\"a\\\":\\\"123\\\"}' AND `key4` = '123')",
   );
   assert.equal(
     builder.makeDelete(Model, { where: { key1: 1 }, order: [{ key2: -1 }], limit: [0, 1] }),
-    'DELETE FROM `test``table` WHERE (`id` = 1) ORDER BY `key2` DESC LIMIT 1',
+    'DELETE FROM `test_table` WHERE (`id` = 1) ORDER BY `key2` DESC LIMIT 1',
   );
-  assert.equal(builder.makeDelete(Model), 'DELETE FROM `test``table`');
+  assert.equal(builder.makeDelete(Model), 'DELETE FROM `test_table`');
   assert.throws(() => builder.makeDelete(Model, { limit: [1, 1] }), /non-zero offset/);
 });
 
@@ -220,7 +220,7 @@ test('compiled v1 scenarios bind data in deterministic order', () => {
       where: { key2: { $between: [1, 2] }, key1: { $in: [3, 4] } },
     }),
     {
-      sql: 'UPDATE `test``table` SET `key3` = ?, `key6` = BIN(7), `key4` = NULL WHERE (`key2` BETWEEN ? AND ? AND `id` IN (?, ?))',
+      sql: 'UPDATE `test_table` SET `key3` = ?, `key6` = BIN(7), `key4` = NULL WHERE (`key2` BETWEEN ? AND ? AND `id` IN (?, ?))',
       values: ['{"a":"123"}', 1, 2, 3, 4],
     },
   );

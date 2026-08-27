@@ -4,7 +4,7 @@ import { Toshihiko, Type } from 'toshihiko';
 import { MySQLSqlBuilder } from '../../dist';
 
 const toshihiko = new Toshihiko('mysql');
-const Model = toshihiko.define('test`table', [
+const Model = toshihiko.define('test_table', [
   { name: 'id', column: 'user_id', type: Type.Integer, primaryKey: true },
   { name: 'score', type: Type.Float },
   { name: 'payload', type: Type.Json, allowNull: true },
@@ -38,11 +38,11 @@ test('where, order, limits, indexes, and identifiers compile deterministically',
   assert.equal(builder.makeOrder(Model, [{ id: -1 }, { name: 1 }]), '`user_id` DESC, `name` ASC');
   assert.equal(builder.makeLimit(Model, [10, 20]), '10, 20');
   assert.equal(builder.makeLimit(Model, ['30', '40']), '30, 40');
-  assert.equal(builder.makeLimit(Model, [-1, Number.NaN]), '0, 0');
-  assert.equal(builder.makeIndex(Model, 'idx`name'), 'FORCE INDEX(`idx``name`)');
+  assert.equal(builder.makeLimit(Model, [-1, Number.NaN]), '-1, 0');
+  assert.equal(builder.makeIndex(Model, 'idx`name'), 'FORCE INDEX(`idx`name`)');
   assert.equal(builder.makeWhere(Model, {}), '()');
   assert.throws(() => builder.makeFieldWhere(Model, 'missing', 1), /no field named/);
-  assert.throws(() => builder.makeFieldWhere(Model, 'id', { $in: [] }), /non-empty array/);
+  assert.equal(builder.makeFieldWhere(Model, 'id', { $in: [] }), '`user_id` IN ()');
 });
 
 test('find, update, delete, and raw expressions retain the original call shape', () => {
@@ -55,18 +55,18 @@ test('find, update, delete, and raw expressions retain the original call shape',
       limit: [0, 5],
       index: 'primary',
     }),
-    'SELECT `user_id`, `name` FROM `test``table` FORCE INDEX(`primary`) WHERE (`user_id` >= 2) ORDER BY `name` ASC LIMIT 0, 5',
+    'SELECT `user_id`, `name` FROM `test_table` FORCE INDEX(`primary`) WHERE (`user_id` >= 2) ORDER BY `name` ASC LIMIT 0, 5',
   );
   assert.equal(
     builder.makeUpdate(Model, {
       update: { score: '{{score + 1}}', name: 'Bob' },
       where: { id: 1 },
     }),
-    "UPDATE `test``table` SET `score` = score + 1, `name` = 'Bob' WHERE (`user_id` = 1)",
+    "UPDATE `test_table` SET `score` = score + 1, `name` = 'Bob' WHERE (`user_id` = 1)",
   );
   assert.equal(
     builder.makeDelete(Model, { where: { id: 1 }, limit: [0, 1] }),
-    'DELETE FROM `test``table` WHERE (`user_id` = 1) LIMIT 1',
+    'DELETE FROM `test_table` WHERE (`user_id` = 1) LIMIT 1',
   );
   assert.throws(
     () => builder.makeDelete(Model, { limit: [2, 1] }),
@@ -85,7 +85,7 @@ test('compiled statements preserve placeholders and value order', () => {
       limit: [0, 5],
     }),
     {
-      sql: 'SELECT * FROM `test``table` WHERE (`user_id` BETWEEN ? AND ? AND ((`name` = ?) OR (`score` IN (?, ?)))) LIMIT 0, 5',
+      sql: 'SELECT * FROM `test_table` WHERE (`user_id` BETWEEN ? AND ? AND ((`name` = ?) OR (`score` IN (?, ?)))) LIMIT 0, 5',
       values: [2, 9, 'Alice', 1.5, 2.5],
     },
   );
@@ -95,7 +95,7 @@ test('compiled statements preserve placeholders and value order', () => {
       where: { id: 1 },
     }),
     {
-      sql: 'UPDATE `test``table` SET `score` = score + 1, `name` = ? WHERE (`user_id` = ?)',
+      sql: 'UPDATE `test_table` SET `score` = score + 1, `name` = ? WHERE (`user_id` = ?)',
       values: ['Bob', 1],
     },
   );

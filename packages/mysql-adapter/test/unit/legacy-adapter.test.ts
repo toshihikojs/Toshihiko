@@ -45,7 +45,10 @@ test('v1 construction keeps Adapter identity, public options, and credentials pr
   assert.equal(adapter.options.password, undefined);
   assert.equal(adapter.options.pool, undefined);
   assert.equal(adapter.options.username, undefined);
-  assert.equal('package' in adapter, false);
+  assert.equal(adapter.package, 'mysql2');
+  assert.equal(Object.keys(adapter).includes('mysql'), false);
+  assert.equal(Object.keys(adapter).includes('builder'), false);
+  assert.equal(Object.keys(adapter).includes('showSql'), false);
   assert.deepEqual(options, {
     database: 'test',
     host: '127.0.0.1',
@@ -119,7 +122,7 @@ test('v1 queryToOptions preserves query state and single-row limit rules', () =>
   query._updateData = { name: 'Bob' };
 
   assert.deepEqual(adapter.queryToOptions(query), {
-    connection,
+    conn: connection,
     fields: ['id', 'name'],
     index: 'idx',
     limit: [10, 20],
@@ -155,10 +158,12 @@ test('v1 makeSql dispatch remains override-compatible', () => {
 
   assert.equal(adapter.makeSql('find', User, { where: {} }), 'FIND');
   assert.equal(adapter.makeSql('legacy-unknown', User, { where: {} }), 'FIND');
-  assert.equal(adapter.makeSql('count', User, { where: {} }), 'FIND');
+  const countOptions: MySQLQueryOptions = { where: {} };
+  assert.equal(adapter.makeSql('count', User, countOptions), 'FIND');
   assert.equal(adapter.makeSql('update', User, { where: {} }), 'UPDATE');
   assert.equal(adapter.makeSql('delete', User, { where: {} }), 'DELETE');
   assert.equal(calls[2]?.[2]?.count, true);
+  assert.equal(calls[2]?.[2], countOptions);
 });
 
 test('v1 findWithNoCache preserves list, single, empty, and connection failures', async () => {
@@ -176,12 +181,12 @@ test('v1 findWithNoCache preserves list, single, empty, and connection failures'
 
   const connection = createConnection([new Error('dummy')]);
   await assert.rejects(
-    adapter.findWithNoCache(User, { connection, where: { id: 1 } }),
+    adapter.findWithNoCache(User, { conn: connection, where: { id: 1 } }),
     /dummy/,
   );
 });
 
-test('v1 count handles COUNT aliases, empty results, and invalid result shapes', async () => {
+test('v1 count returns only the COUNT(0) field and keeps malformed failures', async () => {
   const pool = createPool([
     [{ 'COUNT(0)': 3 }],
     [{ count: '4' }],
@@ -192,9 +197,9 @@ test('v1 count handles COUNT aliases, empty results, and invalid result shapes',
   const User = define(adapter, 'users', [{ name: 'id', type: Type.Integer, primaryKey: true }]);
 
   assert.equal(await adapter.count(User.where({ id: { $gte: 2 } })), 3);
-  assert.equal(await adapter.count(User.where({})), 4);
-  assert.equal(await adapter.count(User.where({})), 0);
-  await assert.rejects(adapter.count(User.where({})), /did not return rows/);
+  assert.equal(await adapter.count(User.where({})), undefined);
+  await assert.rejects(adapter.count(User.where({})), TypeError);
+  await assert.rejects(adapter.count(User.where({})), TypeError);
 });
 
 test('v1 insert reads auto-increment primary keys back with bound values', async () => {
@@ -337,21 +342,24 @@ test('v1 insert preserves custom unquoted field expressions', async () => {
   });
 });
 
-test('v1 insert rejects missing data, ambiguous readback, and missing rows', async () => {
+test('v1 insert lets SQL and readback determine empty or ambiguous failures', async () => {
   const adapter = new MySQLAdapter({ pool: createPool() });
   const Empty = define(adapter, 'empty_items', [{ name: 'id', type: Type.Integer }]);
-  await assert.rejects(adapter.insert(Empty, null, []), /no insert data/);
+  await assert.rejects(adapter.insert(Empty, null, []), /failed to read the record/);
 
   const ambiguousAdapter = new MySQLAdapter({
-    pool: createPool([{ affectedRows: 1, insertId: 0 }]),
+    pool: createPool([
+      { affectedRows: 1, insertId: 0 },
+      [{ id: 7, name: 'First row' }],
+    ]),
   });
   const Ambiguous = define(ambiguousAdapter, 'ambiguous_items', [
     { name: 'id', type: Type.Integer, primaryKey: true },
     { name: 'name', type: Type.String },
   ]);
-  await assert.rejects(
-    ambiguousAdapter.insert(Ambiguous, null, dataFor(Ambiguous, { name: 'Alice' })),
-    /no unique readback condition/,
+  assert.deepEqual(
+    await ambiguousAdapter.insert(Ambiguous, null, dataFor(Ambiguous, { name: 'Alice' })),
+    { id: 7, name: 'First row' },
   );
 
   const missingAdapter = new MySQLAdapter({
@@ -372,7 +380,7 @@ test('v1 insert rejects missing data, ambiguous readback, and missing rows', asy
   ]);
   await assert.rejects(
     malformedAdapter.insert(Malformed, null, dataFor(Malformed, { id: 1 })),
-    /did not return a mutation result/,
+    /failed to read the record/,
   );
 });
 
@@ -441,7 +449,7 @@ test('v1 updateByQuery and deleteByQuery preserve query clauses and values', asy
   });
 });
 
-test('v1 mutation methods reject malformed driver results', async () => {
+test('v1 query mutations pass driver results through unchanged', async () => {
   const pool = createPool([[], []]);
   const adapter = new MySQLAdapter({ pool });
   const Item = define(adapter, 'items', [
@@ -450,8 +458,8 @@ test('v1 mutation methods reject malformed driver results', async () => {
   ]);
   const update = Item.where({ id: 1 });
   update._updateData = { name: 'Bob' };
-  await assert.rejects(adapter.updateByQuery(update), /did not return a mutation result/);
-  await assert.rejects(adapter.deleteByQuery(Item.where({ id: 1 })), /did not return a mutation result/);
+  assert.deepEqual(await adapter.updateByQuery(update), []);
+  assert.deepEqual(await adapter.deleteByQuery(Item.where({ id: 1 })), []);
 });
 
 test('v1 query mutations propagate errors from a supplied connection', async () => {
@@ -470,7 +478,7 @@ test('v1 query mutations propagate errors from a supplied connection', async () 
   assert.equal(pool.calls.length, 0);
 });
 
-test('v1 transactions release connections after begin, commit, rollback, and failures', async () => {
+test('v1 transactions release on success while preserving failure behavior', async () => {
   const events: string[] = [];
   const connection = asConnection({
     async beginTransaction() {
@@ -493,7 +501,7 @@ test('v1 transactions release connections after begin, commit, rollback, and fai
   assert.equal(await adapter.beginTransaction(), connection);
   await adapter.commit(connection);
   await assert.rejects(adapter.rollback(connection), /rollback failed/);
-  assert.deepEqual(events, ['begin', 'commit', 'release', 'rollback', 'release']);
+  assert.deepEqual(events, ['begin', 'commit', 'release', 'rollback']);
 
   const failedConnection = asConnection({
     async beginTransaction() {

@@ -24,6 +24,7 @@ const inserted: Promise<typeof user> = user.insert();
 const updated: Promise<typeof user> = inserted.then((row) => row.update());
 const saved: Promise<typeof user> = user.save();
 const deleted: Promise<true> = updated.then((row) => row.delete());
+const counted: Promise<number> = User.where({ id: { $gte: 1 } }).count();
 
 void user;
 void id;
@@ -34,6 +35,7 @@ void inserted;
 void updated;
 void saved;
 void deleted;
+void counted;
 
 class ConsumerAdapter implements Adapter {
   constructor(readonly options: { readonly database: string }) {}
@@ -45,6 +47,11 @@ class ConsumerAdapter implements Adapter {
     void query;
     void options;
     return [];
+  }
+
+  async count(query: AdapterQuery): Promise<number> {
+    void query;
+    return 0;
   }
 
   async insert(

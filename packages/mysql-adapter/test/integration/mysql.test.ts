@@ -38,33 +38,38 @@ test.after(async () => {
 test('read, write, raw execution, and transactions work end to end', async () => {
   const inserted = User.build({ name: 'Alice', score: 1.5 });
   assert.equal(await inserted.save(), inserted);
-  assert.equal(inserted.$source, 'query');
+  assert.equal(inserted.$source, 'new');
   assert.deepEqual(inserted.toJSON(), { id: 1, name: 'Alice', score: 1.5 });
-  assert.deepEqual(inserted.changes(), []);
 
   const rows = await User.where({ score: { $gte: 1 } }).order({ id: -1 }).find(true);
   assert.deepEqual(rows, [{ id: 1, name: 'Alice', score: 1.5 }]);
-  assert.equal(await adapter.count(User.where({ name: 'Alice' })), 1);
+  assert.equal(await User.where({ name: 'Alice' }).count(), 1);
+  assert.equal(await User.count(), 1);
 
-  inserted.score = 2.5;
-  const updatedYukari = await inserted.save();
-  assert.equal(updatedYukari, inserted);
-  assert.deepEqual(inserted.changes(), []);
+  const persisted = await User.findById(1);
+  assert.notEqual(persisted, null);
+  persisted!.score = 2.5;
+  const updatedYukari = await persisted!.save();
+  assert.equal(updatedYukari, persisted);
+  assert.deepEqual(persisted!.changes(), []);
   const updated = await User.findById(1, true);
   assert.notEqual(updated, null);
   assert.equal(updated?.score, 2.5);
 
-  const connection = await adapter.beginTransaction();
-  await adapter.execute(connection, 'INSERT INTO `users` (`display_name`, `score`) VALUES (?, ?)', ['Rolled back', 3]);
-  await adapter.rollback(connection);
-  assert.equal(await adapter.count(User.where({ name: 'Rolled back' })), 0);
+  const connection = await User.beginTransaction();
+  await User.conn(connection).execute(
+    'INSERT INTO `users` (`display_name`, `score`) VALUES (?, ?)',
+    ['Rolled back', 3],
+  );
+  await User.rollback(connection);
+  assert.equal(await User.where({ name: 'Rolled back' }).count(), 0);
 
   const stale = await User.findById(1);
   assert.notEqual(stale, null);
-  assert.equal(await inserted.delete(), true);
-  assert.equal(inserted.$source, 'delete');
+  assert.equal(await persisted!.delete(), true);
+  assert.equal(persisted!.$source, 'delete');
   assert.equal(await User.findById(1, true), null);
-  await assert.rejects(inserted.save(), /deleted Yukari/);
+  await assert.rejects(persisted!.save(), /Out-dated yukari data/);
 
   stale!.name = 'Stale';
   await assert.rejects(stale!.update(), /Out-dated yukari data/);

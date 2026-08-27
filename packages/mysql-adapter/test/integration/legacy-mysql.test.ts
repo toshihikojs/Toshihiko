@@ -165,7 +165,7 @@ test('v1 update and updateByQuery preserve typed and raw values', async () => {
     score: 4.5,
     payload: { foo: 'bar' },
     name: null,
-    createdAt: legacyDate.toISOString(),
+    createdAt: legacyDate,
     bits: { dec: 15 },
   });
 

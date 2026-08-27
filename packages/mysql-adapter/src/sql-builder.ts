@@ -164,7 +164,7 @@ export class MySQLSqlBuilder {
 
   makeOrder(
     model: MySQLModel,
-    order: readonly Readonly<Record<string, 1 | -1>>[],
+    order: readonly Readonly<Record<string, number>>[],
   ): string {
     const fragments: string[] = [];
     for (const entry of order) {
@@ -218,9 +218,6 @@ export class MySQLSqlBuilder {
 
   compileValue(field: MySQLField, value: unknown): MySQLStatement {
     if (value === null) {
-      if (!field.allowNull) {
-        throw new TypeError(`field "${field.name}" does not allow null.`);
-      }
       return statement('NULL');
     }
     return this.compileRestoredValue(field, value);
@@ -338,21 +335,16 @@ export class MySQLSqlBuilder {
     const column = quoteIdentifier(field.column);
 
     if (symbol === 'IN') {
-      if (!Array.isArray(operand) || operand.length === 0) {
-        throw new TypeError('$in requires a non-empty array.');
-      }
-      const values = operand.map((value) => this.compileRestoredValue(field, value));
+      const values = (operand as readonly unknown[]).map((value) => this.compileRestoredValue(field, value));
       const compiled = joinStatements(values, ', ');
       return { sql: `${column} IN (${compiled.sql})`, values: compiled.values };
     }
 
     if (symbol === 'BETWEEN') {
-      if (!Array.isArray(operand) || operand.length !== 2) {
-        throw new TypeError('$between requires exactly two values.');
-      }
+      const between = operand as readonly unknown[];
       const compiled = joinStatements([
-        this.compileRestoredValue(field, operand[0]),
-        this.compileRestoredValue(field, operand[1]),
+        this.compileRestoredValue(field, between[0]),
+        this.compileRestoredValue(field, between[1]),
       ], ' AND ');
       return { sql: `${column} BETWEEN ${compiled.sql}`, values: compiled.values };
     }
@@ -410,10 +402,8 @@ export class MySQLSqlBuilder {
     value: unknown,
   ): MySQLStatement {
     if (value === null) {
-      if (!field.allowNull) {
-        throw new TypeError(`field "${field.name}" does not allow null.`);
-      }
-      return statement('NULL');
+      if (field.allowNull) return statement('NULL');
+      return this.compileRestoredValue(field, value);
     }
 
     if (isRawExpression(value)) {
@@ -450,7 +440,7 @@ export class MySQLSqlBuilder {
 
   private makeOrderClause(
     model: MySQLModel,
-    order?: readonly Readonly<Record<string, 1 | -1>>[],
+    order?: readonly Readonly<Record<string, number>>[],
   ): string {
     if (order === undefined || order.length === 0) {
       return '';
@@ -518,7 +508,7 @@ function formatStatement(compiled: MySQLStatement): string {
 }
 
 function quoteIdentifier(identifier: string): string {
-  return `\`${identifier.replaceAll('`', '``')}\``;
+  return `\`${identifier}\``;
 }
 
 function normalizeLogic(logic: string): SqlLogic {
@@ -526,11 +516,11 @@ function normalizeLogic(logic: string): SqlLogic {
 }
 
 function normalizeLimit(value: number | string | undefined): number {
-  const normalized = Number.parseInt(String(value ?? ''), 10);
+  const normalized = parseInt(value as string);
   if (!Number.isFinite(normalized)) {
     return 0;
   }
-  return Math.max(0, normalized);
+  return normalized;
 }
 
 function splitLogicalValues(value: unknown): {

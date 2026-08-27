@@ -50,6 +50,7 @@
     "access": "public"
   },
   "dependencies": {
-    "eventemitter3": "^5.0.1"
+    "eventemitter2": "^6.0.0",
+    "lodash": "4.17.21"
   }
 }

@@ -29,7 +29,7 @@ test('Adapter copies options and remains directly usable by Toshihiko', async ()
   );
 });
 
-test('Adapter preserves non-plain option objects instead of erasing their prototype', () => {
+test('Adapter deep-clones non-plain option objects like v1', () => {
   class OptionsWithMethod {
     constructor() {
       this.database = 'typed';
@@ -43,11 +43,12 @@ test('Adapter preserves non-plain option objects instead of erasing their protot
   const options = new OptionsWithMethod();
   const adapter = new Adapter(options);
 
-  assert.equal(adapter.options, options);
+  assert.notEqual(adapter.options, options);
+  assert.equal(adapter.options instanceof OptionsWithMethod, true);
   assert.equal(adapter.options.getDatabase(), 'typed');
 });
 
-test('all base operations reject through the Promise-only boundary', async () => {
+test('base operations preserve the original not-implemented failures', async () => {
   const adapter = new Adapter({});
   const query = {
     _conn: null,
@@ -106,16 +107,17 @@ test('extend deep-merges own data without mutating its inputs', () => {
   assert.deepEqual(options, { nested: { fromOptions: true } });
 });
 
-test('extend rejects non-plain roots and ignores prototype-pollution keys', () => {
+test('extend accepts non-plain roots and copies special keys as own data', () => {
   const inherited = Object.create({ inherited: true });
   inherited.own = true;
-  assert.throws(() => extend(inherited, {}), /must be plain objects/);
+  assert.deepEqual(extend(inherited, {}), { own: true });
 
   const defaults = { own: true };
   const malicious = JSON.parse('{"__proto__":{"polluted":true},"safe":1}');
   const result = extend(defaults, malicious);
 
-  assert.deepEqual(result, { own: true, safe: 1 });
+  assert.deepEqual({ own: result.own, safe: result.safe }, { own: true, safe: 1 });
+  assert.deepEqual(Object.getOwnPropertyDescriptor(result, '__proto__')?.value, { polluted: true });
   assert.equal({}.polluted, undefined);
 });
 
@@ -129,4 +131,13 @@ test('extend types follow option-overrides-default runtime semantics', () => {
     nested: { fromDefault: true, fromOptions: 'yes' },
     port: '3307',
   });
+});
+
+test('extend preserves the v1 recursive precedence for overlapping nested keys', () => {
+  const result = extend(
+    { nested: { same: 'default' } },
+    { nested: { same: 'option' } },
+  );
+
+  assert.deepEqual(result, { nested: { same: 'default' } });
 });

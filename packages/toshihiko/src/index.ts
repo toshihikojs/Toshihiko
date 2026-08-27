@@ -1,5 +1,9 @@
+import { escape, escapeLike } from '@toshihiko/sql-utils';
+
 export { Type, type JsonValue } from './field-types';
 export { Toshihiko, type ToshihikoOptions } from './toshihiko';
+
+export const Escaper = { escape, escapeLike };
 
 export type {
   BuiltYukari,
@@ -11,20 +15,30 @@ export type {
 export type {
   Adapter,
   AdapterConnection,
+  AdapterCommitResult,
   AdapterConstructor,
+  AdapterCountQueryType,
   AdapterData,
   AdapterDeleteQueryType,
+  AdapterDeleteByQueryResult,
+  AdapterExecuteArguments,
+  AdapterExecuteResult,
   AdapterFindOptions,
   AdapterFindResult,
   AdapterLike,
   AdapterModel,
   AdapterQuery,
+  AdapterQueryExecuteArguments,
   AdapterRow,
   AdapterSource,
+  AdapterTransactionConnection,
   AdapterUpdateConnection,
+  AdapterUpdateByQueryResult,
+  AdapterUpdateByQueryType,
   AdapterUpdateField,
   AdapterUpdateModel,
   AdapterUpdateValue,
+  AdapterRollbackResult,
 } from './contracts/adapter';
 export type { FieldName, RowShape } from './contracts/common';
 export type {

@@ -1,11 +1,18 @@
+import { EventEmitter2 } from 'eventemitter2';
 import type { FieldName } from './common';
 import type {
   Adapter,
+  AdapterCommitResult,
   AdapterConnection,
+  AdapterDeleteByQueryResult,
+  AdapterExecuteResult,
   AdapterLike,
+  AdapterQueryExecuteArguments,
+  AdapterRollbackResult,
+  AdapterTransactionConnection,
+  AdapterUpdateByQueryResult,
 } from './adapter';
 import {
-  isReservedYukariFieldName,
   Yukari,
   type BuiltYukari,
   type QueriedYukari,
@@ -56,9 +63,7 @@ export type FieldNamesMap<Schema extends SchemaDefinition> = {
 export type BuildInput<Schema extends SchemaDefinition> = Partial<RowFromSchema<Schema>>;
 
 type DefaultedDefinition<Definition extends FieldDefinitionShape> =
-  Definition extends { readonly default: infer Value }
-    ? undefined extends Value ? never : Definition
-    : Definition extends { readonly defaultValue: infer Value }
+  Definition extends { readonly defaultValue: infer Value }
       ? undefined extends Value ? never : Definition
       : FieldTypeFromDefinition<Definition> extends { readonly defaultValue: infer Value }
         ? undefined extends Value ? never : Definition
@@ -91,20 +96,28 @@ export class Model<
   Name extends string,
   Schema extends SchemaDefinition,
   AdapterInstance extends AdapterLike = Adapter,
-> {
+> extends EventEmitter2 {
   declare readonly $inferPrimaryKey: PrimaryKeyNames<Schema>;
 
-  readonly name: Name;
-  readonly parent: Toshihiko<AdapterInstance>;
-  readonly originalSchema: Schema;
-  readonly options: ModelOptions;
-  readonly schema: CompiledSchema<Schema>;
-  readonly primaryKeys: readonly Field<Schema[number]>[];
-  readonly autoIncrementField: Field<Schema[number]> | null;
-  readonly ai: Field<Schema[number]> | null;
-  readonly nameToColumn: NameToColumnMap<Schema>;
-  readonly columnToName: Readonly<Record<string, FieldName<RowFromSchema<Schema>>>>;
-  readonly fieldNamesMap: FieldNamesMap<Schema>;
+  declare readonly name: Name;
+  declare readonly parent: Toshihiko<AdapterInstance>;
+  declare readonly originalSchema: Schema;
+  declare readonly options: ModelOptions;
+  declare readonly schema: CompiledSchema<Schema>;
+  declare readonly primaryKeys: readonly Field<Schema[number]>[];
+  declare readonly autoIncrementField: Field<Schema[number]> | null;
+  declare ai: Field<Schema[number]> | null;
+  declare readonly nameToColumn: NameToColumnMap<Schema>;
+  declare readonly columnToName: Readonly<Record<string, FieldName<RowFromSchema<Schema>>>>;
+  declare readonly fieldNamesMap: FieldNamesMap<Schema>;
+  declare readonly fieldColumnsMap: Readonly<Record<string, Field<Schema[number]>>>;
+  declare readonly _fieldsKeyMap: {
+    readonly n2c: NameToColumnMap<Schema>;
+    readonly c2n: Readonly<Record<string, FieldName<RowFromSchema<Schema>>>>;
+    readonly name: FieldNamesMap<Schema>;
+    readonly column: Readonly<Record<string, Field<Schema[number]>>>;
+  };
+  declare readonly cache: null;
 
   constructor(
     name: Name,
@@ -112,17 +125,7 @@ export class Model<
     schema: Schema,
     options: ModelOptions = {},
   ) {
-    this.name = name;
-    this.parent = parent;
-    this.originalSchema = schema;
-    this.options = options;
-
-    for (const definition of schema) {
-      if (isReservedYukariFieldName(definition.name)) {
-        throw new TypeError(`Field name ${definition.name} is reserved by Yukari.`);
-      }
-    }
-
+    super();
     const compiled = schema.map((definition) => new Field(
       definition as Schema[number] & ValidatedFieldDefinition<Schema[number]>,
     )) as CompiledSchema<Schema>;
@@ -130,6 +133,7 @@ export class Model<
     const nameToColumn: Record<string, string> = {};
     const columnToName: Record<string, FieldName<RowFromSchema<Schema>>> = {};
     const fieldNamesMap: Record<string, Field<Schema[number]>> = {};
+    const fieldColumnsMap: Record<string, Field<Schema[number]>> = {};
     let autoIncrementField: Field<Schema[number]> | null = null;
 
     for (const field of compiled) {
@@ -143,15 +147,71 @@ export class Model<
       nameToColumn[field.name] = field.column;
       columnToName[field.column] = field.name as FieldName<RowFromSchema<Schema>>;
       fieldNamesMap[field.name] = field;
+      fieldColumnsMap[field.column] = field;
     }
 
-    this.schema = compiled;
-    this.primaryKeys = primaryKeys;
-    this.autoIncrementField = autoIncrementField;
-    this.ai = autoIncrementField;
-    this.nameToColumn = nameToColumn as NameToColumnMap<Schema>;
-    this.columnToName = columnToName;
-    this.fieldNamesMap = fieldNamesMap as unknown as FieldNamesMap<Schema>;
+    const typedNameToColumn = nameToColumn as NameToColumnMap<Schema>;
+    const typedFieldNamesMap = fieldNamesMap as unknown as FieldNamesMap<Schema>;
+    Object.defineProperties(this, {
+      ai: { enumerable: true, value: autoIncrementField, writable: true },
+      autoIncrementField: { value: autoIncrementField },
+      cache: { enumerable: true, value: null },
+      columnToName: { value: columnToName },
+      fieldColumnsMap: { value: fieldColumnsMap },
+      fieldNamesMap: { value: typedFieldNamesMap },
+      name: { enumerable: true, value: name },
+      nameToColumn: { value: typedNameToColumn },
+      options: { value: options },
+      originalSchema: { value: schema },
+      parent: { value: parent },
+      primaryKeys: { enumerable: true, value: primaryKeys },
+      schema: { enumerable: true, value: compiled },
+      _fieldsKeyMap: {
+        value: {
+          n2c: typedNameToColumn,
+          c2n: columnToName,
+          name: typedFieldNamesMap,
+          column: fieldColumnsMap,
+        },
+      },
+    });
+
+    if (this.primaryKeys.length === 0) {
+      this.emit('log', `!!! WARNING: YOU'D BETTER ADD PRIMARY KEY(S) IN MODEL ${this.name} !!!`);
+    }
+  }
+
+  get _fields(): CompiledSchema<Schema> {
+    return this.schema;
+  }
+
+  get toshihiko(): Toshihiko<AdapterInstance> {
+    return this.parent;
+  }
+
+  beginTransaction(): Promise<AdapterTransactionConnection<AdapterInstance>> {
+    const adapter = this.parent.getAdapter() as unknown as {
+      beginTransaction(): Promise<AdapterTransactionConnection<AdapterInstance>>;
+    };
+    return adapter.beginTransaction();
+  }
+
+  commit(
+    connection: AdapterTransactionConnection<AdapterInstance>,
+  ): Promise<AdapterCommitResult<AdapterInstance>> {
+    const adapter = this.parent.getAdapter() as unknown as {
+      commit(value: AdapterTransactionConnection<AdapterInstance>): Promise<AdapterCommitResult<AdapterInstance>>;
+    };
+    return adapter.commit(connection);
+  }
+
+  rollback(
+    connection: AdapterTransactionConnection<AdapterInstance>,
+  ): Promise<AdapterRollbackResult<AdapterInstance>> {
+    const adapter = this.parent.getAdapter() as unknown as {
+      rollback(value: AdapterTransactionConnection<AdapterInstance>): Promise<AdapterRollbackResult<AdapterInstance>>;
+    };
+    return adapter.rollback(connection);
   }
 
   build<const Input extends BuildInput<Schema>>(
@@ -185,9 +245,9 @@ export class Model<
     second?: number | string,
   ): Query<Name, Schema, AdapterInstance> {
     const query = new Query(this);
-    return second === undefined
+    return arguments.length <= 1
       ? query.limit(first)
-      : query.limit(normalizeModelLimit(first), second);
+      : query.limit(normalizeModelLimit(first), second as number | string);
   }
 
   index(indexName: string): Query<Name, Schema, AdapterInstance> {
@@ -202,8 +262,26 @@ export class Model<
     return new Query(this).orderBy(order);
   }
 
-  conn(connection: AdapterConnection<AdapterInstance>): Query<Name, Schema, AdapterInstance> {
+  conn(connection: AdapterConnection<AdapterInstance> | null): Query<Name, Schema, AdapterInstance> {
     return new Query(this).conn(connection);
+  }
+
+  count(): Promise<number> {
+    return new Query(this).count();
+  }
+
+  update(data: Partial<RowFromSchema<Schema>>): Promise<AdapterUpdateByQueryResult<AdapterInstance>> {
+    return new Query(this).update(data);
+  }
+
+  delete(): Promise<AdapterDeleteByQueryResult<AdapterInstance>> {
+    return new Query(this).delete();
+  }
+
+  execute(
+    ...arguments_: AdapterQueryExecuteArguments<AdapterInstance>
+  ): Promise<AdapterExecuteResult<AdapterInstance>> {
+    return new Query(this).execute(...arguments_);
   }
 
   find(): Promise<readonly QueriedYukari<Name, Schema, AdapterInstance>[]>;
@@ -250,6 +328,35 @@ export class Model<
   ): Promise<QueriedYukari<Name, Schema, AdapterInstance> | null> | Promise<QueryJsonRow<Schema> | null> {
     const query = new Query(this);
     return toJSON ? query.findById(id, true) : query.findById(id, false);
+  }
+
+  convertColumnToName(column: string): FieldName<RowFromSchema<Schema>> | undefined;
+  convertColumnToName(columns: readonly string[]): readonly (FieldName<RowFromSchema<Schema>> | undefined)[];
+  convertColumnToName(object: Readonly<Record<string, unknown>>): Readonly<Record<string, unknown>>;
+  convertColumnToName(object: unknown): unknown {
+    if (typeof object === 'string') return this.columnToName[object];
+    if (Array.isArray(object)) return object.map((column) => this.columnToName[column]);
+    if (object !== null && typeof object === 'object') {
+      const result: Record<string, unknown> = {};
+      for (const [column, value] of Object.entries(object)) {
+        const name = this.columnToName[column];
+        if (name !== undefined) result[name] = value;
+      }
+      return result;
+    }
+    return undefined;
+  }
+
+  getPrimaryKeysName(): string | readonly string[] {
+    if (this.primaryKeys.length === 0) return [];
+    if (this.primaryKeys.length === 1) return this.primaryKeys[0]!.name;
+    return this.primaryKeys.map((field) => field.name);
+  }
+
+  getPrimaryKeysColumn(): string | readonly string[] {
+    if (this.primaryKeys.length === 0) return [];
+    if (this.primaryKeys.length === 1) return this.primaryKeys[0]!.column;
+    return this.primaryKeys.map((field) => field.column);
   }
 }
 

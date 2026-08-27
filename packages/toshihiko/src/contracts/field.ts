@@ -1,5 +1,10 @@
 import { Type } from '../field-types';
 
+const cloneDeep = require('lodash/cloneDeep') as <Value>(value: Value) => Value;
+const otrans = require('otrans') as {
+  toCamel(value: Readonly<Record<string, unknown>>): Readonly<Record<string, unknown>>;
+};
+
 declare const fieldTypeValue: unique symbol;
 declare const fieldTypeStorageValue: unique symbol;
 declare const fieldTypeJsonValue: unique symbol;
@@ -21,12 +26,11 @@ export type FieldType<
   readonly [fieldTypeValue]?: Value;
   readonly [fieldTypeStorageValue]?: StorageValue;
   readonly [fieldTypeJsonValue]?: JsonValue;
-  readonly name: string;
+  readonly name?: string;
   readonly needQuotes?: boolean;
   readonly defaultValue?: Value;
   parse(value: StorageValue): Value;
   restore(value: Value): StorageValue;
-  clone?(value: Value): Value;
   equal?(left: Value, right: Value): boolean;
 } & FieldTypeJsonMethod<Value, JsonValue>;
 
@@ -34,12 +38,11 @@ export interface FieldTypeLike {
   readonly [fieldTypeValue]?: unknown;
   readonly [fieldTypeStorageValue]?: unknown;
   readonly [fieldTypeJsonValue]?: unknown;
-  readonly name: string;
+  readonly name?: string;
   readonly needQuotes?: boolean;
   readonly defaultValue?: unknown;
   parse(value: never): unknown;
   restore(value: never): unknown;
-  clone?(value: never): unknown;
   equal?(left: never, right: never): boolean;
   toJSON?(value: never): unknown;
 }
@@ -51,10 +54,10 @@ export type FieldTypeValue<Type extends FieldTypeLike> =
 
 export type FieldValidator<Value> = (
   value: Value,
-) => Promise<string | void>;
+) => string | void | Promise<string | void>;
 
 type FieldValidatorShape = {
-  validate(value: any): Promise<string | void>;
+  validate(value: any): string | void | Promise<string | void>;
 }['validate'];
 
 export interface FieldDefinitionShape {
@@ -67,7 +70,6 @@ export interface FieldDefinitionShape {
   readonly allowNull?: boolean;
   readonly primaryKey?: boolean;
   readonly autoIncrement?: boolean;
-  readonly default?: unknown;
   readonly defaultValue?: unknown;
 }
 
@@ -84,7 +86,6 @@ export interface FieldDefinition<
   readonly allowNull?: boolean;
   readonly primaryKey?: boolean;
   readonly autoIncrement?: boolean;
-  readonly default?: FieldTypeValue<FieldTypeDefinition> | undefined;
   readonly defaultValue?: FieldTypeValue<FieldTypeDefinition> | undefined;
 }
 
@@ -124,26 +125,18 @@ export type JsonRowFromSchema<Schema extends SchemaDefinition> = {
 
 export type ValidatedFieldDefinition<Definition extends FieldDefinitionShape> = Omit<
   Definition,
-  'default' | 'defaultValue' | 'type' | 'validators'
+  'defaultValue' | 'type' | 'validators'
 > & {
   readonly type?: Definition extends {
     readonly type: infer FieldTypeDefinition extends FieldTypeLike;
   }
     ? ValidatedFieldType<FieldTypeDefinition>
     : FieldTypeLike;
-  readonly default?: FieldDefinitionValue<Definition> | undefined;
   readonly defaultValue?: FieldDefinitionValue<Definition> | undefined;
   readonly validators?:
     | FieldValidator<FieldDefinitionNonNullValue<Definition>>
     | readonly FieldValidator<FieldDefinitionNonNullValue<Definition>>[];
 };
-
-type HasValidClone<Type extends FieldTypeLike, Value> =
-  Type extends { clone(value: infer Input): infer Output }
-    ? SameType<Input, Value> extends true
-      ? SameType<Output, Value>
-      : false
-    : true;
 
 type HasValidEqual<Type extends FieldTypeLike, Value> =
   Type extends { equal(left: infer Left, right: infer Right): boolean }
@@ -164,10 +157,8 @@ export type ValidatedFieldType<Type extends FieldTypeLike> =
   }
     ? SameType<RestoredValue, Value> extends true
       ? RestoredStorageValue extends StorageValue
-        ? HasValidClone<Type, Value> extends true
-          ? HasValidEqual<Type, Value> extends true
-            ? HasValidToJSON<Type, Value> extends true ? Type : never
-            : never
+        ? HasValidEqual<Type, Value> extends true
+          ? HasValidToJSON<Type, Value> extends true ? Type : never
           : never
         : never
       : never
@@ -191,64 +182,69 @@ export type PrimaryKeyNames<Schema extends SchemaDefinition> = Extract<
 export class Field<
   Definition extends FieldDefinitionShape = FieldDefinitionShape,
 > {
-  readonly name: Definition['name'];
-  readonly column: string;
-  readonly type: FieldTypeFromDefinition<Definition>;
-  readonly validators: readonly FieldValidator<FieldDefinitionNonNullValue<Definition>>[];
-  readonly allowNull: boolean;
-  readonly primaryKey: boolean;
-  readonly autoIncrement: boolean;
-  readonly defaultValue: FieldDefinitionValue<Definition> | undefined;
+  declare readonly options: Readonly<Record<string, unknown>>;
+  declare readonly name: Definition['name'];
+  declare readonly column: string;
+  declare readonly type: FieldTypeFromDefinition<Definition>;
+  declare readonly validators: readonly FieldValidator<FieldDefinitionNonNullValue<Definition>>[];
+  declare readonly allowNull: boolean;
+  declare readonly primaryKey: boolean;
+  declare readonly autoIncrement: boolean;
+  declare readonly default: FieldDefinitionValue<Definition> | undefined;
 
   constructor(definition: Definition & ValidatedFieldDefinition<Definition>) {
     if (!definition.name) {
       throw new Error('no field name specified.');
     }
 
-    this.name = definition.name;
-    this.column = definition.column ?? definition.name;
-    this.type = (definition.type ?? Type.String) as FieldTypeFromDefinition<Definition>;
-    this.validators = normalizeValidators<FieldDefinitionNonNullValue<Definition>>(
-      definition.validators as
+    const normalized = normalizeDefinition(definition);
+    const candidateType = normalized.type as FieldTypeLike | undefined;
+    const type = (isRuntimeFieldType(candidateType) ? candidateType : Type.String) as FieldTypeFromDefinition<Definition>;
+    const validators = normalizeValidators<FieldDefinitionNonNullValue<Definition>>(
+      normalized.validators as
         | FieldValidator<FieldDefinitionNonNullValue<Definition>>
         | readonly FieldValidator<FieldDefinitionNonNullValue<Definition>>[]
         | undefined,
     );
-    this.allowNull = definition.allowNull ?? false;
-    this.primaryKey = definition.primaryKey ?? false;
-    this.autoIncrement = definition.autoIncrement ?? false;
-    this.defaultValue = resolveDefaultValue(definition, this.type);
+    const autoIncrement = normalized.autoIncrement === undefined
+      ? false
+      : Boolean(normalized.autoIncrement);
+    const defaultValue = resolveDefaultValue(
+      normalized as Definition,
+      type,
+    );
+    const runtimeType = type as FieldTypeLike;
+    Object.defineProperties(this, {
+      allowNull: { enumerable: true, value: Boolean(normalized.allowNull) },
+      autoIncrement: { enumerable: true, value: autoIncrement },
+      column: { enumerable: true, value: normalized.column ?? normalized.name },
+      default: { enumerable: true, value: defaultValue },
+      equal: {
+        value: runtimeType.equal === undefined
+          ? Type.$equal
+          : runtimeType.equal.bind(runtimeType),
+      },
+      name: { enumerable: true, value: normalized.name },
+      options: { value: normalized },
+      primaryKey: { enumerable: true, value: Boolean(normalized.primaryKey) },
+      type: { enumerable: true, value: type },
+      validators: { enumerable: true, value: validators },
+    });
+  }
+
+  get defaultValue(): FieldDefinitionValue<Definition> | undefined {
+    return this.default;
+  }
+
+  get needQuotes(): boolean {
+    return Boolean(this.type.needQuotes);
   }
 
   parse(value: unknown): FieldDefinitionValue<Definition> {
-    if (value === null) {
-      if (!this.allowNull) {
-        throw new TypeError(`Field ${this.name} can't be null.`);
-      }
-      return null as FieldDefinitionValue<Definition>;
-    }
-
     return this.type.parse(value as never) as FieldDefinitionValue<Definition>;
   }
 
-  clone(
-    value: FieldDefinitionValue<Definition>,
-  ): FieldDefinitionValue<Definition> {
-    const type = this.type as FieldTypeLike;
-    if (value === null) {
-      return value;
-    }
-
-    return type.clone === undefined
-      ? cloneValue(value)
-      : type.clone(value as never) as FieldDefinitionValue<Definition>;
-  }
-
   restore(value: FieldDefinitionValue<Definition>): unknown {
-    if (value === null) {
-      return null;
-    }
-
     return this.type.restore(value as never);
   }
 
@@ -256,13 +252,9 @@ export class Field<
     left: FieldDefinitionValue<Definition>,
     right: FieldDefinitionValue<Definition>,
   ): boolean {
-    if (left === null || right === null) {
-      return left === right;
-    }
-
     const type = this.type as FieldTypeLike;
     if (type.equal === undefined) {
-      return equalValues(left, right);
+      return left === right;
     }
 
     return type.equal(left as never, right as never);
@@ -272,7 +264,7 @@ export class Field<
     value: FieldDefinitionValue<Definition>,
   ): FieldDefinitionJsonValue<Definition> {
     const type = this.type as FieldTypeLike;
-    if (value === null || type.toJSON === undefined) {
+    if (type.toJSON === undefined) {
       return value as FieldDefinitionJsonValue<Definition>;
     }
 
@@ -280,148 +272,8 @@ export class Field<
   }
 }
 
-function cloneValue<Value>(value: Value, seen = new WeakMap<object, object>()): Value {
-  if (typeof value !== 'object' || value === null) {
-    return value;
-  }
-
-  const existing = seen.get(value);
-  if (existing !== undefined) {
-    return existing as Value;
-  }
-
-  if (value instanceof Date) {
-    return new Date(value.getTime()) as Value;
-  }
-  if (value instanceof RegExp) {
-    return new RegExp(value.source, value.flags) as Value;
-  }
-  if (value instanceof ArrayBuffer) {
-    return value.slice(0) as Value;
-  }
-  if (ArrayBuffer.isView(value)) {
-    return structuredClone(value) as Value;
-  }
-
-  if (value instanceof Map) {
-    const cloned = new Map();
-    seen.set(value, cloned);
-    for (const [key, entry] of value) {
-      cloned.set(cloneValue(key, seen), cloneValue(entry, seen));
-    }
-    return cloned as Value;
-  }
-  if (value instanceof Set) {
-    const cloned = new Set();
-    seen.set(value, cloned);
-    for (const entry of value) {
-      cloned.add(cloneValue(entry, seen));
-    }
-    return cloned as Value;
-  }
-
-  const cloned = Array.isArray(value)
-    ? new Array(value.length)
-    : Object.create(Object.getPrototypeOf(value)) as object;
-  seen.set(value, cloned);
-  for (const key of Reflect.ownKeys(value)) {
-    const descriptor = Object.getOwnPropertyDescriptor(value, key);
-    if (descriptor === undefined) {
-      continue;
-    }
-    if ('value' in descriptor) {
-      descriptor.value = cloneValue(descriptor.value, seen);
-    }
-    Object.defineProperty(cloned, key, descriptor);
-  }
-  return cloned as Value;
-}
-
-function equalValues(
-  left: unknown,
-  right: unknown,
-  seen = new WeakMap<object, object>(),
-): boolean {
-  if (Object.is(left, right)) {
-    return true;
-  }
-  if (typeof left !== 'object' || left === null
-    || typeof right !== 'object' || right === null
-    || Object.getPrototypeOf(left) !== Object.getPrototypeOf(right)) {
-    return false;
-  }
-
-  const existing = seen.get(left);
-  if (existing !== undefined) {
-    return existing === right;
-  }
-  seen.set(left, right);
-
-  if (left instanceof Date && right instanceof Date) {
-    return left.getTime() === right.getTime();
-  }
-  if (left instanceof RegExp && right instanceof RegExp) {
-    return left.source === right.source && left.flags === right.flags;
-  }
-  if (left instanceof ArrayBuffer && right instanceof ArrayBuffer) {
-    return equalByteViews(new Uint8Array(left), new Uint8Array(right));
-  }
-  if (ArrayBuffer.isView(left) && ArrayBuffer.isView(right)) {
-    return equalByteViews(
-      new Uint8Array(left.buffer, left.byteOffset, left.byteLength),
-      new Uint8Array(right.buffer, right.byteOffset, right.byteLength),
-    );
-  }
-  if (left instanceof Map && right instanceof Map) {
-    if (left.size !== right.size) {
-      return false;
-    }
-    const rightEntries = [...right.entries()];
-    return [...left.entries()].every(([leftKey, leftValue], index) => {
-      const rightEntry = rightEntries[index];
-      return rightEntry !== undefined
-        && equalValues(leftKey, rightEntry[0], seen)
-        && equalValues(leftValue, rightEntry[1], seen);
-    });
-  }
-  if (left instanceof Set && right instanceof Set) {
-    if (left.size !== right.size) {
-      return false;
-    }
-    const rightEntries = [...right.values()];
-    return [...left.values()].every((leftValue, index) => (
-      equalValues(leftValue, rightEntries[index], seen)
-    ));
-  }
-
-  const leftKeys = Reflect.ownKeys(left);
-  const rightKeys = Reflect.ownKeys(right);
-  if (leftKeys.length !== rightKeys.length
-    || leftKeys.some((key) => !Object.prototype.hasOwnProperty.call(right, key))) {
-    return false;
-  }
-
-  return leftKeys.every((key) => {
-    const leftDescriptor = Object.getOwnPropertyDescriptor(left, key);
-    const rightDescriptor = Object.getOwnPropertyDescriptor(right, key);
-    if (leftDescriptor === undefined || rightDescriptor === undefined
-      || leftDescriptor.enumerable !== rightDescriptor.enumerable
-      || leftDescriptor.configurable !== rightDescriptor.configurable
-      || ('writable' in leftDescriptor && 'writable' in rightDescriptor
-        && leftDescriptor.writable !== rightDescriptor.writable)) {
-      return false;
-    }
-    if ('value' in leftDescriptor && 'value' in rightDescriptor) {
-      return equalValues(leftDescriptor.value, rightDescriptor.value, seen);
-    }
-    return leftDescriptor.get === rightDescriptor.get
-      && leftDescriptor.set === rightDescriptor.set;
-  });
-}
-
-function equalByteViews(left: Uint8Array, right: Uint8Array): boolean {
-  return left.byteLength === right.byteLength
-    && left.every((value, index) => value === right[index]);
+export function cloneValue<Value>(value: Value): Value {
+  return cloneDeep(value);
 }
 
 function normalizeValidators<Value>(
@@ -434,18 +286,10 @@ function normalizeValidators<Value>(
     return [];
   }
 
-  if (typeof validators !== 'function' && !Array.isArray(validators)) {
-    throw new TypeError('field validators must be functions that return Promises.');
-  }
-
-  const normalized = typeof validators === 'function' ? [validators] : validators;
-  for (const validator of normalized) {
-    if (typeof validator !== 'function') {
-      throw new TypeError('field validators must be functions that return Promises.');
-    }
-  }
-
-  return normalized;
+  if (typeof validators === 'function') return [validators];
+  return Array.isArray(validators)
+    ? validators as readonly FieldValidator<Value>[]
+    : [];
 }
 
 function resolveDefaultValue<Definition extends FieldDefinitionShape>(
@@ -456,9 +300,19 @@ function resolveDefaultValue<Definition extends FieldDefinitionShape>(
     return definition.defaultValue as FieldDefinitionValue<Definition>;
   }
 
-  if (Object.prototype.hasOwnProperty.call(definition, 'default')) {
-    return definition.default as FieldDefinitionValue<Definition>;
-  }
-
   return type.defaultValue as FieldDefinitionValue<Definition> | undefined;
+}
+
+function isRuntimeFieldType(type: FieldTypeLike | undefined): type is FieldTypeLike {
+  return type !== undefined
+    && typeof type.parse === 'function'
+    && typeof type.restore === 'function';
+}
+
+function normalizeDefinition<Definition extends FieldDefinitionShape>(
+  definition: Definition,
+): FieldDefinitionShape {
+  return otrans.toCamel(
+    definition as Readonly<Record<string, unknown>>,
+  ) as unknown as FieldDefinitionShape;
 }

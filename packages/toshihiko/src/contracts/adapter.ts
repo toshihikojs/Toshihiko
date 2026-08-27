@@ -10,7 +10,7 @@ export interface AdapterQuery<Model = unknown, Connection = unknown> {
   readonly _fields: readonly string[];
   readonly _index: string;
   readonly _limit: readonly number[];
-  readonly _order: readonly Readonly<Record<string, 1 | -1>>[];
+  readonly _order: readonly Readonly<Record<string, number>>[];
   readonly _where: Readonly<Record<string, unknown>>;
   readonly model: Model;
 }
@@ -38,6 +38,12 @@ export interface Adapter<
     query: Query,
     options?: AdapterFindOptions,
   ) => Promise<AdapterFindResult>;
+  readonly count: (
+    query: Query,
+  ) => Promise<number>;
+  readonly updateByQuery?: (
+    query: Query,
+  ) => Promise<unknown>;
   readonly insert: (
     model: Model,
     connection: Connection | null,
@@ -52,6 +58,12 @@ export interface Adapter<
   readonly deleteByQuery: (
     query: Query,
   ) => Promise<unknown>;
+  readonly execute?: (
+    ...arguments_: readonly unknown[]
+  ) => Promise<unknown>;
+  readonly beginTransaction?: () => Promise<Connection>;
+  readonly commit?: (connection: Connection) => Promise<unknown>;
+  readonly rollback?: (connection: Connection) => Promise<unknown>;
   getDBName(): string;
 }
 
@@ -60,6 +72,12 @@ export interface AdapterLike {
     query: never,
     options?: AdapterFindOptions,
   ) => Promise<AdapterFindResult>;
+  readonly count: (
+    query: never,
+  ) => Promise<number>;
+  readonly updateByQuery?: (
+    query: never,
+  ) => Promise<unknown>;
   readonly insert: (
     model: never,
     connection: never,
@@ -96,6 +114,9 @@ export type AdapterValue<Instance extends AdapterLike> =
 export type AdapterQueryType<Instance extends AdapterLike> =
   Parameters<Instance['find']>[0];
 
+export type AdapterCountQueryType<Instance extends AdapterLike> =
+  Parameters<Instance['count']>[0];
+
 export type AdapterUpdateModel<Instance extends AdapterLike> =
   Parameters<Instance['update']>[0];
 
@@ -114,6 +135,60 @@ export type AdapterUpdateValue<Instance extends AdapterLike> =
 
 export type AdapterDeleteQueryType<Instance extends AdapterLike> =
   Parameters<Instance['deleteByQuery']>[0];
+
+type AdapterMethodValue<
+  Instance extends AdapterLike,
+  Name extends keyof AdapterLike,
+> = Exclude<Instance[Name], undefined>;
+
+export type AdapterUpdateByQueryType<Instance extends AdapterLike> =
+  AdapterMethodValue<Instance, 'updateByQuery'> extends (
+    query: infer Query,
+  ) => unknown ? Query : never;
+
+export type AdapterUpdateByQueryResult<Instance extends AdapterLike> =
+  AdapterMethodValue<Instance, 'updateByQuery'> extends (
+    query: infer _Query,
+  ) => infer Result ? Awaited<Result> : unknown;
+
+export type AdapterDeleteByQueryResult<Instance extends AdapterLike> =
+  Awaited<ReturnType<Instance['deleteByQuery']>>;
+
+export type AdapterExecuteArguments<Instance extends AdapterLike> =
+  Instance extends { execute(...arguments_: infer Arguments): unknown }
+    ? Arguments
+    : readonly unknown[];
+
+type WithoutConnection<Arguments, Connection> =
+  Arguments extends readonly [Connection | null, ...infer Rest]
+    ? Rest
+    : Arguments;
+
+export type AdapterQueryExecuteArguments<Instance extends AdapterLike> =
+  WithoutConnection<
+    AdapterExecuteArguments<Instance>,
+    AdapterConnection<Instance>
+  >;
+
+export type AdapterExecuteResult<Instance extends AdapterLike> =
+  Instance extends { execute(...arguments_: any): infer Result }
+    ? Awaited<Result>
+    : unknown;
+
+export type AdapterTransactionConnection<Instance extends AdapterLike> =
+  Instance extends { beginTransaction(): infer Result }
+    ? Awaited<Result>
+    : AdapterConnection<Instance>;
+
+export type AdapterCommitResult<Instance extends AdapterLike> =
+  Instance extends {
+    commit(connection: AdapterTransactionConnection<Instance>): infer Result;
+  } ? Awaited<Result> : unknown;
+
+export type AdapterRollbackResult<Instance extends AdapterLike> =
+  Instance extends {
+    rollback(connection: AdapterTransactionConnection<Instance>): infer Result;
+  } ? Awaited<Result> : unknown;
 
 export interface AdapterConstructor<
   Options extends object = ToshihikoOptions,

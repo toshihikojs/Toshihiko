@@ -7,7 +7,12 @@ import {
   type MySQLQueryResult,
   type MySQLStatement,
 } from '../..';
-import { Toshihiko, Type, type FieldType } from 'toshihiko';
+import {
+  Toshihiko,
+  Type,
+  type AdapterExecuteResult,
+  type FieldType,
+} from 'toshihiko';
 
 const BinaryType = {
   name: 'Binary',
@@ -51,7 +56,10 @@ const rawStatement: MySQLStatement = new MySQLSqlBuilder().compileSet(Binary, {
 const database: string = adapter.database;
 const pending: Promise<MySQLQueryResult> = adapter.execute('SELECT ?', [1]);
 const transaction: Promise<MySQLConnection> = adapter.beginTransaction();
+const modelTransaction: Promise<MySQLConnection> = User.beginTransaction();
 transaction.then((connection) => {
+  const commit: Promise<void> = User.commit(connection);
+  const rollback: Promise<void> = User.rollback(connection);
   User.conn(connection);
   User.build({ id: 1, name: 'Alice' }).insert(connection);
   User.build({ id: 1, name: 'Alice' }).save(connection);
@@ -60,8 +68,15 @@ transaction.then((connection) => {
     user?.save(connection);
     user?.delete(connection);
   });
+  void commit;
+  void rollback;
 });
-const counted = adapter.count(User.where({ id: { $gte: 1 } }));
+const counted: Promise<number> = User.where({ id: { $gte: 1 } }).count();
+const queryUpdated: Promise<MySQLMutationResult> = User.where({ id: 1 }).update({ name: 'Bob' });
+const queryDeleted: Promise<MySQLMutationResult> = User.where({ id: 1 }).delete();
+const rootExecuted: Promise<MySQLQueryResult> = toshihiko.execute('SELECT ?', [1]);
+const queryExecuted: Promise<MySQLQueryResult> = User.execute('SELECT ?', [1]);
+const directExecuteResult: MySQLQueryResult = null as unknown as AdapterExecuteResult<MySQLAdapter>;
 const inserted = adapter.insert(User, null, [
   { field: User.fieldNamesMap.id, value: 1 },
   { field: User.fieldNamesMap.name, value: 'Alice' },
@@ -75,7 +90,13 @@ void statement;
 void rawStatement;
 void pending;
 void transaction;
+void modelTransaction;
 void counted;
+void queryUpdated;
+void queryDeleted;
+void rootExecuted;
+void queryExecuted;
+void directExecuteResult;
 void inserted;
 void updated;
 

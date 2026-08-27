@@ -1,3 +1,4 @@
+import { EventEmitter2 } from 'eventemitter2';
 import {
   Model,
   type ModelOptions,
@@ -12,7 +13,10 @@ import type {
   Adapter,
   AdapterConnection,
   AdapterConstructor,
+  AdapterCountQueryType,
   AdapterDeleteQueryType,
+  AdapterExecuteArguments,
+  AdapterExecuteResult,
   AdapterField,
   AdapterLike,
   AdapterModel,
@@ -20,12 +24,12 @@ import type {
   AdapterSource,
   AdapterUpdateConnection,
   AdapterUpdateField,
+  AdapterUpdateByQueryType,
   AdapterUpdateModel,
   AdapterUpdateValue,
   AdapterValue,
 } from './contracts/adapter';
 import type { Query } from './query';
-import type { Yukari } from './yukari';
 
 export type ToshihikoOptions = object;
 
@@ -33,79 +37,70 @@ type IsAdapterCompatible<
   Name extends string,
   Schema extends SchemaDefinition,
   AdapterInstance extends AdapterLike,
-> = IsAssignableWhenUsed<
-  Model<Name, Schema, AdapterInstance>,
-  AdapterModel<AdapterInstance>
-> extends true
-  ? IsAssignableWhenUsed<
+> = false extends
+  | IsAssignableWhenUsed<
+    Model<Name, Schema, AdapterInstance>,
+    AdapterModel<AdapterInstance>
+  >
+  | IsAssignableWhenUsed<
     Query<Name, Schema, AdapterInstance>,
     AdapterQueryType<AdapterInstance>
-  > extends true
-    ? IsAssignableWhenUsed<
-      Field<Schema[number]>,
-      AdapterField<AdapterInstance>
-    > extends true
-      ? IsAssignableWhenUsed<
-        FieldDefinitionValue<Schema[number]>,
-        AdapterValue<AdapterInstance>
-      > extends true
-        ? IsAssignableWhenUsed<
-          Model<Name, Schema, AdapterInstance>,
-          AdapterUpdateModel<AdapterInstance>
-        > extends true
-          ? IsAssignableWhenUsed<
-            AdapterConnection<AdapterInstance>,
-            AdapterUpdateConnection<AdapterInstance>
-          > extends true
-            ? IsAssignableWhenUsed<
-              Field<Schema[number]>,
-              AdapterUpdateField<AdapterInstance>
-            > extends true
-              ? IsAssignableWhenUsed<
-                FieldDefinitionValue<Schema[number]>,
-                AdapterUpdateValue<AdapterInstance>
-              > extends true
-                ? IsAssignableWhenUsed<
-                  Query<Name, Schema, AdapterInstance>,
-                  AdapterDeleteQueryType<AdapterInstance>
-                >
-                : false
-              : false
-            : false
-          : false
-        : false
-      : false
-    : false
-  : false;
+  >
+  | IsAssignableWhenUsed<
+    Query<Name, Schema, AdapterInstance>,
+    AdapterCountQueryType<AdapterInstance>
+  >
+  | IsAssignableWhenUsed<
+    Field<Schema[number]>,
+    AdapterField<AdapterInstance>
+  >
+  | IsAssignableWhenUsed<
+    FieldDefinitionValue<Schema[number]>,
+    AdapterValue<AdapterInstance>
+  >
+  | IsAssignableWhenUsed<
+    Model<Name, Schema, AdapterInstance>,
+    AdapterUpdateModel<AdapterInstance>
+  >
+  | IsAssignableWhenUsed<
+    AdapterConnection<AdapterInstance>,
+    AdapterUpdateConnection<AdapterInstance>
+  >
+  | IsAssignableWhenUsed<
+    Field<Schema[number]>,
+    AdapterUpdateField<AdapterInstance>
+  >
+  | IsAssignableWhenUsed<
+    FieldDefinitionValue<Schema[number]>,
+    AdapterUpdateValue<AdapterInstance>
+  >
+  | IsAssignableWhenUsed<
+    Query<Name, Schema, AdapterInstance>,
+    AdapterDeleteQueryType<AdapterInstance>
+  >
+  | IsAssignableWhenUsed<
+    Query<Name, Schema, AdapterInstance>,
+    AdapterUpdateByQueryType<AdapterInstance>
+  >
+  ? false
+  : true;
 
 type IsAssignableWhenUsed<Actual, Expected> = [Expected] extends [never]
   ? true
   : Actual extends Expected ? true : false;
-
-type ReservedYukariFieldName =
-  | Extract<keyof Yukari<string, SchemaDefinition, Adapter>, string>
-  | 'constructor'
-  | `$${string}`;
-
-type HasReservedFieldName<Schema extends SchemaDefinition> =
-  Extract<Schema[number]['name'], ReservedYukariFieldName> extends never
-    ? false
-    : true;
 
 type IsValidDefinition<
   Name extends string,
   Schema extends SchemaDefinition,
   AdapterInstance extends AdapterLike,
 > = NoInfer<Schema> extends ValidatedSchema<NoInfer<Schema>>
-  ? HasReservedFieldName<NoInfer<Schema>> extends false
-    ? IsAdapterCompatible<Name, NoInfer<Schema>, AdapterInstance>
-    : false
+  ? IsAdapterCompatible<Name, NoInfer<Schema>, AdapterInstance>
   : false;
 
 export class Toshihiko<
   AdapterInstance extends AdapterLike = Adapter,
   Options extends object = ToshihikoOptions,
-> {
+> extends EventEmitter2 {
   readonly adapter: AdapterInstance | null;
   readonly dialect: string | null;
   readonly options: Options;
@@ -116,6 +111,7 @@ export class Toshihiko<
       ? readonly [options?: Options]
       : readonly [options: Options]
   ) {
+    super();
     this.options = (options ?? {}) as Options;
 
     if (typeof adapter === 'string') {
@@ -148,6 +144,15 @@ export class Toshihiko<
     }
 
     return this.adapter;
+  }
+
+  async execute(
+    ...arguments_: AdapterExecuteArguments<AdapterInstance>
+  ): Promise<AdapterExecuteResult<AdapterInstance>> {
+    const adapter = this.getAdapter() as unknown as {
+      execute(...values: AdapterExecuteArguments<AdapterInstance>): Promise<AdapterExecuteResult<AdapterInstance>>;
+    };
+    return await adapter.execute(...arguments_);
   }
 
   define<

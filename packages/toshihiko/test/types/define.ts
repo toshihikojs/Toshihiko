@@ -65,7 +65,7 @@ const Validated = toshihiko.define('validated', [
   {
     name: 'score',
     type: Type.Integer,
-    default: 0,
+    defaultValue: 0,
     validators: async (value: number) => {
       const typedValue: number = value;
       if (typedValue < 0) {
@@ -157,6 +157,11 @@ class TestAdapter implements Adapter {
     void data;
   }
 
+  async count(query: AdapterQuery): Promise<number> {
+    void query;
+    return 0;
+  }
+
   async deleteByQuery(query: AdapterQuery): Promise<void> {
     void query;
   }
@@ -178,12 +183,16 @@ const foundUsers = ConnectedUser
   .find();
 const foundUser = ConnectedUser.findById(1);
 const foundJson = ConnectedUser.findById(1, true);
+const connectedCount: Promise<number> = ConnectedUser.where({ id: { $gte: 1 } }).count();
+const allConnectedCount: Promise<number> = ConnectedUser.count();
 const builtConnectedUser = ConnectedUser.build({ id: 1, name: 'Alice' });
 const insertedConnectedUser: Promise<typeof builtConnectedUser> = builtConnectedUser.insert({
   transaction: 1,
 });
 
 void insertedConnectedUser;
+void connectedCount;
+void allConnectedCount;
 
 interface TypedConnection {
   readonly transaction: number;
@@ -232,6 +241,13 @@ class TypedConnectionAdapter implements Adapter<
     void data;
   }
 
+  async count(
+    query: AdapterQuery<TypedModel, TypedConnection>,
+  ): Promise<number> {
+    void query;
+    return 0;
+  }
+
   async deleteByQuery(
     query: AdapterQuery<TypedModel, TypedConnection>,
   ): Promise<void> {
@@ -246,6 +262,7 @@ class TypedConnectionAdapter implements Adapter<
 const typedConnections = new Toshihiko(TypedConnectionAdapter, { database: 'typed' });
 const TypedConnectionModel = typedConnections.define('typed-connections', [{ name: 'id' }]);
 TypedConnectionModel.conn({ transaction: 1 });
+TypedConnectionModel.conn({ transaction: 1 }).count();
 TypedConnectionModel.build({ id: '1' }).insert({ transaction: 1 });
 TypedConnectionModel.build({ id: '1' }).save({ transaction: 1 });
 TypedConnectionModel.findOne().then((row) => {
@@ -308,6 +325,11 @@ class UnsupportedModelAdapter implements Adapter<UnsupportedModel> {
     void data;
   }
 
+  async count(query: AdapterQuery<UnsupportedModel>): Promise<number> {
+    void query;
+    return 0;
+  }
+
   async deleteByQuery(query: AdapterQuery<UnsupportedModel>): Promise<void> {
     void query;
   }
@@ -342,6 +364,11 @@ class UnsupportedQueryAdapter implements Adapter<
   }
 
   async update(): Promise<void> {}
+
+  async count(query: UnsupportedQuery): Promise<number> {
+    void query;
+    return 0;
+  }
 
   async deleteByQuery(query: UnsupportedQuery): Promise<void> {
     void query;
@@ -389,6 +416,11 @@ class UnsupportedFieldAdapter implements Adapter<unknown, unknown, UnsupportedFi
     void data;
   }
 
+  async count(query: AdapterQuery): Promise<number> {
+    void query;
+    return 0;
+  }
+
   async deleteByQuery(query: AdapterQuery): Promise<void> {
     void query;
   }
@@ -429,6 +461,11 @@ class UnsupportedUpdateAdapter {
     void connection;
     void primaryKey;
     void data;
+  }
+
+  async count(query: AdapterQuery): Promise<number> {
+    void query;
+    return 0;
   }
 
   async deleteByQuery(query: AdapterQuery): Promise<void> {
@@ -477,6 +514,11 @@ class UnsupportedDeleteAdapter {
     void data;
   }
 
+  async count(query: AdapterQuery): Promise<number> {
+    void query;
+    return 0;
+  }
+
   async deleteByQuery(query: UnsupportedDeleteQuery): Promise<void> {
     void query;
   }
@@ -489,6 +531,57 @@ class UnsupportedDeleteAdapter {
 const unsupportedDelete = new Toshihiko(new UnsupportedDeleteAdapter());
 // @ts-expect-error Core Queries must satisfy the delete contract declared by the Adapter.
 unsupportedDelete.define('unsupported-delete', [{ name: 'id' }]);
+
+interface UnsupportedCountQuery extends AdapterQuery {
+  readonly requiredByCount: true;
+}
+
+class UnsupportedCountAdapter {
+  async find(query: AdapterQuery): Promise<AdapterFindResult> {
+    void query;
+    return [];
+  }
+
+  async count(query: UnsupportedCountQuery): Promise<number> {
+    void query;
+    return 0;
+  }
+
+  async insert(
+    model: unknown,
+    connection: unknown,
+    data: readonly AdapterData[],
+  ): Promise<AdapterRow> {
+    void model;
+    void connection;
+    void data;
+    return {};
+  }
+
+  async update(
+    model: unknown,
+    connection: unknown,
+    primaryKey: Readonly<Record<string, unknown>>,
+    data: readonly AdapterData[],
+  ): Promise<void> {
+    void model;
+    void connection;
+    void primaryKey;
+    void data;
+  }
+
+  async deleteByQuery(query: AdapterQuery): Promise<void> {
+    void query;
+  }
+
+  getDBName(): string {
+    return 'unsupported-count';
+  }
+}
+
+const unsupportedCount = new Toshihiko(new UnsupportedCountAdapter());
+// @ts-expect-error Core Queries must satisfy the count contract declared by the Adapter.
+unsupportedCount.define('unsupported-count', [{ name: 'id' }]);
 
 class StringValueAdapter implements Adapter<unknown, unknown, unknown, string> {
   async find(): Promise<AdapterFindResult> {
@@ -516,6 +609,11 @@ class StringValueAdapter implements Adapter<unknown, unknown, unknown, string> {
     void connection;
     void primaryKey;
     void data;
+  }
+
+  async count(query: AdapterQuery): Promise<number> {
+    void query;
+    return 0;
   }
 
   async deleteByQuery(query: AdapterQuery): Promise<void> {
@@ -555,9 +653,9 @@ const Membership = connected.define('membership', [
   { name: 'groupId', type: Type.Integer, primaryKey: true },
 ]);
 Membership.findById({ userId: 1, groupId: 2 });
-
-// @ts-expect-error Composite primary keys require the complete key object.
 Membership.findById({ userId: 1 });
+Membership.findById({ arbitraryLegacyKey: 1 });
+TypedConnectionModel.conn(null);
 
 // @ts-expect-error build() preserves FieldType value types.
 User.build({ id: '1' });
@@ -574,15 +672,21 @@ const invalidDefault: FieldDefinition<'score', typeof Type.Integer> = {
   name: 'score',
   type: Type.Integer,
   // @ts-expect-error Defaults must use the FieldType value type.
-  default: 'zero',
+  defaultValue: 'zero',
 };
 
 void invalidDefault;
 
+const unnamedLegacyType: FieldType<number> = {
+  parse: Number,
+  restore: Number,
+};
+void unnamedLegacyType;
+
 const invalidInlineSchema = [{
   name: 'score',
   type: Type.Integer,
-  default: 'zero',
+  defaultValue: 'zero',
 }] as const;
 
 // @ts-expect-error Schema validation reconnects defaults to their FieldType values.
@@ -593,7 +697,7 @@ void invalidValidatedSchema;
 toshihiko.define('invalid-inline-default', [{
   name: 'score',
   type: Type.Integer,
-  default: 'zero',
+  defaultValue: 'zero',
 }]);
 
 // @ts-expect-error define() validates validators against the sibling FieldType.
@@ -626,7 +730,7 @@ void optionalBuiltBirthday;
 const UndefinedDefault = toshihiko.define('undefined-default', [{
   name: 'label',
   type: Type.String,
-  default: undefined,
+  defaultValue: undefined,
 }]);
 const undefinedDefaultValue: string | undefined = UndefinedDefault.build({}).label;
 void undefinedDefaultValue;
@@ -663,10 +767,8 @@ if (nullableValidator !== undefined) {
   nullableValidator(null);
 }
 
-// @ts-expect-error Yukari API names are rejected before a Model can be created.
 toshihiko.define('collision', [{ name: 'insert', type: Type.String }]);
 
-// @ts-expect-error Prototype constructor names are reserved too.
 toshihiko.define('constructor-collision', [{ name: 'constructor' }]);
 
 const syncValidator = (value: number): string | void => {
@@ -675,5 +777,4 @@ const syncValidator = (value: number): string | void => {
   }
 };
 
-// @ts-expect-error v2 validators must return Promise objects.
 toshihiko.define('invalid-sync-validator', [{ name: 'score', type: Type.Integer, validators: syncValidator }]);

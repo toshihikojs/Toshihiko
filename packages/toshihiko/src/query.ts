@@ -1,11 +1,18 @@
 import type {
   Adapter,
   AdapterConnection,
+  AdapterCountQueryType,
+  AdapterDeleteByQueryResult,
+  AdapterDeleteQueryType,
+  AdapterExecuteResult,
   AdapterFindOptions,
   AdapterFindResult,
   AdapterLike,
+  AdapterQueryExecuteArguments,
   AdapterQueryType,
   AdapterRow,
+  AdapterUpdateByQueryResult,
+  AdapterUpdateByQueryType,
 } from './contracts/adapter';
 import type { FieldName } from './contracts/common';
 import type {
@@ -16,7 +23,7 @@ import type {
 import type { Model } from './contracts/model';
 import { Yukari, type QueriedYukari } from './yukari';
 
-export type QueryOrderDirection = 1 | -1 | 'asc' | 'ASC' | 'desc' | 'DESC';
+export type QueryOrderDirection = number | 'asc' | 'ASC' | 'desc' | 'DESC';
 
 export interface QueryFieldOperators<Value> {
   readonly $and?: Value | readonly Value[];
@@ -68,38 +75,38 @@ type PrimaryKeyName<Schema extends SchemaDefinition> = Extract<
   { readonly primaryKey: true }
 >['name'];
 
-type IsUnion<Value, Whole = Value> = Value extends unknown
-  ? [Whole] extends [Value] ? false : true
-  : never;
-
 export type FindByIdInput<Schema extends SchemaDefinition> =
   [PrimaryKeyName<Schema>] extends [never]
-    ? never
-    : true extends IsUnion<PrimaryKeyName<Schema>>
-      ? Pick<RowFromSchema<Schema>, PrimaryKeyName<Schema>>
-      : RowFromSchema<Schema>[PrimaryKeyName<Schema>]
-        | Pick<RowFromSchema<Schema>, PrimaryKeyName<Schema>>;
+    ? Readonly<Record<string, unknown>>
+    : RowFromSchema<Schema>[PrimaryKeyName<Schema>]
+      | Readonly<Record<string, unknown>>;
 
 export class Query<
   Name extends string,
   Schema extends SchemaDefinition,
   AdapterInstance extends AdapterLike = Adapter,
 > {
-  readonly cache = null;
-  readonly model: Model<Name, Schema, AdapterInstance>;
-  readonly toshihiko: Model<Name, Schema, AdapterInstance>['parent'];
+  declare readonly cache: null;
+  declare readonly model: Model<Name, Schema, AdapterInstance>;
+  declare readonly toshihiko: Model<Name, Schema, AdapterInstance>['parent'];
 
   _conn: AdapterConnection<AdapterInstance> | null = null;
   _fields: string[];
   _index = '';
   _limit: number[] = [];
-  _order: Readonly<Record<string, 1 | -1>>[] = [];
+  _order: Readonly<Record<string, number>>[] = [];
   _updateData: Partial<RowFromSchema<Schema>> = {};
   _where: QueryWhere<RowFromSchema<Schema>> = {};
 
   constructor(model: Model<Name, Schema, AdapterInstance>) {
-    this.model = model;
-    this.toshihiko = model.parent;
+    Object.defineProperties(this, {
+      adapter: { get: () => model.parent.getAdapter() },
+      cache: { value: model.cache },
+      field: { value: this.fields, writable: true },
+      model: { value: model },
+      orderBy: { value: this.order, writable: true },
+      toshihiko: { value: model.parent },
+    });
     this._fields = model.schema.map((field) => field.name);
   }
 
@@ -113,8 +120,8 @@ export class Query<
   }
 
   where(condition: QueryWhere<RowFromSchema<Schema>>): this {
-    if (condition === null || typeof condition !== 'object' || Array.isArray(condition)) {
-      throw new TypeError('query condition must be an object.');
+    if (typeof condition !== 'object') {
+      throw new Error(`query condition expected to be an object but got ${typeof condition} ${String(condition)}.`);
     }
 
     this._where = condition;
@@ -126,11 +133,15 @@ export class Query<
   }
 
   fields(fields: string | readonly FieldName<RowFromSchema<Schema>>[]): this {
-    const normalized = typeof fields === 'string'
-      ? fields.split(',').map((field) => field.trim()).filter(Boolean)
-      : [...fields];
+    let normalized: readonly unknown[] | unknown = fields;
+    if (typeof fields === 'string') {
+      normalized = fields.split(',').map((field) => field.trim()).filter(Boolean);
+    }
+    if (!isReadonlyArray(normalized)) {
+      throw new Error(`query fields expected to be an array or string but got ${typeof fields} ${String(fields)}.`);
+    }
 
-    this._fields = normalized;
+    this._fields = normalized as string[];
     return this;
   }
 
@@ -140,8 +151,8 @@ export class Query<
     first: number | string | readonly (number | string)[],
     second?: number | string,
   ): this {
-    if (second !== undefined) {
-      this._limit = [normalizeLimit(first), normalizeLimit(second)];
+    if (arguments.length >= 2) {
+      this._limit = [normalizeLimit(first), normalizeLimit(second ?? 0)];
       return this;
     }
 
@@ -166,9 +177,50 @@ export class Query<
     return this.order(order);
   }
 
-  conn(connection: AdapterConnection<AdapterInstance>): this {
+  conn(connection: AdapterConnection<AdapterInstance> | null): this {
     this._conn = connection;
     return this;
+  }
+
+  async count(): Promise<number> {
+    const adapter = this.adapter as unknown as {
+      readonly count: (
+        query: AdapterCountQueryType<AdapterInstance>,
+      ) => Promise<number>;
+    };
+    return await adapter.count(
+      this as unknown as AdapterCountQueryType<AdapterInstance>,
+    );
+  }
+
+  async update(
+    data: Partial<RowFromSchema<Schema>>,
+  ): Promise<AdapterUpdateByQueryResult<AdapterInstance>> {
+    this._updateData = data;
+    const adapter = this.adapter as unknown as {
+      updateByQuery(query: AdapterUpdateByQueryType<AdapterInstance>): Promise<AdapterUpdateByQueryResult<AdapterInstance>>;
+    };
+    return await adapter.updateByQuery(
+      this as unknown as AdapterUpdateByQueryType<AdapterInstance>,
+    );
+  }
+
+  async delete(): Promise<AdapterDeleteByQueryResult<AdapterInstance>> {
+    const adapter = this.adapter as unknown as {
+      deleteByQuery(query: AdapterDeleteQueryType<AdapterInstance>): Promise<AdapterDeleteByQueryResult<AdapterInstance>>;
+    };
+    return await adapter.deleteByQuery(
+      this as unknown as AdapterDeleteQueryType<AdapterInstance>,
+    );
+  }
+
+  async execute(
+    ...arguments_: AdapterQueryExecuteArguments<AdapterInstance>
+  ): Promise<AdapterExecuteResult<AdapterInstance>> {
+    const adapter = this.adapter as unknown as {
+      execute(connection: AdapterConnection<AdapterInstance> | null, ...values: AdapterQueryExecuteArguments<AdapterInstance>): Promise<AdapterExecuteResult<AdapterInstance>>;
+    };
+    return await adapter.execute(this._conn, ...arguments_);
   }
 
   find(): Promise<readonly QueriedYukari<Name, Schema, AdapterInstance>[]>;
@@ -184,13 +236,14 @@ export class Query<
     toJSON = false,
     options: QueryFindOptions = {},
   ): Promise<readonly QueriedYukari<Name, Schema, AdapterInstance>[] | readonly QueryJsonRow<Schema>[]> {
+    const normalizedOptions = options && typeof options === 'object' ? options : {};
     const result = await this.fetch({
-      noCache: options.noCache ?? false,
+      noCache: normalizedOptions.noCache ?? false,
       single: false,
     });
 
-    if (!isReadonlyArray(result)) {
-      throw new TypeError('Adapter.find() must return an array for a list query.');
+    if (!result || !isReadonlyArray(result) || result.length === 0) {
+      return result as unknown as readonly QueriedYukari<Name, Schema, AdapterInstance>[];
     }
 
     const rows = result.map((row) => this.hydrate(row));
@@ -204,14 +257,8 @@ export class Query<
     toJSON = false,
   ): Promise<QueriedYukari<Name, Schema, AdapterInstance> | QueryJsonRow<Schema> | null> {
     const result = await this.fetch({ noCache: false, single: true });
-    if (result === null) {
-      return null;
-    }
-    if (isReadonlyArray(result)) {
-      throw new TypeError('Adapter.find() must return one row or null for a single query.');
-    }
-
-    const row = this.hydrate(result);
+    if (!result) return result as null;
+    const row = this.hydrate(result as AdapterRow);
     return toJSON ? row.toJSON() : row;
   }
 
@@ -243,15 +290,10 @@ export class Query<
       unknown,
       AdapterQueryType<AdapterInstance>
     >;
-    const pending = adapter.find(
+    return adapter.find(
       this as unknown as AdapterQueryType<AdapterInstance>,
       options,
     );
-    if (!isPromiseLike(pending)) {
-      throw new TypeError('Adapter.find() must return a Promise.');
-    }
-
-    return pending;
   }
 
   private hydrate(row: AdapterRow): QueriedYukari<Name, Schema, AdapterInstance> {
@@ -259,12 +301,8 @@ export class Query<
       return row as QueriedYukari<Name, Schema, AdapterInstance>;
     }
 
-    if (row === null || typeof row !== 'object' || Array.isArray(row)) {
-      throw new TypeError('Adapter.find() returned an invalid row.');
-    }
-
     const yukari = new Yukari<Name, Schema, AdapterInstance>(this.model, 'query');
-    yukari.fillRowFromSource(row, true);
+    yukari.fillRowFromSource(row as Readonly<Record<string, unknown>>, true);
     return yukari as QueriedYukari<Name, Schema, AdapterInstance>;
   }
 
@@ -272,30 +310,16 @@ export class Query<
     id: FindByIdInput<Schema>,
   ): QueryWhere<RowFromSchema<Schema>> {
     const primaryKeys = this.model.primaryKeys;
-    if (primaryKeys.length === 0) {
-      throw new Error(`Model ${this.model.name} has no primary key.`);
-    }
-
-    if (primaryKeys.length === 1 && (id === null || typeof id !== 'object')) {
+    if (primaryKeys.length === 1 && typeof id !== 'object') {
       return {
         [primaryKeys[0]!.name]: id,
       } as QueryWhere<RowFromSchema<Schema>>;
     }
 
-    if (id === null || typeof id !== 'object' || Array.isArray(id)) {
-      throw new TypeError('findById() requires an object for composite primary keys.');
+    if (typeof id !== 'object') {
+      throw new Error('you should pass a valid IDs object');
     }
-
-    const values = id as Readonly<Record<string, unknown>>;
-    const condition: Record<string, unknown> = {};
-    for (const primaryKey of primaryKeys) {
-      if (!Object.prototype.hasOwnProperty.call(values, primaryKey.name)) {
-        throw new TypeError(`findById() is missing primary key ${primaryKey.name}.`);
-      }
-      condition[primaryKey.name] = values[primaryKey.name];
-    }
-
-    return condition as QueryWhere<RowFromSchema<Schema>>;
+    return id as QueryWhere<RowFromSchema<Schema>>;
   }
 }
 
@@ -303,20 +327,20 @@ function normalizeLimit(value: number | string | readonly (number | string)[]): 
   if (isReadonlyArray(value)) {
     return normalizeLimit(value[0] ?? 0);
   }
-  const normalized = Number.parseInt(String(value), 10);
+  const normalized = parseInt(value as string);
   return Number.isNaN(normalized) ? 0 : normalized;
 }
 
 function normalizeOrder<Row extends object>(
   order: QueryOrder<Row>,
-): Readonly<Record<string, 1 | -1>>[] {
+): Readonly<Record<string, number>>[] {
   if (typeof order === 'string') {
     return order.split(',').map(parseOrderFragment).filter(isDefined);
   }
 
   if (isReadonlyArray(order)) {
     return order.flatMap((entry) => typeof entry === 'string'
-      ? [parseOrderFragment(entry)].filter(isDefined)
+      ? [parseArrayOrderFragment(entry)]
       : normalizeOrderObject(entry));
   }
 
@@ -328,7 +352,7 @@ function normalizeOrder<Row extends object>(
 
 function normalizeOrderObject(
   order: Readonly<Record<string, QueryOrderDirection | undefined>>,
-): Readonly<Record<string, 1 | -1>>[] {
+): Readonly<Record<string, number>>[] {
   return Object.entries(order).map(([name, direction]) => ({
     [name.trim()]: normalizeOrderDirection(direction),
   }));
@@ -336,7 +360,7 @@ function normalizeOrderObject(
 
 function parseOrderFragment(
   fragment: string,
-): Readonly<Record<string, 1 | -1>> | undefined {
+): Readonly<Record<string, number>> | undefined {
   const [name, direction] = fragment.trim().split(/\s+/, 2);
   if (!name) {
     return undefined;
@@ -344,14 +368,23 @@ function parseOrderFragment(
   return { [name]: normalizeOrderDirection(direction) };
 }
 
+function parseArrayOrderFragment(
+  fragment: string,
+): Readonly<Record<string, number>> {
+  const parts = fragment.split(' ');
+  return {
+    [(parts[0] ?? '').trim()]: normalizeOrderDirection(parts[1] || 'ASC'),
+  };
+}
+
 function normalizeOrderDirection(
   direction: QueryOrderDirection | string | undefined,
-): 1 | -1 {
+): number {
   if (direction === undefined) {
     return 1;
   }
   if (typeof direction === 'number') {
-    return direction === 1 ? 1 : -1;
+    return direction;
   }
   return direction.toUpperCase() === 'ASC' ? 1 : -1;
 }
@@ -362,11 +395,4 @@ function isDefined<Value>(value: Value | undefined): value is Value {
 
 function isReadonlyArray(value: unknown): value is readonly unknown[] {
   return Array.isArray(value);
-}
-
-function isPromiseLike<Value>(value: unknown): value is PromiseLike<Value> {
-  return typeof value === 'object'
-    && value !== null
-    && 'then' in value
-    && typeof value.then === 'function';
 }

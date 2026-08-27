@@ -1,4 +1,4 @@
-import { EventEmitter } from 'eventemitter3';
+import { EventEmitter2 } from 'eventemitter2';
 import type {
   Adapter as AdapterContract,
   AdapterData,
@@ -30,14 +30,14 @@ export class Adapter<
   Field = unknown,
   Value = unknown,
   Query extends AdapterQuery<Model, Connection> = AdapterQuery<Model, Connection>,
-> extends EventEmitter implements AdapterContract<
+> extends EventEmitter2 implements AdapterContract<
   Model,
   Connection,
   Field,
   Value,
   Query
 > {
-  readonly options: Options;
+  declare options: Options;
 
   constructor(
     ...[options]: {} extends Options
@@ -45,7 +45,12 @@ export class Adapter<
       : readonly [options: Options]
   ) {
     super();
-    this.options = copyOptions(options);
+    Object.defineProperty(this, 'options', {
+      configurable: false,
+      enumerable: true,
+      value: copyOptions(options),
+      writable: true,
+    });
   }
 
   async find(
@@ -125,8 +130,10 @@ export class Adapter<
     return this.notImplemented('rollback');
   }
 
-  protected notImplemented(method: string): never {
-    throw new AdapterNotImplementedError(method);
+  protected notImplemented(method: string): Promise<never> {
+    return new Promise((_resolve, reject) => {
+      process.nextTick(() => reject(new AdapterNotImplementedError(method)));
+    });
   }
 }
 
@@ -137,10 +144,7 @@ function copyOptions<Options extends object>(
     return {} as Options;
   }
 
-  const prototype = Object.getPrototypeOf(options) as unknown;
-  return prototype === Object.prototype || prototype === null
-    ? { ...options }
-    : options;
+  return extend({}, options) as Options;
 }
 
 export { extend };

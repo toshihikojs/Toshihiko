@@ -22,6 +22,7 @@ export interface MySQLAdapterOptions extends Omit<
   readonly [key: string]: unknown;
   readonly database?: string;
   readonly password?: string;
+  readonly package?: string;
   readonly pool?: Pool;
   readonly showSql?: MySQLShowSql;
   readonly user?: string;
@@ -55,16 +56,16 @@ export interface MySQLQuery extends AdapterQuery<MySQLModel, PoolConnection> {
 }
 
 export interface MySQLQueryOptions {
-  readonly connection?: PoolConnection | null;
-  readonly count?: boolean;
-  readonly fields?: readonly string[];
-  readonly index?: string;
-  readonly limit?: readonly number[];
-  readonly noCache?: boolean;
-  readonly order?: readonly Readonly<Record<string, 1 | -1>>[];
-  readonly single?: boolean;
-  readonly update?: Readonly<Record<string, unknown>>;
-  readonly where?: Readonly<Record<string, unknown>>;
+  conn?: PoolConnection | null;
+  count?: boolean;
+  fields?: string[];
+  index?: string;
+  limit?: number[];
+  noCache?: boolean;
+  order?: Record<string, number>[];
+  single?: boolean;
+  update?: Record<string, unknown>;
+  where?: Record<string, unknown>;
 }
 
 export interface MySQLStatement {

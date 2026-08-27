@@ -37,7 +37,7 @@ test('find and count execute through the Promise pool', async () => {
   });
 });
 
-test('execute preserves both v2 and legacy connection-first argument order', async () => {
+test('execute preserves direct and connection-first argument order', async () => {
   const pool = createPool([[{ ok: 1 }]]);
   const connection = createConnection([[{ connected: true }]]);
   const shown: string[] = [];
@@ -62,10 +62,10 @@ test('execute preserves both v2 and legacy connection-first argument order', asy
     'SELECT 1',
     "INSERT INTO `users` SET `name` = 'Alice'",
   ]);
-  assert.equal('package' in adapter, false);
+  assert.equal(adapter.package, 'mysql2');
 });
 
-test('transaction connections are released on success and failure', async () => {
+test('transaction connections retain v1 release behavior', async () => {
   const events: string[] = [];
   const connection = asConnection({
     async beginTransaction() {
@@ -89,7 +89,7 @@ test('transaction connections are released on success and failure', async () => 
   assert.equal(acquired, connection);
   await adapter.commit(connection);
   await assert.rejects(adapter.rollback(connection), /rollback failed/);
-  assert.deepEqual(events, ['begin', 'commit', 'release', 'rollback', 'release']);
+  assert.deepEqual(events, ['begin', 'commit', 'release', 'rollback']);
 });
 
 test('a failed transaction start releases its checked-out connection', async () => {
@@ -145,8 +145,11 @@ test('insert reads back the generated row and update rejects stale records', asy
   );
 });
 
-test('insert refuses an ambiguous readback instead of returning the first row', async () => {
-  const pool = createPool([{ affectedRows: 1, insertId: 0 }]);
+test('insert preserves v1 empty-locator readback behavior', async () => {
+  const pool = createPool([
+    { affectedRows: 1, insertId: 0 },
+    [{ id: 9, name: 'First row' }],
+  ]);
   const adapter = new MySQLAdapter({ pool });
   const toshihiko = new Toshihiko(adapter);
   const User = toshihiko.define('users', [
@@ -154,11 +157,12 @@ test('insert refuses an ambiguous readback instead of returning the first row', 
     { name: 'name', type: Type.String },
   ]);
 
-  await assert.rejects(
-    adapter.insert(User, null, [
-      { field: User.fieldNamesMap.name, value: 'Alice' },
-    ]),
-    /no unique readback condition/,
-  );
-  assert.equal(pool.calls.length, 1);
+  assert.deepEqual(await adapter.insert(User, null, [
+    { field: User.fieldNamesMap.name, value: 'Alice' },
+  ]), { id: 9, name: 'First row' });
+  assert.deepEqual(pool.calls[1], {
+    method: 'execute',
+    sql: 'SELECT `id`, `name` FROM `users` LIMIT 0, 1',
+    values: [],
+  });
 });
