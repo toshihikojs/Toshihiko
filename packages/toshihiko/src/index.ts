@@ -20,6 +20,10 @@ export type {
   AdapterQuery,
   AdapterRow,
   AdapterSource,
+  AdapterUpdateConnection,
+  AdapterUpdateField,
+  AdapterUpdateModel,
+  AdapterUpdateValue,
 } from './contracts/adapter';
 export type { FieldName, RowShape } from './contracts/common';
 export type {

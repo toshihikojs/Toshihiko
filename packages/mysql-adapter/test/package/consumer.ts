@@ -54,6 +54,7 @@ const transaction: Promise<MySQLConnection> = adapter.beginTransaction();
 transaction.then((connection) => {
   User.conn(connection);
   User.build({ id: 1, name: 'Alice' }).insert(connection);
+  User.findById(1).then((user) => user?.update(connection));
 });
 const counted = adapter.count(User.where({ id: { $gte: 1 } }));
 const inserted = adapter.insert(User, null, [

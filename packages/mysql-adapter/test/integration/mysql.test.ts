@@ -45,10 +45,10 @@ test('read, write, raw execution, and transactions work end to end', async () =>
   assert.deepEqual(rows, [{ id: 1, name: 'Alice', score: 1.5 }]);
   assert.equal(await adapter.count(User.where({ name: 'Alice' })), 1);
 
-  const mutation = await adapter.update(User, null, { id: 1 }, [
-    { field: User.fieldNamesMap.score, value: 2.5 },
-  ]);
-  assert.equal(mutation.affectedRows, 1);
+  inserted.score = 2.5;
+  const updatedYukari = await inserted.update();
+  assert.equal(updatedYukari, inserted);
+  assert.deepEqual(inserted.changes(), []);
   const updated = await User.findById(1, true);
   assert.notEqual(updated, null);
   assert.equal(updated?.score, 2.5);
@@ -62,4 +62,8 @@ test('read, write, raw execution, and transactions work end to end', async () =>
   const deletion = await adapter.deleteByQuery(query);
   assert.equal(deletion.affectedRows, 1);
   assert.equal(await User.findById(1, true), null);
+
+  inserted.name = 'Stale';
+  await assert.rejects(inserted.update(), /Out-dated yukari data/);
+  assert.deepEqual(inserted.toJSON(true), { id: 1, name: 'Alice', score: 2.5 });
 });

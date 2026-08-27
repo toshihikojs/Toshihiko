@@ -221,6 +221,53 @@ export class Yukari<
     return this;
   }
 
+  async update(
+    connection: AdapterConnection<AdapterInstance> | null = null,
+  ): Promise<this> {
+    if (this.$source !== 'query') {
+      throw new Error('Yukari.update() can only be called on a queried Yukari object.');
+    }
+
+    const primaryKey = this.originalPrimaryKey();
+    await this.validateAll();
+    const data = this.changes();
+    if (data.length === 0) {
+      return this;
+    }
+
+    const adapter = this.$model.parent.getAdapter() as unknown as Adapter<
+      AdapterModel<AdapterInstance>,
+      AdapterConnection<AdapterInstance>,
+      AdapterField<AdapterInstance>,
+      AdapterValue<AdapterInstance>
+    >;
+    const pending = adapter.update(
+      this.$model as unknown as AdapterModel<AdapterInstance>,
+      connection,
+      primaryKey,
+      data as unknown as readonly AdapterData<
+        AdapterField<AdapterInstance>,
+        AdapterValue<AdapterInstance>
+      >[],
+    );
+    if (!isPromiseLike(pending)) {
+      throw new TypeError('Adapter.update() must return a Promise.');
+    }
+
+    await pending;
+    const originalData = this.$origData as unknown as RuntimeOriginalData;
+    for (const entry of data) {
+      const field = entry.field as Field<Schema[number]>;
+      originalData[field.name] = {
+        fieldIdx: this.$schema.indexOf(field),
+        data: field.clone(
+          entry.value as FieldDefinitionValue<Schema[number]>,
+        ),
+      };
+    }
+    return this;
+  }
+
   changes(): readonly YukariFieldData<Schema[number]>[] {
     const values = this as Readonly<Record<string, unknown>>;
     const changes: YukariFieldData<Schema[number]>[] = [];
@@ -289,6 +336,23 @@ export class Yukari<
     }
 
     return extracted;
+  }
+
+  private originalPrimaryKey(): Readonly<Record<string, unknown>> {
+    if (this.$model.primaryKeys.length === 0) {
+      throw new Error(`Model ${this.$model.name} has no primary key for update().`);
+    }
+
+    const originalData = this.$origData as unknown as RuntimeOriginalData;
+    const primaryKey: Record<string, unknown> = {};
+    for (const field of this.$model.primaryKeys) {
+      const original = originalData[field.name];
+      if (original === undefined) {
+        throw new Error(`Yukari.update() is missing original primary key ${field.name}.`);
+      }
+      primaryKey[field.name] = original.data;
+    }
+    return primaryKey;
   }
 
   private async validateField(name: string, value: unknown): Promise<void> {

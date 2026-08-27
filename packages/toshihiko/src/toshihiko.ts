@@ -10,12 +10,17 @@ import type {
 } from './contracts/field';
 import type {
   Adapter,
+  AdapterConnection,
   AdapterConstructor,
   AdapterField,
   AdapterLike,
   AdapterModel,
   AdapterQueryType,
   AdapterSource,
+  AdapterUpdateConnection,
+  AdapterUpdateField,
+  AdapterUpdateModel,
+  AdapterUpdateValue,
   AdapterValue,
 } from './contracts/adapter';
 import type { Query } from './query';
@@ -43,7 +48,25 @@ type IsAdapterCompatible<
         FieldDefinitionValue<Schema[number]>,
         AdapterValue<AdapterInstance>
       > extends true
-        ? true
+        ? IsAssignableWhenUsed<
+          Model<Name, Schema, AdapterInstance>,
+          AdapterUpdateModel<AdapterInstance>
+        > extends true
+          ? IsAssignableWhenUsed<
+            AdapterConnection<AdapterInstance>,
+            AdapterUpdateConnection<AdapterInstance>
+          > extends true
+            ? IsAssignableWhenUsed<
+              Field<Schema[number]>,
+              AdapterUpdateField<AdapterInstance>
+            > extends true
+              ? IsAssignableWhenUsed<
+                FieldDefinitionValue<Schema[number]>,
+                AdapterUpdateValue<AdapterInstance>
+              >
+              : false
+            : false
+          : false
         : false
       : false
     : false

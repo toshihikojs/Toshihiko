@@ -43,6 +43,12 @@ export interface Adapter<
     connection: Connection | null,
     data: readonly AdapterData<Field, Value>[],
   ) => Promise<AdapterRow | null>;
+  readonly update: (
+    model: Model,
+    connection: Connection | null,
+    primaryKey: Readonly<Record<string, unknown>>,
+    data: readonly AdapterData<Field, Value>[],
+  ) => Promise<unknown>;
   getDBName(): string;
 }
 
@@ -56,6 +62,12 @@ export interface AdapterLike {
     connection: never,
     data: readonly never[],
   ) => Promise<AdapterRow | null>;
+  readonly update: (
+    model: never,
+    connection: never,
+    primaryKey: Readonly<Record<string, unknown>>,
+    data: readonly never[],
+  ) => Promise<unknown>;
   getDBName(): string;
 }
 
@@ -77,6 +89,22 @@ export type AdapterValue<Instance extends AdapterLike> =
 
 export type AdapterQueryType<Instance extends AdapterLike> =
   Parameters<Instance['find']>[0];
+
+export type AdapterUpdateModel<Instance extends AdapterLike> =
+  Parameters<Instance['update']>[0];
+
+export type AdapterUpdateConnection<Instance extends AdapterLike> =
+  Exclude<Parameters<Instance['update']>[1], null>;
+
+export type AdapterUpdateField<Instance extends AdapterLike> =
+  Parameters<Instance['update']>[3][number] extends AdapterData<infer Field, unknown>
+    ? Field
+    : never;
+
+export type AdapterUpdateValue<Instance extends AdapterLike> =
+  Parameters<Instance['update']>[3][number] extends AdapterData<unknown, infer Value>
+    ? Value
+    : never;
 
 export interface AdapterConstructor<
   Options extends object = ToshihikoOptions,

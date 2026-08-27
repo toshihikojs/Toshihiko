@@ -11,6 +11,7 @@ class MemoryAdapter {
     this.options = options;
     this.calls = [];
     this.insertCalls = [];
+    this.updateCalls = [];
   }
 
   getDBName() {
@@ -43,6 +44,19 @@ class MemoryAdapter {
       throw this.options.insertError;
     }
     return this.options.insertRow ?? null;
+  }
+
+  async update(model, connection, primaryKey, data) {
+    this.updateCalls.push({
+      connection,
+      data: data.map(({ field, value }) => ({ name: field.name, value })),
+      primaryKey,
+      table: model.name,
+    });
+    if (this.options.updateError) {
+      throw this.options.updateError;
+    }
+    return this.options.updateResult;
   }
 }
 
@@ -357,6 +371,126 @@ test('insert rejects old Yukari objects, synchronous Adapters, and invalid rows'
     User.build({ id: 4 }).insert(),
     /returned an invalid row/,
   );
+});
+
+test('queried Yukari updates changed fields with its original primary key', async () => {
+  const validationCalls = [];
+  const connection = { transaction: 2 };
+  const adapter = new MemoryAdapter({ database: 'toshihiko' });
+  const toshihiko = new Toshihiko(adapter);
+  const User = toshihiko.define('user', [
+    { name: 'id', column: 'user_id', type: Type.Integer, primaryKey: true },
+    {
+      name: 'name',
+      column: 'display_name',
+      async validators(value) {
+        validationCalls.push(value);
+      },
+    },
+    { name: 'profile', type: Type.Json },
+  ]);
+  const user = new Yukari(User, 'query');
+  user.fillRowFromSource({
+    user_id: '7',
+    display_name: 'Alice',
+    profile: '{"role":"writer"}',
+  }, true);
+  user.id = 8;
+  user.name = 'Bob';
+  user.profile.role = 'admin';
+
+  const updated = await user.update(connection);
+
+  assert.equal(updated, user);
+  assert.equal(user.$source, 'query');
+  assert.deepEqual(adapter.updateCalls, [{
+    connection,
+    data: [
+      { name: 'id', value: 8 },
+      { name: 'name', value: 'Bob' },
+      { name: 'profile', value: { role: 'admin' } },
+    ],
+    primaryKey: { id: 7 },
+    table: 'user',
+  }]);
+  assert.deepEqual(validationCalls, ['Bob']);
+  assert.deepEqual(user.changes(), []);
+  assert.deepEqual(user.toJSON(true), {
+    id: 8,
+    name: 'Bob',
+    profile: { role: 'admin' },
+  });
+
+  await user.update(connection);
+  assert.equal(adapter.updateCalls.length, 1);
+  assert.deepEqual(validationCalls, ['Bob', 'Bob']);
+});
+
+test('update failures preserve original snapshots and pending changes', async () => {
+  const updateError = new Error('stale row');
+  const adapter = new MemoryAdapter({ database: 'toshihiko', updateError });
+  const User = new Toshihiko(adapter).define('user', [
+    { name: 'id', type: Type.Integer, primaryKey: true },
+    { name: 'name' },
+  ]);
+  const user = new Yukari(User, 'query');
+  user.fillRowFromSource({ id: 1, name: 'Alice' }, true);
+  user.name = 'Bob';
+
+  await assert.rejects(user.update(), (error) => error === updateError);
+  assert.deepEqual(user.toJSON(true), { id: 1, name: 'Alice' });
+  assert.deepEqual(user.changes().map(({ field, value }) => ({
+    name: field.name,
+    value,
+  })), [{ name: 'name', value: 'Bob' }]);
+
+  const Invalid = new Toshihiko(new MemoryAdapter({ database: 'toshihiko' }))
+    .define('invalid', [
+      { name: 'id', type: Type.Integer, primaryKey: true },
+      {
+        name: 'score',
+        type: Type.Integer,
+        async validators() {
+          return 'invalid score';
+        },
+      },
+    ]);
+  const invalid = new Yukari(Invalid, 'query');
+  invalid.fillRowFromSource({ id: 1, score: 1 }, true);
+  invalid.score = -1;
+  await assert.rejects(invalid.update(), /invalid score/);
+  assert.equal(Invalid.parent.adapter.updateCalls.length, 0);
+});
+
+test('update enforces source, primary-key, and Promise boundaries', async () => {
+  const adapter = new MemoryAdapter({ database: 'toshihiko' });
+  const toshihiko = new Toshihiko(adapter);
+  const User = toshihiko.define('user', [
+    { name: 'id', type: Type.Integer, primaryKey: true },
+    { name: 'name' },
+  ]);
+
+  await assert.rejects(User.build({ id: 1, name: 'Alice' }).update(), /queried Yukari/);
+  await assert.rejects(new Yukari(User, 'delete').update(), /queried Yukari/);
+
+  const Keyless = toshihiko.define('keyless', [{ name: 'name' }]);
+  const keyless = new Yukari(Keyless, 'query');
+  keyless.fillRowFromSource({ name: 'Alice' }, true);
+  keyless.name = 'Bob';
+  await assert.rejects(keyless.update(), /has no primary key/);
+
+  const projected = new Yukari(User, 'query');
+  projected.fillRowFromSource({ name: 'Alice' }, true);
+  projected.name = 'Bob';
+  await assert.rejects(projected.update(), /missing original primary key id/);
+
+  const synchronous = new Yukari(User, 'query');
+  synchronous.fillRowFromSource({ id: 1, name: 'Alice' }, true);
+  synchronous.name = 'Bob';
+  adapter.update = function synchronousUpdate() {
+    return {};
+  };
+  await assert.rejects(synchronous.update(), /must return a Promise/);
 });
 
 test('Yukari restores database columns without applying build defaults', () => {

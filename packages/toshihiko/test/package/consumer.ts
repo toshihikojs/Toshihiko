@@ -21,6 +21,7 @@ const name: string = user.name;
 const json = user.toJSON();
 const jsonId: number | undefined = json.id;
 const inserted: Promise<typeof user> = user.insert();
+const updated: Promise<typeof user> = inserted.then((row) => row.update());
 
 void user;
 void id;
@@ -28,6 +29,7 @@ void name;
 void json;
 void jsonId;
 void inserted;
+void updated;
 
 class ConsumerAdapter implements Adapter {
   constructor(readonly options: { readonly database: string }) {}
@@ -50,6 +52,18 @@ class ConsumerAdapter implements Adapter {
     void connection;
     void data;
     return {};
+  }
+
+  async update(
+    model: unknown,
+    connection: unknown,
+    primaryKey: Readonly<Record<string, unknown>>,
+    data: readonly AdapterData[],
+  ): Promise<void> {
+    void model;
+    void connection;
+    void primaryKey;
+    void data;
   }
 
   getDBName(): string {

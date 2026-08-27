@@ -145,6 +145,18 @@ class TestAdapter implements Adapter {
     return {};
   }
 
+  async update(
+    model: unknown,
+    connection: unknown,
+    primaryKey: Readonly<Record<string, unknown>>,
+    data: readonly AdapterData[],
+  ): Promise<void> {
+    void model;
+    void connection;
+    void primaryKey;
+    void data;
+  }
+
   getDBName(): string {
     return this.options.database;
   }
@@ -204,6 +216,18 @@ class TypedConnectionAdapter implements Adapter<
     return {};
   }
 
+  async update(
+    model: TypedModel,
+    connection: TypedConnection | null,
+    primaryKey: Readonly<Record<string, unknown>>,
+    data: readonly AdapterData[],
+  ): Promise<void> {
+    void model;
+    void connection;
+    void primaryKey;
+    void data;
+  }
+
   getDBName(): string {
     return this.options.database;
   }
@@ -213,6 +237,7 @@ const typedConnections = new Toshihiko(TypedConnectionAdapter, { database: 'type
 const TypedConnectionModel = typedConnections.define('typed-connections', [{ name: 'id' }]);
 TypedConnectionModel.conn({ transaction: 1 });
 TypedConnectionModel.build({ id: '1' }).insert({ transaction: 1 });
+TypedConnectionModel.findOne().then((row) => row?.update({ transaction: 1 }));
 const concreteAdapter: TypedConnectionAdapter = TypedConnectionModel.parent.getAdapter();
 void concreteAdapter;
 
@@ -224,6 +249,11 @@ TypedConnectionModel.conn({ transaction: '1' });
 
 // @ts-expect-error Yukari.insert() preserves the Adapter connection type.
 TypedConnectionModel.build({ id: '1' }).insert({ transaction: '1' });
+
+TypedConnectionModel.findOne().then((row) => {
+  // @ts-expect-error Yukari.update() preserves the Adapter connection type.
+  row?.update({ transaction: '1' });
+});
 
 interface UnsupportedModel {
   readonly name: string;
@@ -245,6 +275,18 @@ class UnsupportedModelAdapter implements Adapter<UnsupportedModel> {
     void connection;
     void data;
     return {};
+  }
+
+  async update(
+    model: UnsupportedModel,
+    connection: unknown,
+    primaryKey: Readonly<Record<string, unknown>>,
+    data: readonly AdapterData[],
+  ): Promise<void> {
+    void model;
+    void connection;
+    void primaryKey;
+    void data;
   }
 
   getDBName(): string {
@@ -276,6 +318,8 @@ class UnsupportedQueryAdapter implements Adapter<
     return {};
   }
 
+  async update(): Promise<void> {}
+
   getDBName(): string {
     return 'unsupported-query';
   }
@@ -306,6 +350,18 @@ class UnsupportedFieldAdapter implements Adapter<unknown, unknown, UnsupportedFi
     return {};
   }
 
+  async update(
+    model: unknown,
+    connection: unknown,
+    primaryKey: Readonly<Record<string, unknown>>,
+    data: readonly AdapterData<UnsupportedField>[],
+  ): Promise<void> {
+    void model;
+    void connection;
+    void primaryKey;
+    void data;
+  }
+
   getDBName(): string {
     return 'unsupported-field';
   }
@@ -314,6 +370,44 @@ class UnsupportedFieldAdapter implements Adapter<unknown, unknown, UnsupportedFi
 const unsupportedField = new Toshihiko(new UnsupportedFieldAdapter());
 // @ts-expect-error Compiled Fields must satisfy the Field contract declared by the Adapter.
 unsupportedField.define('unsupported-field', [{ name: 'id' }]);
+
+class UnsupportedUpdateAdapter {
+  async find(query: AdapterQuery): Promise<AdapterFindResult> {
+    void query;
+    return [];
+  }
+
+  async insert(
+    model: unknown,
+    connection: unknown,
+    data: readonly AdapterData[],
+  ): Promise<AdapterRow> {
+    void model;
+    void connection;
+    void data;
+    return {};
+  }
+
+  async update(
+    model: { readonly requiredByUpdate: true },
+    connection: { readonly updateTransaction: number },
+    primaryKey: Readonly<Record<string, unknown>>,
+    data: readonly AdapterData<UnsupportedField>[],
+  ): Promise<void> {
+    void model;
+    void connection;
+    void primaryKey;
+    void data;
+  }
+
+  getDBName(): string {
+    return 'unsupported-update';
+  }
+}
+
+const unsupportedUpdate = new Toshihiko(new UnsupportedUpdateAdapter());
+// @ts-expect-error Core update inputs must satisfy the update contract declared by the Adapter.
+unsupportedUpdate.define('unsupported-update', [{ name: 'id' }]);
 
 class StringValueAdapter implements Adapter<unknown, unknown, unknown, string> {
   async find(): Promise<AdapterFindResult> {
@@ -329,6 +423,18 @@ class StringValueAdapter implements Adapter<unknown, unknown, unknown, string> {
     void connection;
     void data;
     return {};
+  }
+
+  async update(
+    model: unknown,
+    connection: unknown,
+    primaryKey: Readonly<Record<string, unknown>>,
+    data: readonly AdapterData<unknown, string>[],
+  ): Promise<void> {
+    void model;
+    void connection;
+    void primaryKey;
+    void data;
   }
 
   getDBName(): string {
