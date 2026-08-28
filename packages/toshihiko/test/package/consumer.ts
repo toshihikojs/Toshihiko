@@ -38,10 +38,12 @@ void saved;
 void deleted;
 void counted;
 
-const cache: Cache<{ id: number }> = {
+const cache: Cache = {
   async deleteData() {},
   async deleteKeys() {},
-  async getData() { return [{ id: 1 }]; },
+  async getData<Value extends object>(): Promise<(Value | null)[]> {
+    return [{ id: 1 } as Value];
+  },
   async setData() {},
 };
 const CachedUser = toshihiko.define('cached_user', [

@@ -9,14 +9,14 @@ import {
   define,
 } from '../helpers/mysql';
 
-class TestCache implements Cache<unknown> {
+class TestCache implements Cache {
   readonly deleted: CacheKey[][] = [];
   readonly reads: CacheKey[][] = [];
-  readonly writes: { readonly data: unknown; readonly key: CacheKey }[] = [];
+  readonly writes: { readonly data: object; readonly key: CacheKey }[] = [];
   getError: Error | undefined;
   deleteError: Error | undefined;
   setError: Error | undefined;
-  rows: unknown[] = [];
+  rows: (object | null)[] = [];
 
   async deleteData(): Promise<void> {}
 
@@ -29,21 +29,21 @@ class TestCache implements Cache<unknown> {
     if (this.deleteError) throw this.deleteError;
   }
 
-  async getData(
+  async getData<Value extends object>(
     _database: string,
     _table: string,
     keys: CacheKey | readonly CacheKey[],
-  ): Promise<unknown[]> {
+  ): Promise<(Value | null)[]> {
     this.reads.push(Array.isArray(keys) ? [...keys] : [keys]);
     if (this.getError) throw this.getError;
-    return this.rows;
+    return this.rows as (Value | null)[];
   }
 
-  async setData(
+  async setData<Value extends object>(
     _database: string,
     _table: string,
     key: CacheKey,
-    data: unknown,
+    data: Value,
   ): Promise<void> {
     this.writes.push({ data, key });
     if (this.setError) throw this.setError;
@@ -52,7 +52,7 @@ class TestCache implements Cache<unknown> {
 
 test('v1 MySQL cache reads hits, fills misses, and honors noCache', async () => {
   const cache = new TestCache();
-  cache.rows = [{ user_id: 1, name: 'cached', ignored: 'cached-extra' }];
+  cache.rows = [null, { user_id: 1, name: 'cached', ignored: 'cached-extra' }];
   const pool = createPool([
     [{ user_id: 1 }, { user_id: 2 }],
     [{ user_id: 2, name: 'database', ignored: 'database-extra' }],

@@ -8,7 +8,7 @@ interface Row {
   readonly id: number;
 }
 
-class MemoryCache extends Cache<Row> {
+class MemoryCache extends Cache {
   override async deleteData(
     _database: string,
     _table: string,
@@ -21,19 +21,19 @@ class MemoryCache extends Cache<Row> {
     _keys: readonly CacheKey[],
   ): Promise<void> {}
 
-  override async getData(): Promise<Row[]> {
-    return [{ id: 1 }];
+  override async getData<Value extends object>(): Promise<(Value | null)[]> {
+    return [{ id: 1 } as Value];
   }
 
-  override async setData(
+  override async setData<Value extends object>(
     _database: string,
     _table: string,
     _key: CacheKey,
-    _data: Row,
+    _data: Value,
   ): Promise<void> {}
 }
 
-const cache: CacheContract<Row> = new MemoryCache();
-const rows: Promise<Row[]> = cache.getData('database', 'records', [1]);
+const cache: CacheContract = new MemoryCache();
+const rows: Promise<(Row | null)[]> = cache.getData<Row>('database', 'records', [1]);
 
 void rows;

@@ -20,20 +20,25 @@ import {
   type CacheKey,
 } from '@toshihiko/base-cache';
 
-class MemoryCache extends Cache<object> {
-  async getData(
+interface UserRow {
+  id: number;
+  name: string;
+}
+
+class MemoryCache extends Cache {
+  async getData<Value extends object>(
     database: string,
     table: string,
     keys: CacheKey | readonly CacheKey[],
-  ): Promise<object[]> {
+  ): Promise<Value[]> {
     return [];
   }
 
-  async setData(
+  async setData<Value extends object>(
     database: string,
     table: string,
     key: CacheKey,
-    data: object,
+    data: Value,
   ): Promise<void> {}
 
   async deleteData(

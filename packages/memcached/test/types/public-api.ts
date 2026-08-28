@@ -11,7 +11,9 @@ const customizeKey: CustomizeKey = function(database, table, key) {
 const options: MemcachedCacheOptions = { customizeKey, prefix: 'app:' };
 const direct: MemcachedCache = new MemcachedCache('127.0.0.1:11211', options);
 const created: MemcachedCache = create('127.0.0.1:11211', options);
-const rows: Promise<unknown[]> = direct.getData('database', 'records', [1, 2]);
+const rows: Promise<(Readonly<{ id: number }> | null)[]> = direct.getData<
+  Readonly<{ id: number }>
+>('database', 'records', [1, 2]);
 
 void created;
 void rows;

@@ -4,23 +4,32 @@ import {
 } from '../..';
 import type { Cache as CacheContract } from 'toshihiko';
 
-class PublishedCache extends Cache<string> {
+interface CachedRow {
+  readonly value: string;
+}
+
+class PublishedCache extends Cache {
   override async deleteData(): Promise<void> {}
 
   override async deleteKeys(): Promise<void> {}
 
-  override async getData(
+  override async getData<Value extends object>(
     _database: string,
     _table: string,
     _keys: CacheKey | readonly CacheKey[],
-  ): Promise<string[]> {
-    return ['cached'];
+  ): Promise<(Value | null)[]> {
+    return [{ value: 'cached' } as Value];
   }
 
-  override async setData(): Promise<void> {}
+  override async setData<Value extends object>(
+    _database: string,
+    _table: string,
+    _key: CacheKey,
+    _data: Value,
+  ): Promise<void> {}
 }
 
-const cache: CacheContract<string> = new PublishedCache();
-const rows: Promise<string[]> = cache.getData('database', 'records', 1);
+const cache: CacheContract = new PublishedCache();
+const rows: Promise<(CachedRow | null)[]> = cache.getData<CachedRow>('database', 'records', 1);
 
 void rows;

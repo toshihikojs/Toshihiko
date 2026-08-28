@@ -14,7 +14,7 @@ type RedisConstructorOptions = RedisOptions & {
   replyMapping?: NonNullable<RedisOptions['replyMapping']>;
 };
 
-export class RedisCache extends Cache<unknown> {
+export class RedisCache extends Cache {
   readonly prefix: string;
   readonly redis: RedisClient;
 
@@ -61,20 +61,20 @@ export class RedisCache extends Cache<unknown> {
     database: string,
     table: string,
     keys: readonly CacheKey[],
-  ): Promise<unknown[]> {
+  ): Promise<number[]> {
     const pipeline = this.redis.pipeline();
     for (const key of keys) {
       pipeline.del(this._getKey(database, table, key));
     }
-    const result = await pipeline.exec() as readonly (readonly [Error | null, unknown])[];
-    return result.map((entry) => entry[1]);
+    const result = await pipeline.exec() as readonly (readonly [Error | null, number])[] | null;
+    return result?.map((entry) => entry[1]) ?? [];
   }
 
-  async setData(
+  async setData<Value extends object>(
     database: string,
     table: string,
     key: CacheKey,
-    data: unknown,
+    data: Value,
   ): Promise<'OK' | null> {
     return await this.redis.set(
       this._getKey(database, table, key),
@@ -82,20 +82,20 @@ export class RedisCache extends Cache<unknown> {
     );
   }
 
-  async getData(
+  async getData<Value extends object>(
     database: string,
     table: string,
     keys: CacheKey | readonly CacheKey[],
-  ): Promise<unknown[]> {
+  ): Promise<(Value | null)[]> {
     const normalized = Array.isArray(keys) ? keys : [keys];
     const pipeline = this.redis.pipeline();
     for (const key of normalized) {
       pipeline.get(this._getKey(database, table, key));
     }
-    const result = await pipeline.exec() as readonly (readonly [Error | null, unknown])[];
-    return result
-      .filter((entry) => entry !== null)
-      .map((entry) => JSON.parse(entry[1] as string));
+    const result = await pipeline.exec() as readonly (readonly [Error | null, string | null])[] | null;
+    return result?.map((entry) => entry[1] === null
+      ? null
+      : JSON.parse(entry[1]) as Value) ?? [];
   }
 }
 

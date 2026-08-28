@@ -298,9 +298,9 @@ export class MySQLAdapter extends Adapter<
       throw error;
     }
 
-    let cachedRows: readonly unknown[] = [];
+    let cachedRows: readonly (AdapterRow | null)[] = [];
     try {
-      cachedRows = await cache.getData(this.database, model.name, primaryRows);
+      cachedRows = await cache.getData<AdapterRow>(this.database, model.name, primaryRows);
     } catch {
       cachedRows = [];
     }
@@ -310,11 +310,12 @@ export class MySQLAdapter extends Adapter<
     for (let index = 0; index < primaryRows.length; index++) {
       const primaryRow = primaryRows[index]!;
       const cached = cachedRows.find((value) => {
-        const row = value as Readonly<Record<string, unknown>>;
+        if (value === null) return false;
+        const row = value;
         return Object.keys(primaryRow).every((key) => primaryRow[key] === row[key]);
-      }) as AdapterRow | undefined;
+      });
 
-      if (cached !== undefined) {
+      if (cached !== undefined && cached !== null) {
         (cached as Record<string, unknown>).$fromCache = true;
         result.push(cached);
       } else {

@@ -18,7 +18,7 @@ export interface MemcachedCacheOptions extends MemcachedClient.options {
   customizeKey?: CustomizeKey;
 }
 
-export class MemcachedCache extends Cache<unknown> {
+export class MemcachedCache extends Cache {
   readonly memcached: MemcachedClient;
   readonly options: MemcachedCacheOptions | undefined;
   readonly prefix: string;
@@ -130,11 +130,11 @@ export class MemcachedCache extends Cache<unknown> {
     await Promise.all(workers);
   }
 
-  async setData(
+  async setData<Value extends object>(
     database: string,
     table: string,
     key: CacheKey,
-    data: unknown,
+    data: Value,
   ): Promise<boolean> {
     const cacheKey = this._getKey(database, table, key);
     return await new Promise<boolean>((resolve, reject) => {
@@ -145,16 +145,16 @@ export class MemcachedCache extends Cache<unknown> {
     });
   }
 
-  async getData(
+  async getData<Value extends object>(
     database: string,
     table: string,
     keys: CacheKey | readonly CacheKey[],
-  ): Promise<unknown[]> {
+  ): Promise<(Value | null)[]> {
     const normalized = Array.isArray(keys) ? keys : [keys];
     const cacheKeys = this._getKeys(database, table, normalized);
     if (cacheKeys.length === 0) return [];
     if (cacheKeys.length === 1) {
-      const data = await this.get(cacheKeys[0]!);
+      const data = await this.get<Value>(cacheKeys[0]!);
       return data === undefined ? [] : [data];
     }
 
@@ -169,15 +169,15 @@ export class MemcachedCache extends Cache<unknown> {
       groups[groups.length - 1]!.push(cacheKey);
     }
 
-    const result: unknown[] = [];
+    const result: Value[] = [];
     for (const group of groups) {
-      result.push(...await this.getMany(group));
+      result.push(...await this.getMany<Value>(group));
     }
     return result;
   }
 
-  private async get(key: string): Promise<unknown> {
-    return await new Promise<unknown>((resolve, reject) => {
+  private async get<Value extends object>(key: string): Promise<Value | undefined> {
+    return await new Promise<Value | undefined>((resolve, reject) => {
       this.memcached.get(key, (error, data) => {
         if (error) reject(error);
         else resolve(data);
@@ -185,14 +185,14 @@ export class MemcachedCache extends Cache<unknown> {
     });
   }
 
-  private async getMany(keys: readonly string[]): Promise<unknown[]> {
-    return await new Promise<unknown[]>((resolve, reject) => {
+  private async getMany<Value extends object>(keys: readonly string[]): Promise<Value[]> {
+    return await new Promise<Value[]>((resolve, reject) => {
       this.memcached.getMulti([...keys], (error, data) => {
         if (error) {
           reject(error);
           return;
         }
-        const result: unknown[] = [];
+        const result: Value[] = [];
         for (const key of keys) {
           if (data[key]) result.push(data[key]);
         }

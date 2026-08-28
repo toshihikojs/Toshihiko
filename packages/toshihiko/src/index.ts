@@ -7,9 +7,12 @@ export const Escaper = { escape, escapeLike };
 
 export type {
   Cache,
+  CacheDeleteKeysResult,
+  CacheDeleteResult,
   CacheKey,
   CacheModule,
   CacheOptions,
+  CacheSetResult,
   CacheSource,
 } from './contracts/cache';
 export type {

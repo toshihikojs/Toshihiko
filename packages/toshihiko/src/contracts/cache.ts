@@ -1,27 +1,39 @@
-export type CacheKey = unknown;
+export type CacheKey =
+  | object
+  | string
+  | number
+  | bigint
+  | boolean
+  | symbol
+  | null
+  | undefined;
 
-export interface Cache<Value = unknown> {
+export type CacheDeleteResult = void | boolean | number;
+export type CacheDeleteKeysResult = void | readonly number[];
+export type CacheSetResult = void | boolean | 'OK' | null;
+
+export interface Cache {
   deleteData(
     database: string,
     table: string,
     key: CacheKey,
-  ): Promise<unknown>;
+  ): Promise<CacheDeleteResult>;
   deleteKeys(
     database: string,
     table: string,
     keys: readonly CacheKey[],
-  ): Promise<unknown>;
-  getData(
+  ): Promise<CacheDeleteKeysResult>;
+  getData<Value extends object>(
     database: string,
     table: string,
     keys: CacheKey | readonly CacheKey[],
-  ): Promise<Value[]>;
-  setData(
+  ): Promise<(Value | null)[]>;
+  setData<Value extends object>(
     database: string,
     table: string,
     key: CacheKey,
     data: Value,
-  ): Promise<unknown>;
+  ): Promise<CacheSetResult>;
 }
 
 export interface CacheModule {
