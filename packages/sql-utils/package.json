@@ -35,7 +35,7 @@
     "clean:test": "node -e \"require('node:fs').rmSync('.test-dist', { recursive: true, force: true })\"",
     "typecheck": "tsc -p tsconfig.src.json --noEmit && tsc -p tsconfig.test.json --noEmit && tsc -p tsconfig.tools.json --noEmit",
     "test": "npm run build:test && node --experimental-test-coverage --test --test-concurrency=1 --test-coverage-exclude='.test-dist/test/**' .test-dist/test/*.test.js",
-    "test:coverage": "npm run gen-keywords && npm run typecheck && npm run build:test && c8 --src=.test-dist/src --include='.test-dist/src/**/*.js' node --test --test-concurrency=1 .test-dist/test/*.test.js",
+    "test:coverage": "npm run build && npm run typecheck && npm run build:test && c8 --src=.test-dist/src --include='.test-dist/src/**/*.js' node --test --test-concurrency=1 .test-dist/test/*.test.js",
     "gen-keywords": "ts-node tools/keywords/extract.ts",
     "prepublishOnly": "npm run build",
     "prepare": "npm run gen-keywords"
