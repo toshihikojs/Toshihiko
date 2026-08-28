@@ -27,6 +27,11 @@
       "versionPolicyName": "toshihiko-v2"
     },
     {
+      "packageName": "@toshihiko/base-cache",
+      "projectFolder": "packages/base-cache",
+      "versionPolicyName": "toshihiko-v2"
+    },
+    {
       "packageName": "@toshihiko/redis-cache",
       "projectFolder": "packages/redis",
       "versionPolicyName": "toshihiko-v2"

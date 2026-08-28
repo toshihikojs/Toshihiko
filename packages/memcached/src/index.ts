@@ -1,9 +1,8 @@
-import { EventEmitter } from 'node:events';
-import MemcachedClient from 'memcached';
-import type {
+import {
   Cache,
-  CacheKey,
-} from 'toshihiko';
+  type CacheKey,
+} from '@toshihiko/base-cache';
+import MemcachedClient from 'memcached';
 
 const memcachedCommandMaxLength = 250;
 
@@ -19,7 +18,7 @@ export interface MemcachedCacheOptions extends MemcachedClient.options {
   customizeKey?: CustomizeKey;
 }
 
-export class MemcachedCache extends EventEmitter implements Cache<unknown> {
+export class MemcachedCache extends Cache<unknown> {
   readonly memcached: MemcachedClient;
   readonly options: MemcachedCacheOptions | undefined;
   readonly prefix: string;

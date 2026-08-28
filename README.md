@@ -93,6 +93,7 @@ Toshihiko is developed as a monorepo, but each package keeps an independent publ
 | [`toshihiko`](packages/toshihiko) | `packages/toshihiko` | ORM core, Model, Query, Yukari, and built-in field types |
 | [`@toshihiko/base-adapter`](packages/base-adapter) | `packages/base-adapter` | Typed, Promise-only foundation for adapter authors; installed transitively by concrete adapters |
 | [`@toshihiko/mysql-adapter`](packages/mysql-adapter) | `packages/mysql-adapter` | MySQL adapter built on the `mysql2` Promise API |
+| [`@toshihiko/base-cache`](packages/base-cache) | `packages/base-cache` | Typed, Promise-only foundation for cache implementations |
 | [`@toshihiko/redis-cache`](packages/redis) | `packages/redis` | Redis cache preserving the v1 key and result behavior |
 | [`@toshihiko/memcached-cache`](packages/memcached) | `packages/memcached` | Memcached cache preserving v1 batching and custom keys |
 | [`@toshihiko/sql-utils`](packages/sql-utils) | `packages/sql-utils` | SQL identifier mapping and escaping utilities |
@@ -104,8 +105,9 @@ flowchart LR
   mysql["@toshihiko/mysql-adapter"] --> base["@toshihiko/base-adapter"]
   mysql --> core["toshihiko"]
   mysql --> sql["@toshihiko/sql-utils"]
-  redis["@toshihiko/redis-cache"] --> core
-  memcached["@toshihiko/memcached-cache"] --> core
+  redis["@toshihiko/redis-cache"] --> cache["@toshihiko/base-cache"]
+  memcached["@toshihiko/memcached-cache"] --> cache
+  cache --> core
   base --> core
   core --> sql
 ```
@@ -235,7 +237,7 @@ rush test:integration
 
 Rush tracks changes and publishes packages independently:
 
-- `toshihiko`, `@toshihiko/base-adapter`, `@toshihiko/mysql-adapter`, `@toshihiko/redis-cache`, and `@toshihiko/memcached-cache` are locked to major version 2, but do not need to publish together.
+- `toshihiko`, `@toshihiko/base-adapter`, `@toshihiko/mysql-adapter`, `@toshihiko/base-cache`, `@toshihiko/redis-cache`, and `@toshihiko/memcached-cache` are locked to major version 2, but do not need to publish together.
 - `@toshihiko/sql-utils` remains on its independent 1.x version line.
 - A change to an adapter does not force an unrelated core release.
 

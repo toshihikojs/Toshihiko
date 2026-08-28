@@ -30,6 +30,7 @@
     "toshihiko": ">=2.0.0-alpha.0 <3"
   },
   "dependencies": {
+    "@toshihiko/base-cache": "2.0.0-alpha.0",
     "ioredis": "^6.0.0"
   },
   "devDependencies": {

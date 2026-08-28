@@ -1,11 +1,10 @@
-import { EventEmitter } from 'node:events';
+import {
+  Cache,
+  type CacheKey,
+} from '@toshihiko/base-cache';
 import RedisClient, {
   type RedisOptions,
 } from 'ioredis';
-import type {
-  Cache,
-  CacheKey,
-} from 'toshihiko';
 
 export interface RedisCacheOptions extends RedisOptions {
   prefix?: string;
@@ -15,7 +14,7 @@ type RedisConstructorOptions = RedisOptions & {
   replyMapping?: NonNullable<RedisOptions['replyMapping']>;
 };
 
-export class RedisCache extends EventEmitter implements Cache<unknown> {
+export class RedisCache extends Cache<unknown> {
   readonly prefix: string;
   readonly redis: RedisClient;
 

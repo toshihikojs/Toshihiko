@@ -138,9 +138,17 @@
         "typescript": "^5.9.3"
       }
     },
+    "@rush-temp/base-cache": {
+      "version": "file:projects/base-cache.tgz",
+      "integrity": "sha512-dxQoIU0DU83MrjkGUSIbu3oP1hzYoibb7NWQ5gk0WQP5t8/Mhax1nsq+RJpk5g0Lyvm22aNgf8ovISUpdGUCNQ==",
+      "requires": {
+        "@types/node": "^22.0.0",
+        "typescript": "^5.9.3"
+      }
+    },
     "@rush-temp/memcached-cache": {
       "version": "file:projects/memcached-cache.tgz",
-      "integrity": "sha512-V2kyhos/WLDUGdnoZv2T9PI/C8wZFYLh3NrfGL9HmKA5+ItUtggvGxksYyayDY+tbVMS6mPGxoV/eLu8mCFL0g==",
+      "integrity": "sha512-zdIig25setfTC++XEXiuCJ42YhrNJ2nzizvVyZ6wlR4d7bPPsImKkmJwExVONjVcCmIZ0SsgL6fErkQL/QJVUg==",
       "requires": {
         "@types/memcached": "^2.2.10",
         "@types/node": "^22.0.0",
@@ -159,7 +167,7 @@
     },
     "@rush-temp/redis-cache": {
       "version": "file:projects/redis-cache.tgz",
-      "integrity": "sha512-C0ne0D7NwL+5M0a5lbo6MEjvZ67ZEluCrWuq6y5RQQFLOHBmMeJg5nH5/k1q6EHpdvkp8F0uWPPJ0ETdEnZ4Bg==",
+      "integrity": "sha512-ERrP2IafAvqD8PawgQWjD9JnhY0LyyJWYO6NbUzmbwM3TTOTHDK0XpD1gPoEY2h5g3qZ09rWeL12R//zezTt0Q==",
       "requires": {
         "@types/node": "^22.0.0",
         "ioredis": "^6.0.0",
