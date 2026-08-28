@@ -2,7 +2,7 @@
 
 [![npm](https://img.shields.io/npm/v/@toshihiko/base-adapter.svg)](https://www.npmjs.com/package/@toshihiko/base-adapter)
 [![CI](https://github.com/toshihikojs/Toshihiko/actions/workflows/ci.yml/badge.svg?branch=v2)](https://github.com/toshihikojs/Toshihiko/actions/workflows/ci.yml)
-[![Repository coverage](https://coveralls.io/repos/github/toshihikojs/Toshihiko/badge.svg?branch=v2)](https://coveralls.io/github/toshihikojs/Toshihiko?branch=v2)
+[![Coverage](https://codecov.io/github/toshihikojs/Toshihiko/branch/v2/graph/badge.svg?flag=base-adapter)](https://app.codecov.io/github/toshihikojs/Toshihiko)
 
 The Promise-only, typed foundation for Toshihiko v2 database adapters.
 

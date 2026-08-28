@@ -60,6 +60,7 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: read
+      id-token: write
 
     steps:
       - name: Checkout
@@ -82,74 +83,75 @@ jobs:
       - name: Normalize package coverage paths
         run: node scripts/normalize-lcov-paths.cjs
 
-      - name: Upload to Coveralls / toshihiko
-        uses: coverallsapp/github-action@8d6379e14d29928660c4ba802d8e85393440b329 # v2.3.8
+      - name: Upload to Codecov / toshihiko
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          file: packages/toshihiko/coverage/lcov.info
-          format: lcov
-          flag-name: toshihiko
-          parallel: true
+          disable_search: true
+          fail_ci_if_error: true
+          files: packages/toshihiko/coverage/lcov.info
+          flags: toshihiko
+          name: toshihiko
+          use_oidc: true
 
-      - name: Upload to Coveralls / base-adapter
-        uses: coverallsapp/github-action@8d6379e14d29928660c4ba802d8e85393440b329 # v2.3.8
+      - name: Upload to Codecov / base-adapter
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          file: packages/base-adapter/coverage/lcov.info
-          format: lcov
-          flag-name: base-adapter
-          parallel: true
+          disable_search: true
+          fail_ci_if_error: true
+          files: packages/base-adapter/coverage/lcov.info
+          flags: base-adapter
+          name: base-adapter
+          use_oidc: true
 
-      - name: Upload to Coveralls / mysql-adapter
-        uses: coverallsapp/github-action@8d6379e14d29928660c4ba802d8e85393440b329 # v2.3.8
+      - name: Upload to Codecov / mysql-adapter
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          file: packages/mysql-adapter/coverage/lcov.info
-          format: lcov
-          flag-name: mysql-adapter
-          parallel: true
+          disable_search: true
+          fail_ci_if_error: true
+          files: packages/mysql-adapter/coverage/lcov.info
+          flags: mysql-adapter
+          name: mysql-adapter
+          use_oidc: true
 
-      - name: Upload to Coveralls / base-cache
-        uses: coverallsapp/github-action@8d6379e14d29928660c4ba802d8e85393440b329 # v2.3.8
+      - name: Upload to Codecov / base-cache
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          file: packages/base-cache/coverage/lcov.info
-          format: lcov
-          flag-name: base-cache
-          parallel: true
+          disable_search: true
+          fail_ci_if_error: true
+          files: packages/base-cache/coverage/lcov.info
+          flags: base-cache
+          name: base-cache
+          use_oidc: true
 
-      - name: Upload to Coveralls / redis-cache
-        uses: coverallsapp/github-action@8d6379e14d29928660c4ba802d8e85393440b329 # v2.3.8
+      - name: Upload to Codecov / redis-cache
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          file: packages/redis/coverage/lcov.info
-          format: lcov
-          flag-name: redis-cache
-          parallel: true
+          disable_search: true
+          fail_ci_if_error: true
+          files: packages/redis/coverage/lcov.info
+          flags: redis-cache
+          name: redis-cache
+          use_oidc: true
 
-      - name: Upload to Coveralls / memcached-cache
-        uses: coverallsapp/github-action@8d6379e14d29928660c4ba802d8e85393440b329 # v2.3.8
+      - name: Upload to Codecov / memcached-cache
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          file: packages/memcached/coverage/lcov.info
-          format: lcov
-          flag-name: memcached-cache
-          parallel: true
+          disable_search: true
+          fail_ci_if_error: true
+          files: packages/memcached/coverage/lcov.info
+          flags: memcached-cache
+          name: memcached-cache
+          use_oidc: true
 
-      - name: Upload to Coveralls / sql-utils
-        uses: coverallsapp/github-action@8d6379e14d29928660c4ba802d8e85393440b329 # v2.3.8
+      - name: Upload to Codecov / sql-utils
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          file: packages/sql-utils/coverage/lcov.info
-          format: lcov
-          flag-name: sql-utils
-          parallel: true
-
-      - name: Finalize Coveralls build
-        uses: coverallsapp/github-action@8d6379e14d29928660c4ba802d8e85393440b329 # v2.3.8
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          parallel-finished: true
+          disable_search: true
+          fail_ci_if_error: true
+          files: packages/sql-utils/coverage/lcov.info
+          flags: sql-utils
+          name: sql-utils
+          use_oidc: true
 
   mysql-integration:
     name: MySQL and cache integration / ${{ matrix.mysql-image }}

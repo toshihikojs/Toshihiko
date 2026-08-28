@@ -1,0 +1,32 @@
+flags:
+  toshihiko:
+    paths:
+      - packages/toshihiko/
+    carryforward: false
+  base-adapter:
+    paths:
+      - packages/base-adapter/
+    carryforward: false
+  mysql-adapter:
+    paths:
+      - packages/mysql-adapter/
+    carryforward: false
+  base-cache:
+    paths:
+      - packages/base-cache/
+    carryforward: false
+  redis-cache:
+    paths:
+      - packages/redis/
+    carryforward: false
+  memcached-cache:
+    paths:
+      - packages/memcached/
+    carryforward: false
+  sql-utils:
+    paths:
+      - packages/sql-utils/
+    carryforward: false
+
+comment:
+  layout: "reach, diff, flags, files"
