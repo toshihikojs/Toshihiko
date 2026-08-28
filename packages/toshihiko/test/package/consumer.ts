@@ -14,7 +14,19 @@ const toshihiko = new Toshihiko('mysql');
 const User = toshihiko.define('user', [
   { name: 'id', type: Type.Integer, primaryKey: true },
   { name: 'name', type: Type.String },
-]);
+], {
+  methods: {
+    findByName(name: string) {
+      return this.where({ name }).findOne();
+    },
+    findByNameTwice(name: string) {
+      return Promise.all([
+        this.findByName(name),
+        this.findByName(name),
+      ]);
+    },
+  },
+});
 
 const user = User.build({ id: 1, name: 'Alice' });
 const id: number = user.id;
@@ -26,6 +38,18 @@ const updated: Promise<typeof user> = inserted.then((row) => row.update());
 const saved: Promise<typeof user> = user.save();
 const deleted: Promise<true> = updated.then((row) => row.delete());
 const counted: Promise<number> = User.where({ id: { $gte: 1 } }).count();
+const foundByName = User.findByName('Alice');
+const foundByNameTwice = User.findByNameTwice('Alice');
+
+foundByName.then((row) => {
+  const foundName: string | undefined = row?.name;
+  void foundName;
+});
+
+foundByNameTwice.then((rows) => {
+  const foundName: string | undefined = rows[0]?.name;
+  void foundName;
+});
 
 void user;
 void id;
@@ -37,6 +61,8 @@ void updated;
 void saved;
 void deleted;
 void counted;
+void foundByName;
+void foundByNameTwice;
 
 const cache: Cache = {
   async deleteData() {},

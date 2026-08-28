@@ -3,7 +3,7 @@ import { createRequire } from 'node:module';
 import { join } from 'node:path';
 import {
   Model,
-  type ModelOptions,
+  type ModelDefinitionOptions,
 } from './contracts/model';
 import type {
   Field,
@@ -170,21 +170,31 @@ export class Toshihiko<
   define<
     const Name extends string,
     const Schema extends SchemaDefinition,
+    const Methods extends object = object,
   >(
     collectionName: Name,
     schema: Schema,
-    options: ModelOptions = {},
+    options: ModelDefinitionOptions<
+      Name,
+      Schema,
+      AdapterInstance,
+      Methods
+    > = {},
     ..._validation: IsValidDefinition<Name, Schema, AdapterInstance> extends true
       ? readonly []
       : readonly [schemaTypeError: never]
-  ): Model<Name, Schema, AdapterInstance> {
+  ): Model<Name, Schema, AdapterInstance> & Methods {
     void _validation;
-    return new Model<Name, Schema, AdapterInstance>(
+    const model = new Model<Name, Schema, AdapterInstance>(
       collectionName,
       this,
       schema,
       options,
     );
+    if (options?.methods) {
+      Object.assign(model, options.methods);
+    }
+    return model as Model<Name, Schema, AdapterInstance> & Methods;
   }
 }
 

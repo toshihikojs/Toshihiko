@@ -64,6 +64,54 @@ const User = toshihiko.define('user', [
   },
 ]);
 
+const UserWithMethods = toshihiko.define('user_with_methods', [
+  { name: 'id', type: Type.Integer, primaryKey: true },
+  { name: 'name', type: Type.String },
+], {
+  methods: {
+    findByName(name: string) {
+      return this.where({ name }).findOne();
+    },
+    findByNameTwice(name: string) {
+      return Promise.all([
+        this.findByName(name),
+        this.findByName(name),
+      ]);
+    },
+    findByIdWithFunction: function findByIdWithFunction(id: number) {
+      return this.findById(id);
+    },
+    rejectsInvalidFields() {
+      // @ts-expect-error Custom methods preserve the Model's schema.
+      return this.where({ missing: true }).findOne();
+    },
+  },
+});
+
+const foundByName = UserWithMethods.findByName('Alice');
+const foundByNameTwice = UserWithMethods.findByNameTwice('Alice');
+foundByName.then((row) => {
+  const name: string | undefined = row?.name;
+  void name;
+});
+foundByNameTwice.then((rows) => {
+  const name: string | undefined = rows[0]?.name;
+  void name;
+});
+
+// @ts-expect-error Custom method parameter types are preserved outside define().
+UserWithMethods.findByName(1);
+
+void foundByName;
+void foundByNameTwice;
+
+toshihiko.define('invalid_methods', [{ name: 'id' }], {
+  methods: {
+    // @ts-expect-error Model methods must be functions.
+    invalid: 1,
+  },
+});
+
 const Validated = toshihiko.define('validated', [
   {
     name: 'score',

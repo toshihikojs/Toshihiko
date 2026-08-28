@@ -102,6 +102,7 @@ export type {
   FieldNamesMap,
   InferModelPrimaryKey,
   InferModelRow,
+  ModelDefinitionOptions,
   Model,
   ModelOptions,
   NameToColumnMap,

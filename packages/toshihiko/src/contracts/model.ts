@@ -52,6 +52,23 @@ export interface ModelOptions {
   readonly [key: string]: unknown;
 }
 
+type ValidatedModelMethods<Methods extends object> = {
+  readonly [Name in keyof Methods]: Methods[Name] extends (
+    ...arguments_: never[]
+  ) => void ? Methods[Name] : never;
+};
+
+export type ModelDefinitionOptions<
+  Name extends string,
+  Schema extends SchemaDefinition,
+  AdapterInstance extends AdapterLike,
+  Methods extends object,
+> = ModelOptions & {
+  readonly methods?: Methods & ValidatedModelMethods<Methods> & ThisType<
+    Model<Name, Schema, AdapterInstance> & Methods
+  >;
+};
+
 type ColumnName<Definition extends FieldDefinitionShape> =
   Definition extends { readonly column: infer Column extends string }
     ? Column extends '' ? Definition['name'] : Column

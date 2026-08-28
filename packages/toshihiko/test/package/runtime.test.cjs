@@ -197,6 +197,40 @@ test('define compiles the documented schema into model metadata', () => {
   assert.equal(Object.keys(User.fieldNamesMap.nickname).includes('options'), false);
 });
 
+test('define attaches typed model methods while preserving v1 dynamic extension', async () => {
+  const toshihiko = new Toshihiko(MemoryAdapter, {
+    rows: [{ id: 1, name: 'Alice' }],
+  });
+  const User = toshihiko.define('user', [
+    { name: 'id', type: Type.Integer, primaryKey: true },
+    { name: 'name', type: Type.String },
+  ], {
+    methods: {
+      findByName(name) {
+        return this.where({ name }).findOne();
+      },
+      findByNameTwice(name) {
+        return Promise.all([
+          this.findByName(name),
+          this.findByName(name),
+        ]);
+      },
+    },
+  });
+
+  assert.equal((await User.findByName('Alice')).name, 'Alice');
+  assert.deepEqual(
+    (await User.findByNameTwice('Alice')).map((row) => row.name),
+    ['Alice', 'Alice'],
+  );
+
+  User.findByLegacyName = function findByLegacyName(name) {
+    return this.where({ name }).findOne();
+  };
+  assert.equal((await User.findByLegacyName('Alice')).name, 'Alice');
+  assert.equal(User.options.methods.findByName, User.findByName);
+});
+
 test('built-in field types retain v1 restore coercion for JavaScript callers', () => {
   assert.equal(Type.String.needQuotes, true);
   assert.equal(Type.Float.needQuotes, false);

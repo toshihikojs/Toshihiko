@@ -94,6 +94,50 @@ const Audit = database.define('audit', auditSchema, {
 
 A Model inherits the Toshihiko-level cache when `cache` is omitted. Pass a cache instance to replace it, or `false` or `null` to disable caching for that Model.
 
+## Model methods
+
+Put application-specific Model methods in the `methods` option. Toshihiko adds
+them to the Model returned by `define()`, and TypeScript preserves their
+parameters and return values:
+
+```typescript
+export const User = database.define('users', [
+  { name: 'id', type: Type.Integer, primaryKey: true },
+  { name: 'name', type: Type.String },
+], {
+  methods: {
+    findByName(name: string) {
+      return this.where({ name }).findOne();
+    },
+    findByNameTwice(name: string) {
+      return Promise.all([
+        this.findByName(name),
+        this.findByName(name),
+      ]);
+    },
+  },
+});
+
+const user = await User.findByName('Alice');
+```
+
+Inside each method, `this` is inferred as the Model together with all custom
+methods. Use method shorthand as above, or a normal `function`. Do not use an
+arrow function when the method needs `this`, because arrow functions do not
+receive the Model as their dynamic `this` value.
+
+JavaScript callers can still extend a Model after `define()`, as in 1.x:
+
+```javascript
+User.findByName = function findByName(name) {
+  return this.where({ name }).findOne();
+};
+```
+
+The `methods` option is preferred for TypeScript because an assignment made
+after `define()` cannot change the already inferred type of `User`. Custom
+method names should not replace built-in Model properties or methods.
+
 ## Inferred helper types
 
 Most application code can use `build()` directly. Helper types remain available when a row type must cross a module boundary:
