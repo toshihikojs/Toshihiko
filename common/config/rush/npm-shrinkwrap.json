@@ -140,9 +140,10 @@
     },
     "@rush-temp/base-adapter": {
       "version": "file:projects/base-adapter.tgz",
-      "integrity": "sha512-A8No6n75mgkKuz2n9hgNo8zY/NbLRwTiDznDY/WpAe6uH00P80suWcUx462WoLIUi1WDl7nToUV2HyEYgXY46A==",
+      "integrity": "sha512-MvzqRqvjRoqko3qC+tpKL7SL3VoDlnofURF4zmiJzW7Hp8TRCJTDtgY+6WT4jsdtCKlN/kqnb0tLvejdl2jHwg==",
       "requires": {
         "@types/node": "^22.0.0",
+        "c8": "^12.0.0",
         "eventemitter2": "^6.0.0",
         "lodash": "4.17.21",
         "typescript": "^5.9.3"
@@ -150,45 +151,50 @@
     },
     "@rush-temp/base-cache": {
       "version": "file:projects/base-cache.tgz",
-      "integrity": "sha512-dxQoIU0DU83MrjkGUSIbu3oP1hzYoibb7NWQ5gk0WQP5t8/Mhax1nsq+RJpk5g0Lyvm22aNgf8ovISUpdGUCNQ==",
+      "integrity": "sha512-eGkcXf8NtUABvaWnBQJg2uiL2eM+fnRHiRtPUBnWSjx8s42oRgLTTFTjf3RjpaZerH3DrAQbOX4h9G8y/lkUzA==",
       "requires": {
         "@types/node": "^22.0.0",
+        "c8": "^12.0.0",
         "typescript": "^5.9.3"
       }
     },
     "@rush-temp/memcached-cache": {
       "version": "file:projects/memcached-cache.tgz",
-      "integrity": "sha512-zdIig25setfTC++XEXiuCJ42YhrNJ2nzizvVyZ6wlR4d7bPPsImKkmJwExVONjVcCmIZ0SsgL6fErkQL/QJVUg==",
+      "integrity": "sha512-s/DA+Jyyn7a5FNcdY/WrU2OETc5ODp5xUBnWVi/zuzFhVsZ7uB/gTLZrhCAVbSl5ODqEXwy5Nha9HxKbRjMskQ==",
       "requires": {
         "@types/memcached": "^2.2.10",
         "@types/node": "^22.0.0",
+        "c8": "^12.0.0",
         "memcached": "^2.2.2",
         "typescript": "^5.9.3"
       }
     },
     "@rush-temp/mysql-adapter": {
       "version": "file:projects/mysql-adapter.tgz",
-      "integrity": "sha512-I0r6rEiRgq1D205vVfEvyNvcmekHZDj0awyU3dOHzVA4eh19yzS1sZp2KOKTLf9rkbeKJ/I+I31RDo+Iv0ULOw==",
+      "integrity": "sha512-53IWDK6j7PQ/gIBqNzYnQO+LdAM228QA/5Y27YJFgpm/qCZh8WoQwaL95MuaTlcYe+QaZPwXnahJUEc9ILWMdA==",
       "requires": {
         "@types/node": "^22.0.0",
+        "c8": "^12.0.0",
         "mysql2": "^3.24.2",
         "typescript": "^5.9.3"
       }
     },
     "@rush-temp/redis-cache": {
       "version": "file:projects/redis-cache.tgz",
-      "integrity": "sha512-ERrP2IafAvqD8PawgQWjD9JnhY0LyyJWYO6NbUzmbwM3TTOTHDK0XpD1gPoEY2h5g3qZ09rWeL12R//zezTt0Q==",
+      "integrity": "sha512-3Hx/wU2XRNm3/3de0mE8WyahDNE6qrcy16J74Fjaj0ksh4BZCz59s46DQm2BmUpCZ3VgWOejA7pvYFRvXOAU3w==",
       "requires": {
         "@types/node": "^22.0.0",
+        "c8": "^12.0.0",
         "ioredis": "^6.0.0",
         "typescript": "^5.9.3"
       }
     },
     "@rush-temp/sql-utils": {
       "version": "file:projects/sql-utils.tgz",
-      "integrity": "sha512-rlLRl4r4cEpHSJNZri0aTWlMa79AEjROsR+5/rQkvFVfNRhkZAsy89SBucTwLhOh4Fe+Mjhj6Vo0EjWs9yCmGQ==",
+      "integrity": "sha512-1tyuwgNjGyddAysQNKuatGXFJSfGIA1sVA60Yrm6UWnnDhcyXbIrSrvf8D76656AKLqU8/Lzn77NPL4i+Ql1vA==",
       "requires": {
         "@types/node": "^22.0.0",
+        "c8": "^12.0.0",
         "cheerio": "^1.0.0",
         "eslint": "^8.57.1",
         "eslint-config-egg": "^14.0.0",
@@ -199,9 +205,10 @@
     },
     "@rush-temp/toshihiko": {
       "version": "file:projects/toshihiko.tgz",
-      "integrity": "sha512-cY6FTFDAloMEolLmXJCSzc4Vx2xyKhDCOG7QaVj5NKgtAgHb7hAHtKFt653/WwWnBTAR49cSKaDgpANhUw9YQQ==",
+      "integrity": "sha512-4Cn2afq0qJr93tISoO9/LiAsaolP9swKpX++EeVGFLhZ9IsmU6nnYZCyGeR7FhIX93kFJyPRb4XUZkgVUWWGWA==",
       "requires": {
         "@types/node": "^22.0.0",
+        "c8": "^12.0.0",
         "eventemitter2": "^6.0.0",
         "fbbk-json": "^1.1.0",
         "lodash": "4.17.21",
