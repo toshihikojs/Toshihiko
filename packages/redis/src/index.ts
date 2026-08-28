@@ -30,10 +30,10 @@ export class RedisCache extends Cache {
     this.redis = client ?? (options
       ? new RedisClient(
         Number(parts[1]),
-        parts[0] ?? '',
+        parts[0]!,
         options as RedisConstructorOptions,
       )
-      : new RedisClient(Number(parts[1]), parts[0] ?? ''));
+      : new RedisClient(Number(parts[1]), parts[0]!));
   }
 
   _getKey(database: string, table: string, key: CacheKey): string {

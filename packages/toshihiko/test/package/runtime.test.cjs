@@ -1,6 +1,9 @@
 'use strict';
 
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
 const test = require('node:test');
 const moment = require('moment');
 
@@ -1350,4 +1353,290 @@ test('Query and Yukari retain the Adapter captured at construction like v1', asy
   assert.equal(first.calls.length, 1);
   assert.equal(first.insertCalls.length, 1);
   assert.equal(second.calls.length, 1);
+});
+
+test('v1 runtime aliases execute through the same Model and Query paths', async () => {
+  const connection = { transaction: 7 };
+  const adapter = new MemoryAdapter({
+    database: 'aliases',
+    executeResult: { ok: true },
+    queryUpdateResult: { affectedRows: 1 },
+    rows: [],
+  });
+  const toshihiko = new Toshihiko(adapter);
+  const User = toshihiko.define('user', [
+    { name: 'id', primaryKey: true },
+    { name: 'name' },
+  ]);
+
+  assert.equal(User._fields, User.schema);
+  assert.equal(User.toshihiko, toshihiko);
+  assert.deepEqual(User.field('id')._fields, ['id']);
+  assert.deepEqual(User.fields(['id', 'name'])._fields, ['id', 'name']);
+  assert.equal(User.index('PRIMARY')._index, 'PRIMARY');
+  assert.deepEqual(User.orderBy({ id: 'desc' })._order, [{ id: -1 }]);
+  assert.equal(User.conn(connection)._conn, connection);
+
+  const query = User.where({});
+  assert.equal(query.field('id'), query);
+  assert.deepEqual(query._fields, ['id']);
+  assert.equal(query.orderBy('id desc'), query);
+  assert.deepEqual(query._order, [{ id: -1 }]);
+  assert.deepEqual(query.limit([2], 3)._limit, [2, 3]);
+  assert.deepEqual(query.limit([], undefined)._limit, [0, 0]);
+
+  assert.deepEqual(await User.update({ name: 'Alice' }), { affectedRows: 1 });
+  assert.deepEqual(await User.delete(), { affectedRows: 1 });
+  assert.deepEqual(await User.execute('SELECT 1'), { ok: true });
+  assert.deepEqual(await toshihiko.execute('SELECT 2'), { ok: true });
+  assert.deepEqual(adapter.executeCalls, [[null, 'SELECT 1'], ['SELECT 2']]);
+});
+
+test('Field and JSON fallbacks retain the v1 JavaScript behavior', () => {
+  const previousEnvironment = process.env.NODE_ENV;
+  const previousError = console.error;
+  const errors = [];
+  process.env.NODE_ENV = 'development';
+  console.error = (message) => errors.push(message);
+  try {
+    assert.deepEqual(Type.Json.parse('{broken json'), {});
+  } finally {
+    console.error = previousError;
+    if (previousEnvironment === undefined) delete process.env.NODE_ENV;
+    else process.env.NODE_ENV = previousEnvironment;
+  }
+  assert.equal(errors.length, 1);
+
+  const Model = new Toshihiko(MemoryAdapter).define('field-fallbacks', [
+    { name: 'text' },
+    {
+      name: 'raw',
+      type: {
+        name: 'Raw',
+        needQuotes: false,
+        parse(value) { return value; },
+        restore(value) { return value; },
+      },
+    },
+    {
+      name: 'serialized',
+      type: {
+        name: 'Serialized',
+        needQuotes: false,
+        parse(value) { return value; },
+        restore(value) { return value; },
+        equal(left, right) { return left.value === right.value; },
+        toJSON(value) { return value.value; },
+      },
+    },
+    { name: 'json', type: Type.Json },
+  ]);
+  const textField = Model.fieldNamesMap.text;
+  const rawField = Model.fieldNamesMap.raw;
+  const serializedField = Model.fieldNamesMap.serialized;
+  const jsonField = Model.fieldNamesMap.json;
+  assert.equal(textField.restore(2), '2');
+  assert.equal(rawField.equal(1, 1), true);
+  assert.equal(rawField.equal({}, {}), false);
+  assert.equal(serializedField.equal({ value: 1 }, { value: 1 }), true);
+  assert.equal(rawField.toJSON('value'), 'value');
+  serializedField.type.toJSON = (value) => value.value;
+  assert.equal(serializedField.toJSON({ value: 2 }), 2);
+  assert.deepEqual(jsonField.toJSON({ enabled: true }), { enabled: true });
+
+  const noArgumentCache = Toshihiko.createCache({
+    module: {
+      create() { return { marker: true }; },
+    },
+  });
+  assert.equal(noArgumentCache.marker, true);
+});
+
+test('cache factories retain v1 path, package-name, and invalid-source loading', () => {
+  const temporaryDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'toshihiko-cache-'));
+  const pathModule = path.join(temporaryDirectory, 'path-cache.cjs');
+  fs.writeFileSync(pathModule, `exports.create = function create(prefix) {
+    return {
+      prefix,
+      deleteData() {},
+      deleteKeys() {},
+      getData() {},
+      setData() {}
+    };
+  };\n`);
+
+  const namedModuleDirectory = path.join(__dirname, '../../node_modules/@toshihiko/coverage-cache');
+  fs.mkdirSync(namedModuleDirectory, { recursive: true });
+  fs.writeFileSync(path.join(namedModuleDirectory, 'index.js'), `exports.create = function create(prefix) {
+    return {
+      prefix,
+      deleteData() {},
+      deleteKeys() {},
+      getData() {},
+      setData() {}
+    };
+  };\n`);
+
+  try {
+    assert.equal(Toshihiko.createCache({ path: pathModule, prefix: 'path' }).prefix, 'path');
+    assert.equal(Toshihiko.createCache({ name: 'coverage', prefix: 'name' }).prefix, 'name');
+    assert.equal(Toshihiko.createCache({}), null);
+
+    const { isCache } = require('../../dist/contracts/cache.js');
+    assert.equal(isCache(null), false);
+    assert.equal(isCache(1), false);
+  } finally {
+    fs.rmSync(temporaryDirectory, { recursive: true, force: true });
+    fs.rmSync(namedModuleDirectory, { recursive: true, force: true });
+  }
+});
+
+test('Adapter loading and direct injection retain the v1 compatibility surface', () => {
+  const temporaryDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'toshihiko-adapter-'));
+  const defaultModule = path.join(temporaryDirectory, 'default.cjs');
+  const namedModule = path.join(temporaryDirectory, 'named.cjs');
+  fs.writeFileSync(defaultModule, 'exports.default = class DefaultAdapter {};\n');
+  fs.writeFileSync(namedModule, 'exports.Adapter = class NamedAdapter {};\n');
+  const { loadAdapter } = require('../../dist/toshihiko.js');
+
+  assert.equal(loadAdapter(defaultModule).name, 'DefaultAdapter');
+  assert.equal(loadAdapter(namedModule).name, 'NamedAdapter');
+
+  const packageDirectory = path.join(temporaryDirectory, 'node_modules/@toshihiko/fallback-adapter');
+  fs.mkdirSync(packageDirectory, { recursive: true });
+  fs.writeFileSync(path.join(temporaryDirectory, 'package.json'), '{}\n');
+  fs.writeFileSync(path.join(packageDirectory, 'index.js'), `module.exports = class FallbackAdapter {
+    constructor(parent, options) { this.parent = parent; this.options = options; }
+    getDBName() { return this.options.database; }
+  };\n`);
+  const previousDirectory = process.cwd();
+  try {
+    process.chdir(temporaryDirectory);
+    const loaded = new Toshihiko('fallback', { database: 'fallback-db' });
+    assert.equal(loaded.database, 'fallback-db');
+    assert.equal(loaded.dialect, 'fallback');
+  } finally {
+    process.chdir(previousDirectory);
+    fs.rmSync(temporaryDirectory, { recursive: true, force: true });
+  }
+
+  const pool = { id: 1 };
+  const direct = {
+    getDBName() { return 'direct'; },
+    mysql: pool,
+  };
+  const withPool = new Toshihiko(direct);
+  assert.equal(withPool.pool, pool);
+  direct.mysql = { id: 2 };
+  assert.equal(withPool.pool, direct.mysql);
+
+  const frozen = Object.freeze({ getDBName() { return 'frozen'; } });
+  assert.equal(new Toshihiko(frozen).database, 'frozen');
+
+  const toshihikoModule = require('../../dist/toshihiko.js');
+  const originalLoadAdapter = toshihikoModule.loadAdapter;
+  toshihikoModule.loadAdapter = (name) => name;
+  try {
+    assert.equal(packageExports.Adapter.base, 'base');
+    assert.equal(packageExports.Adapter.mysql, 'mysql');
+  } finally {
+    toshihikoModule.loadAdapter = originalLoadAdapter;
+  }
+});
+
+test('Yukari covers cached rows, validation aliases, and Adapter row filtering', async () => {
+  const adapter = new MemoryAdapter({
+    database: 'yukari',
+    insertRow: {
+      $fromCache: true,
+      $origData: { id: { fieldIdx: 0, data: 9 } },
+      ignored() {},
+      id: 9,
+    },
+    rows: [],
+  });
+  const User = new Toshihiko(adapter).define('user', [
+    { name: 'id', type: Type.Integer, primaryKey: true },
+    { name: 'nullable', allowNull: true },
+  ]);
+
+  const built = User.build({ id: 1, nullable: null, $fromCache: true });
+  assert.equal(built.$fromCache, true);
+  await built.validateOne('nullable', null);
+  await assert.rejects(built.validateOne('missing', 1), /No such field missing/);
+  await built.insert();
+  assert.equal(built.id, 9);
+  assert.equal(built.$fromCache, true);
+  assert.equal(built.ignored, undefined);
+
+  const queried = new Yukari(User, 'query');
+  queried.fillRowFromSource({ id: 1, nullable: 'value', $fromCache: true });
+  assert.equal(queried.$fromCache, true);
+  queried.nullable = null;
+  assert.deepEqual(queried.updateChanges().map(({ field, value }) => [field.name, value]), [
+    ['nullable', null],
+  ]);
+
+  adapter.options.rows = [queried];
+  assert.equal(await User.findOne(), queried);
+  assert.deepEqual(await User.find(true), [queried.toJSON()]);
+
+  const originalNameBuild = new Yukari(User, 'new');
+  originalNameBuild.buildNewRow({ id: 3 }, true);
+  assert.equal(originalNameBuild.id, 3);
+
+  const nullableSource = new Yukari(User, 'query');
+  nullableSource.fillRowFromSource({ id: 2, nullable: null });
+  assert.equal(nullableSource.nullable, null);
+  assert.deepEqual(Yukari.extractAdapterData(User, { $meta: true, id: 2 }), [
+    { field: User.fieldNamesMap.id, value: 2 },
+  ]);
+  nullableSource.$meta = true;
+  nullableSource.extra = 'ignored';
+  nullableSource.handler = () => undefined;
+  assert.deepEqual(nullableSource.updateChanges(), []);
+
+  const Membership = new Toshihiko(new MemoryAdapter({ database: 'composite', rows: [] }))
+    .define('membership', [
+      { name: 'userId', primaryKey: true },
+      { name: 'groupId', primaryKey: true },
+    ]);
+  await assert.rejects(Membership.findById(1), /valid IDs object/);
+});
+
+test('remaining v1 branch shapes preserve empty and scalar return values', async () => {
+  const emptyAdapter = new MemoryAdapter({ database: 'empty', rows: [] });
+  const Empty = new Toshihiko(emptyAdapter).define('empty', [{ name: 'id', primaryKey: true }]);
+  assert.equal(await Empty.find({ single: true }), null);
+  assert.deepEqual(Empty.convertColumnToName('id'), 'id');
+  assert.equal(Empty.getPrimaryKeysName(), 'id');
+  assert.equal(Empty.getPrimaryKeysColumn(), 'id');
+  assert.deepEqual(Empty.limit([], 2)._limit, [0, 2]);
+
+  const NoPrimary = new Toshihiko(new MemoryAdapter({ rows: [] }))
+    .define('no-primary', [{ name: 'value' }]);
+  assert.deepEqual(NoPrimary.getPrimaryKeysName(), []);
+  assert.deepEqual(NoPrimary.getPrimaryKeysColumn(), []);
+
+  const cachedRows = [{ id: 1 }];
+  const cache = {
+    async deleteData() {},
+    async deleteKeys() {},
+    async getData() { return cachedRows; },
+    async setData() {},
+  };
+  const Cached = new Toshihiko(new MemoryAdapter({ database: 'cached', rows: [] }))
+    .define('cached', [{ name: 'id', primaryKey: true }], { cache });
+  assert.deepEqual(await Cached.findById(1, true), { id: '1' });
+  assert.equal(await Empty.findOne(true), null);
+
+  const unnamedConstructor = class extends MemoryAdapter {};
+  Object.defineProperty(unnamedConstructor, 'name', { value: '' });
+  assert.equal(new Toshihiko(unnamedConstructor).dialect, null);
+  const unnamedInstance = new MemoryAdapter({ database: 'unnamed' });
+  Object.defineProperty(unnamedInstance, 'constructor', { value: { name: '' } });
+  assert.equal(new Toshihiko(unnamedInstance).dialect, null);
+
+  assert.equal(Type.Float.equal(1, '1'), true);
+  assert.equal(Type.Float.equal(1, 1), true);
 });

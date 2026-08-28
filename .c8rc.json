@@ -1,0 +1,28 @@
+{
+  "all": true,
+  "branches": 100,
+  "check-coverage": true,
+  "exclude": [
+    "dist/contracts.js",
+    "dist/contracts/adapter.js",
+    "dist/contracts/common.js",
+    "test/**"
+  ],
+  "extension": [
+    ".js"
+  ],
+  "functions": 100,
+  "include": [
+    "dist/**/*.js"
+  ],
+  "lines": 100,
+  "reporter": [
+    "text",
+    "lcov"
+  ],
+  "reports-dir": "coverage",
+  "src": [
+    "dist"
+  ],
+  "statements": 100
+}

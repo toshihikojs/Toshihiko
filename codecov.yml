@@ -1,0 +1,50 @@
+codecov:
+  branch: v2
+
+comment:
+  layout: "condensed_header, diff, components"
+
+coverage:
+  status:
+    project:
+      default:
+        informational: true
+    patch:
+      default:
+        informational: true
+
+component_management:
+  default_rules:
+    statuses:
+      - type: project
+        target: auto
+        informational: true
+  individual_components:
+    - component_id: toshihiko
+      name: toshihiko
+      paths:
+        - packages/toshihiko/src/**
+    - component_id: base-adapter
+      name: "@toshihiko/base-adapter"
+      paths:
+        - packages/base-adapter/src/**
+    - component_id: mysql-adapter
+      name: "@toshihiko/mysql-adapter"
+      paths:
+        - packages/mysql-adapter/src/**
+    - component_id: base-cache
+      name: "@toshihiko/base-cache"
+      paths:
+        - packages/base-cache/src/**
+    - component_id: redis-cache
+      name: "@toshihiko/redis-cache"
+      paths:
+        - packages/redis/src/**
+    - component_id: memcached-cache
+      name: "@toshihiko/memcached-cache"
+      paths:
+        - packages/memcached/src/**
+    - component_id: sql-utils
+      name: "@toshihiko/sql-utils"
+      paths:
+        - packages/sql-utils/src/**

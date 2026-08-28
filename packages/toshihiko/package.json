@@ -32,6 +32,7 @@
     "build": "npm run clean && tsc -p tsconfig.build.json",
     "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
     "test": "npm run typecheck && npm run build && npm run test:package",
+    "test:coverage": "npm run typecheck && npm run build && c8 node --test test/package/runtime.test.cjs",
     "test:package": "tsc -p test/package/tsconfig.json && node --test test/package/runtime.test.cjs",
     "typecheck": "tsc -p tsconfig.json",
     "validate": "npm ls",
@@ -39,6 +40,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "c8": "^12.0.0",
     "typescript": "^5.9.3"
   },
   "dependencies": {

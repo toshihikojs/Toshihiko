@@ -387,9 +387,6 @@ export class MySQLSqlBuilder {
   }
 
   private compileEquality(field: MySQLField, value: unknown): MySQLStatement {
-    if (value === null) {
-      return statement(`${quoteIdentifier(field.column)} IS NULL`);
-    }
     const compiled = this.compileRestoredValue(field, value);
     return {
       sql: `${quoteIdentifier(field.column)} = ${compiled.sql}`,

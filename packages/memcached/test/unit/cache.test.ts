@@ -2,24 +2,34 @@ import assert from 'node:assert/strict';
 import { EventEmitter } from 'node:events';
 import test from 'node:test';
 import type MemcachedClient from 'memcached';
-import { MemcachedCache } from '../../dist';
+import { create, MemcachedCache } from '../../dist';
 
 class FakeMemcached extends EventEmitter {
+  delError: Error | undefined;
+  getError: Error | undefined;
+  getMultiError: Error | undefined;
+  setError: Error | undefined;
+  readonly multiCalls: string[][] = [];
   readonly values = new Map<string, unknown>();
 
   del(key: string, callback: (error?: Error) => void): void {
     this.values.delete(key);
-    callback();
+    callback(this.delError);
   }
 
   get(key: string, callback: (error: Error | undefined, value?: unknown) => void): void {
-    callback(undefined, this.values.get(key));
+    callback(this.getError, this.values.get(key));
   }
 
   getMulti(
     keys: readonly string[],
     callback: (error: Error | undefined, values: Record<string, unknown>) => void,
   ): void {
+    this.multiCalls.push([...keys]);
+    if (this.getMultiError) {
+      callback(this.getMultiError, {});
+      return;
+    }
     const values: Record<string, unknown> = {};
     for (const key of keys) {
       if (this.values.has(key)) values[key] = this.values.get(key);
@@ -35,7 +45,7 @@ class FakeMemcached extends EventEmitter {
   ): void {
     assert.equal(lifetime, 0);
     this.values.set(key, value);
-    callback();
+    callback(this.setError);
   }
 }
 
@@ -61,6 +71,10 @@ test('Memcached cache preserves v1 key generation and data behavior', async () =
     cache._getKey('database', 'records', { aabd: 2, aac: 3 }),
     '__test__database:records:aab2:aac3',
   );
+  assert.equal(
+    cache._getKey('database', 'records', { ab: 2, abc: 3 }),
+    '__test__database:records:ab2:abc3',
+  );
   assert.equal(cache._getKey('database', 'records', {}), '__test__database:records');
 
   assert.equal(await cache.setData('database', 'records', 1, { id: 1 }), true);
@@ -73,6 +87,32 @@ test('Memcached cache preserves v1 key generation and data behavior', async () =
   await cache.setData('database', 'records', 2, { id: 2 });
   await cache.deleteKeys('database', 'records', [1, 2]);
   assert.deepEqual(await cache.getData('database', 'records', [1, 2]), []);
+
+  const longKey1 = `a${'x'.repeat(125)}`;
+  const longKey2 = `b${'y'.repeat(125)}`;
+  client.values.set(cache._getKey('database', 'records', longKey1), { id: 1 });
+  client.values.set(cache._getKey('database', 'records', longKey2), { id: 2 });
+  assert.deepEqual(
+    await cache.getData('database', 'records', [longKey1, longKey2]),
+    [{ id: 1 }, { id: 2 }],
+  );
+  assert.equal(client.multiCalls.length >= 2, true);
+
+  client.getMultiError = new Error('getMulti failed');
+  await assert.rejects(
+    cache.getData('database', 'records', [1, 2]),
+    /getMulti failed/,
+  );
+
+  assert.deepEqual(await cache.getData('database', 'records', []), []);
+  client.getError = new Error('get failed');
+  await assert.rejects(cache.getData('database', 'records', 1), /get failed/);
+  client.getError = undefined;
+  client.setError = new Error('set failed');
+  await assert.rejects(cache.setData('database', 'records', 3, { id: 3 }), /set failed/);
+  client.setError = undefined;
+  client.delError = new Error('delete failed');
+  await assert.rejects(cache.deleteData('database', 'records', 3), /delete failed/);
 });
 
 test('Memcached cache forwards connection events and custom key functions', () => {
@@ -95,4 +135,22 @@ test('Memcached cache forwards connection events and custom key functions', () =
     return `:${database}${table}${String(key)}`;
   });
   assert.equal(cache._getKey('db', 'table', 1), ':dbtable1');
+});
+
+test('Memcached cache constructor option and create helper retain the v1 surface', () => {
+  const client = new FakeMemcached();
+  const customized = new MemcachedCache(
+    '127.0.0.1:11211',
+    {
+      customizeKey(database, table, key) {
+        return `${database}/${table}/${String(key)}`;
+      },
+    },
+    client as unknown as MemcachedClient,
+  );
+  assert.equal(customized._getKey('db', 'table', 1), 'db/table/1');
+
+  const cache = create('127.0.0.1:11211');
+  assert.equal(cache.servers, '127.0.0.1:11211');
+  cache.memcached.end();
 });

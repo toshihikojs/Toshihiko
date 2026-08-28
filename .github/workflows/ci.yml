@@ -54,6 +54,42 @@ jobs:
       - name: Run package tests
         run: rush test --verbose
 
+  coverage:
+    name: Package coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Install Rush
+        run: npm install --global @microsoft/rush@5.172.1
+
+      - name: Install dependencies
+        run: rush install
+
+      - name: Generate package coverage
+        run: rush test:coverage --verbose
+
+      - name: Normalize package coverage paths
+        run: node scripts/normalize-lcov-paths.cjs
+
+      - name: Upload package coverage
+        uses: codecov/codecov-action@v7
+        with:
+          fail_ci_if_error: true
+          files: packages/toshihiko/coverage/lcov.info,packages/base-adapter/coverage/lcov.info,packages/mysql-adapter/coverage/lcov.info,packages/base-cache/coverage/lcov.info,packages/redis/coverage/lcov.info,packages/memcached/coverage/lcov.info,packages/sql-utils/coverage/lcov.info
+          use_oidc: true
+
   mysql-integration:
     name: MySQL and cache integration / ${{ matrix.mysql-image }}
     runs-on: ubuntu-latest

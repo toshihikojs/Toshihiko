@@ -136,9 +136,7 @@ export class Query<
     return this;
   }
 
-  field(fields: string | readonly FieldName<RowFromSchema<Schema>>[]): this {
-    return this.fields(fields);
-  }
+  declare field: (fields: string | readonly FieldName<RowFromSchema<Schema>>[]) => this;
 
   fields(fields: string | readonly FieldName<RowFromSchema<Schema>>[]): this {
     let normalized: readonly unknown[] | unknown = fields;
@@ -186,9 +184,7 @@ export class Query<
     return this;
   }
 
-  orderBy(order: QueryOrder<RowFromSchema<Schema>>): this {
-    return this.order(order);
-  }
+  declare orderBy: (order: QueryOrder<RowFromSchema<Schema>>) => this;
 
   conn(connection: AdapterConnection<AdapterInstance> | null): this {
     this._conn = connection;
@@ -284,7 +280,7 @@ export class Query<
       if (typeof argument === 'boolean') toJSON = argument;
       else if (argument !== null && typeof argument === 'object') options = argument;
     }
-    const normalizedOptions = options && typeof options === 'object' ? options : {};
+    const normalizedOptions = options;
     const single = Boolean(normalizedOptions.single);
     const result = await this.fetch({
       noCache: Boolean(normalizedOptions.noCache),
@@ -437,7 +433,7 @@ function parseArrayOrderFragment(
 ): Readonly<Record<string, number>> {
   const parts = fragment.split(' ');
   return {
-    [(parts[0] ?? '').trim()]: normalizeOrderDirection(parts[1] || 'ASC'),
+    [parts[0]!.trim()]: normalizeOrderDirection(parts[1] || 'ASC'),
   };
 }
 

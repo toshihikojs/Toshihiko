@@ -24,6 +24,7 @@ test('Adapter copies options and remains directly usable by Toshihiko', async ()
 
   assert.deepEqual(adapter.options, { database: 'typed' });
   assert.equal(new Adapter(null).getDBName(), '');
+  assert.equal(new Adapter(null, { database: 'parentless' }).parent, undefined);
 
   const toshihiko = new Toshihiko(Adapter, { database: 'typed' });
   assert.equal(toshihiko.adapter.parent, toshihiko);
@@ -149,4 +150,6 @@ test('extend preserves the v1 recursive precedence for overlapping nested keys',
   );
 
   assert.deepEqual(result, { nested: { same: 'default' } });
+  assert.deepEqual(extend(undefined, { value: 1 }), { value: 1 });
+  assert.deepEqual(extend({ value: 1 }, undefined), { value: 1 });
 });

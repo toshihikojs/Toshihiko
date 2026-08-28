@@ -259,17 +259,10 @@ export class Field<
     return this.type.restore(value as never) as FieldDefinitionStorageValue<Definition>;
   }
 
-  equal(
+  declare readonly equal: (
     left: FieldDefinitionValue<Definition>,
     right: FieldDefinitionValue<Definition>,
-  ): boolean {
-    const type = this.type as FieldTypeLike;
-    if (type.equal === undefined) {
-      return left === right;
-    }
-
-    return type.equal(left as never, right as never);
-  }
+  ) => boolean;
 
   toJSON(
     value: FieldDefinitionValue<Definition>,

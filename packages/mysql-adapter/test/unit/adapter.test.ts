@@ -166,3 +166,171 @@ test('insert preserves v1 empty-locator readback behavior', async () => {
     values: [],
   });
 });
+
+test('boolean showSql, connection events, formatting, and rollback keep v1 behavior', async () => {
+  const pool = createPool([[{ ok: 1 }]]);
+  let onConnection: (() => void) | undefined;
+  pool.on = ((event: string, listener: () => void) => {
+    if (event === 'connection') onConnection = listener;
+    return pool;
+  }) as typeof pool.on;
+  const loggedSql: string[] = [];
+  const previousLog = console.log;
+  console.log = (sql) => loggedSql.push(String(sql));
+  try {
+    const adapter = new MySQLAdapter({ pool, showSql: true });
+    const events: string[] = [];
+    adapter.on('log', (message) => events.push(String(message)));
+    onConnection?.();
+    await adapter.execute('SELECT ?', [1]);
+    assert.deepEqual(loggedSql, ['SELECT 1']);
+    assert.equal(events.length, 1);
+    assert.equal(adapter.format('SELECT 1'), 'SELECT 1');
+    assert.equal(adapter.format('SELECT ?', [2]), 'SELECT 2');
+    assert.equal(typeof adapter.options.showSql, 'function');
+
+    const transactionEvents: string[] = [];
+    const connection = asConnection({
+      async rollback() { transactionEvents.push('rollback'); },
+      release() { transactionEvents.push('release'); },
+    });
+    await adapter.rollback(connection);
+    assert.deepEqual(transactionEvents, ['rollback', 'release']);
+  } finally {
+    console.log = previousLog;
+  }
+});
+
+test('findWithCache restores requested fields when the primary query fails', async () => {
+  const adapter = new MySQLAdapter({ pool: createPool() });
+  const User = new Toshihiko(adapter).define('users', [
+    { name: 'id', type: Type.Integer, primaryKey: true },
+    { name: 'name', type: Type.String },
+  ]);
+  const options = { fields: ['name'] };
+  const failure = new Error('primary query failed');
+  adapter.findWithNoCache = async () => { throw failure; };
+  const cache = {
+    async deleteData() {},
+    async deleteKeys() {},
+    async getData() { return []; },
+    async setData() {},
+  };
+
+  await assert.rejects(adapter.findWithCache(cache, User, options), (error) => error === failure);
+  assert.deepEqual(options.fields, ['name', 'id']);
+});
+
+test('legacy SQL helper methods remain public Adapter delegates', () => {
+  const adapter = new MySQLAdapter({ pool: createPool() });
+  const User = new Toshihiko(adapter).define('users', [
+    { name: 'id', type: Type.Integer, primaryKey: true },
+    { name: 'name', type: Type.String },
+  ]);
+
+  assert.equal(adapter.makeFieldWhere(User, 'id', 1), '`id` = 1');
+  assert.equal(adapter.makeArrayWhere(User, [{ id: 1 }]), '((`id` = 1))');
+  assert.equal(adapter.makeWhere(User, { id: 1 }), '(`id` = 1)');
+  assert.equal(adapter.makeOrder(User, [{ id: -1 }]), '`id` DESC');
+  assert.equal(adapter.makeLimit(User, [0, 1]), '0, 1');
+  assert.equal(adapter.makeIndex(User, 'PRIMARY'), 'FORCE INDEX(`PRIMARY`)');
+  assert.equal(adapter.makeSet(User, { name: 'Alice' }), "`name` = 'Alice'");
+  assert.equal(adapter.makeFind(User), 'SELECT * FROM `users`');
+  assert.equal(
+    adapter.makeUpdate(User, { update: { name: 'Alice' } }),
+    "UPDATE `users` SET `name` = 'Alice'",
+  );
+  assert.equal(adapter.makeDelete(User), 'DELETE FROM `users`');
+});
+
+test('empty driver and cache result shapes retain v1 fallbacks', async () => {
+  const defaultAdapter = new MySQLAdapter();
+  await defaultAdapter.mysql.end();
+
+  const adapter = new MySQLAdapter({ pool: createPool() });
+  const User = new Toshihiko(adapter).define('users', [
+    { name: 'id', type: Type.Integer, primaryKey: true },
+    { name: 'name', type: Type.String },
+  ]);
+  adapter.execute = async () => null as never;
+  assert.deepEqual(await adapter.findWithNoCache(User), []);
+  await assert.rejects(adapter.insert(User, null, []), /no row inserted/);
+
+  const cachedAdapter = new MySQLAdapter({ pool: createPool() });
+  const cacheWrites: object[] = [];
+  const cache = {
+    async deleteData() {},
+    async deleteKeys() {},
+    async getData() { return [null, null]; },
+    async setData(_database: string, _table: string, _key: object, row: object) {
+      cacheWrites.push(row);
+    },
+  };
+  const CachedUser = new Toshihiko(cachedAdapter).define('cached_users', [
+    { name: 'id', type: Type.Integer, primaryKey: true },
+    { name: 'name', type: Type.String },
+  ], { cache });
+  let primaryLookup = true;
+  cachedAdapter.findWithNoCache = async (_model, options) => {
+    if (primaryLookup) {
+      primaryLookup = false;
+      return [{ id: 1 }, { id: 2 }];
+    }
+    return options?.where?.id === 1 ? { id: 1, name: 'Alice' } : null;
+  };
+  assert.deepEqual(await cachedAdapter.findWithCache(cache, CachedUser, { single: true }), {
+    id: 1,
+    name: 'Alice',
+  });
+  assert.deepEqual(cacheWrites, [{ id: 1, name: 'Alice' }]);
+  cachedAdapter.findWithNoCache = async () => [];
+  assert.equal(await cachedAdapter.findWithCache(cache, CachedUser, { single: true }), null);
+
+  const connection = createConnection([[{ connected: true }]]);
+  assert.deepEqual(
+    await new MySQLAdapter({ pool: createPool() }).execute(connection, 'SELECT 1'),
+    [{ connected: true }],
+  );
+});
+
+test('cache invalidation accepts null related rows and missing field lists', async () => {
+  const deleted: readonly object[][] = [];
+  const cache = {
+    async deleteData() {},
+    async deleteKeys(_database: string, _table: string, keys: readonly object[]) {
+      (deleted as object[][]).push([...keys]);
+    },
+    async getData() { return []; },
+    async setData() {},
+  };
+  const adapter = new MySQLAdapter({ pool: createPool() });
+  const User = new Toshihiko(adapter).define('users', [
+    { name: 'id', type: Type.Integer, primaryKey: true },
+    { name: 'name', type: Type.String },
+  ], { cache });
+  adapter.findWithNoCache = async () => ({ id: 1 });
+  adapter.execute = async () => ({ affectedRows: 1 }) as never;
+
+  assert.equal((await adapter.update(User, null, { id: 1 }, [
+    { field: User.fieldNamesMap.name, value: 'Alice' },
+  ])).affectedRows, 1);
+
+  adapter.findWithNoCache = async () => null;
+  assert.equal((await adapter.update(User, null, { id: 2 }, [
+    { field: User.fieldNamesMap.name, value: 'Carol' },
+  ])).affectedRows, 1);
+
+  const query = User.where({ id: 1 });
+  (query as { _fields: string[] | undefined })._fields = undefined;
+  query._updateData = { name: 'Bob' };
+  adapter.findWithNoCache = async () => ({ id: 1 });
+  assert.equal((await adapter.updateByQuery(query)).affectedRows, 1);
+  adapter.findWithNoCache = async () => null;
+  const nullRelatedQuery = User.where({ id: 2 });
+  nullRelatedQuery._updateData = { name: 'Dave' };
+  assert.equal((await adapter.updateByQuery(nullRelatedQuery)).affectedRows, 1);
+  assert.deepEqual(deleted, [[{ id: 1 }], [], [{ id: 1 }], []]);
+
+  (query as { _limit: number[] | undefined })._limit = undefined;
+  assert.deepEqual(adapter.queryToOptions(query, { single: true }).limit, [0, 1]);
+});

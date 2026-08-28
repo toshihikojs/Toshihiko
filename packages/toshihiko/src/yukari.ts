@@ -162,7 +162,6 @@ export class Yukari<
     }
 
     for (const [name, entry] of Object.entries(originalData)) {
-      if (entry === undefined) continue;
       Object.defineProperty(this, name, {
         configurable: false,
         enumerable: true,
@@ -337,7 +336,7 @@ export class Yukari<
     for (const name of names) {
       const value = useOriginalData ? originalData[name]?.data : values[name];
       if (!useOriginalData && (name.startsWith('$') || typeof value === 'function')) continue;
-      const fieldIdx = useOriginalData ? originalData[name]?.fieldIdx ?? -1 : this.fieldIndex(name);
+      const fieldIdx = useOriginalData ? originalData[name]!.fieldIdx : this.fieldIndex(name);
       const field = this.$schema[fieldIdx] as unknown as RuntimeField | undefined;
       result[name] = field === undefined ? value : field.toJSON(value);
     }

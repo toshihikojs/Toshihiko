@@ -10,6 +10,13 @@
     },
     {
       "commandKind": "bulk",
+      "name": "test:coverage",
+      "summary": "Generate an LCOV report for every package.",
+      "enableParallelism": true,
+      "ignoreMissingScript": false
+    },
+    {
+      "commandKind": "bulk",
       "name": "typecheck",
       "summary": "Type-check all TypeScript packages.",
       "enableParallelism": true,

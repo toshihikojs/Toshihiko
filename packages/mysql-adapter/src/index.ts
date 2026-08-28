@@ -93,7 +93,7 @@ export class MySQLAdapter extends Adapter<
       showSql: { value: showSql },
     });
     if (options.showSql === true) {
-      (this.options as { showSql?: MySQLAdapterOptions['showSql'] }).showSql = showSql ?? undefined;
+      (this.options as { showSql?: MySQLAdapterOptions['showSql'] }).showSql = showSql!;
     }
     this.mysql.on('connection', () => {
       this.emit('log', 'A new MySQL connection from Toshihiko is set. ⁽⁽ଘ( ˙꒳˙ )ଓ⁾⁾');
@@ -279,11 +279,7 @@ export class MySQLAdapter extends Adapter<
     connection.release();
   }
 
-  format(sql: string, values?: MySQLValues): string {
-    return values === undefined
-      ? sql
-      : this.mysql.format(sql, normalizeDriverValues(values));
-  }
+  declare readonly format: (sql: string, values?: MySQLValues) => string;
 
   async findWithNoCache(
     model: MySQLModel,
@@ -604,12 +600,9 @@ function normalizeDriverValues(
 }
 
 function normalizeExecuteValues(
-  values: MySQLValues,
+  values: readonly unknown[],
 ): ExecuteValues {
-  const normalized = Array.isArray(values)
-    ? [...values]
-    : { ...values };
-  return normalized as ExecuteValues;
+  return [...values] as ExecuteValues;
 }
 
 function resolveInsertedRowWhere(

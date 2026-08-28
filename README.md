@@ -87,15 +87,15 @@ await persistedUser?.delete();
 
 Toshihiko is developed as a monorepo, but each package keeps an independent public API and release boundary.
 
-| Package | Directory | Purpose |
-|---|---|---|
-| [`toshihiko`](packages/toshihiko) | `packages/toshihiko` | ORM core, Model, Query, Yukari, and built-in field types |
-| [`@toshihiko/base-adapter`](packages/base-adapter) | `packages/base-adapter` | Typed, Promise-only foundation for adapter authors; installed transitively by concrete adapters |
-| [`@toshihiko/mysql-adapter`](packages/mysql-adapter) | `packages/mysql-adapter` | MySQL adapter built on the `mysql2` Promise API |
-| [`@toshihiko/base-cache`](packages/base-cache) | `packages/base-cache` | Typed, Promise-only foundation for cache implementations |
-| [`@toshihiko/redis-cache`](packages/redis) | `packages/redis` | Redis cache preserving the v1 key and result behavior |
-| [`@toshihiko/memcached-cache`](packages/memcached) | `packages/memcached` | Memcached cache preserving v1 batching and custom keys |
-| [`@toshihiko/sql-utils`](packages/sql-utils) | `packages/sql-utils` | SQL identifier mapping and escaping utilities |
+| Package | Coverage | Directory | Purpose |
+|---|---|---|---|
+| [`toshihiko`](packages/toshihiko) | [![toshihiko coverage](https://codecov.io/gh/toshihikojs/Toshihiko/branch/v2/graph/badge.svg?component=toshihiko)](https://app.codecov.io/gh/toshihikojs/Toshihiko) | `packages/toshihiko` | ORM core, Model, Query, Yukari, and built-in field types |
+| [`@toshihiko/base-adapter`](packages/base-adapter) | [![base adapter coverage](https://codecov.io/gh/toshihikojs/Toshihiko/branch/v2/graph/badge.svg?component=base-adapter)](https://app.codecov.io/gh/toshihikojs/Toshihiko) | `packages/base-adapter` | Typed, Promise-only foundation for adapter authors; installed transitively by concrete adapters |
+| [`@toshihiko/mysql-adapter`](packages/mysql-adapter) | [![MySQL adapter coverage](https://codecov.io/gh/toshihikojs/Toshihiko/branch/v2/graph/badge.svg?component=mysql-adapter)](https://app.codecov.io/gh/toshihikojs/Toshihiko) | `packages/mysql-adapter` | MySQL adapter built on the `mysql2` Promise API |
+| [`@toshihiko/base-cache`](packages/base-cache) | [![base cache coverage](https://codecov.io/gh/toshihikojs/Toshihiko/branch/v2/graph/badge.svg?component=base-cache)](https://app.codecov.io/gh/toshihikojs/Toshihiko) | `packages/base-cache` | Typed, Promise-only foundation for cache implementations |
+| [`@toshihiko/redis-cache`](packages/redis) | [![Redis cache coverage](https://codecov.io/gh/toshihikojs/Toshihiko/branch/v2/graph/badge.svg?component=redis-cache)](https://app.codecov.io/gh/toshihikojs/Toshihiko) | `packages/redis` | Redis cache preserving the v1 key and result behavior |
+| [`@toshihiko/memcached-cache`](packages/memcached) | [![Memcached cache coverage](https://codecov.io/gh/toshihikojs/Toshihiko/branch/v2/graph/badge.svg?component=memcached-cache)](https://app.codecov.io/gh/toshihikojs/Toshihiko) | `packages/memcached` | Memcached cache preserving v1 batching and custom keys |
+| [`@toshihiko/sql-utils`](packages/sql-utils) | [![SQL utils coverage](https://codecov.io/gh/toshihikojs/Toshihiko/branch/v2/graph/badge.svg?component=sql-utils)](https://app.codecov.io/gh/toshihikojs/Toshihiko) | `packages/sql-utils` | SQL identifier mapping and escaping utilities |
 
 The dependency direction is intentionally small:
 
@@ -140,6 +140,18 @@ Article.where({ title: { $like: 'Typed%' } });
 ```
 
 `Model.build()` returns a Yukari instance whose known and optional properties reflect the supplied input and schema defaults. Asynchronous validators can then run through `validateAll()`.
+
+## Documentation
+
+The v2 guide follows the original 1.x documentation structure while describing the current TypeScript and Promise APIs:
+
+- [Getting started](docs/getting-started.md)
+- [Model definition](docs/model/definition.md)
+- [Model usage](docs/model/usage.md)
+- [Querying](docs/querying.md)
+- [Yukari instances](docs/yukari.md)
+- [Data types](docs/types.md)
+- [Testing](docs/testing.md)
 
 ## Adapter model
 

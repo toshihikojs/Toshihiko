@@ -37,6 +37,7 @@
     "@toshihiko/mysql-adapter": "2.0.0-alpha.0",
     "@types/memcached": "^2.2.10",
     "@types/node": "^22.0.0",
+    "c8": "^12.0.0",
     "toshihiko": "2.0.0-alpha.0",
     "typescript": "^5.9.3"
   },
@@ -46,6 +47,7 @@
     "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
     "clean:test": "node -e \"require('node:fs').rmSync('.test-dist', { recursive: true, force: true })\"",
     "test": "npm run typecheck && npm run build && npm run test:unit",
+    "test:coverage": "npm run typecheck && npm run build && npm run build:test && c8 node --test .test-dist/unit/*.test.js",
     "test:unit": "npm run build:test && node --test .test-dist/unit/*.test.js",
     "test:integration": "npm run build:test && node --test .test-dist/integration/*.test.js",
     "typecheck": "tsc -p tsconfig.json",

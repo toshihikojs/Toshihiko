@@ -99,4 +99,28 @@ test('compiled statements preserve placeholders and value order', () => {
       values: ['Bob', 1],
     },
   );
+
+  assert.deepEqual(builder.compileWhere(Model, [{ id: 1 }], 'OR'), {
+    sql: '((`user_id` = ?))',
+    values: [1],
+  });
+  assert.deepEqual(builder.compileValue(Model.fieldNamesMap.payload, null), {
+    sql: 'NULL',
+    values: [],
+  });
+  assert.deepEqual(builder.compileWhere(Model, { payload: null }), {
+    sql: '(`payload` IS NULL)',
+    values: [],
+  });
+  assert.deepEqual(builder.compileDelete(Model, { limit: [1] }), {
+    sql: 'DELETE FROM `test_table` LIMIT 1',
+    values: [],
+  });
+  assert.equal(builder.makeFieldWhere(Model, 'id', { $eq: { $and: undefined } }), '');
+  assert.equal(
+    builder.makeFieldWhere(Model, 'id', { $and: [{ $gt: 1 }, { $lt: 3 }] }),
+    '(`user_id` > 1 AND `user_id` < 3)',
+  );
+  assert.equal(builder.makeFieldWhere(Model, 'id', { $eq: { $or: 1 } }), '`user_id` = 1');
+  assert.equal(builder.makeFind(Model, { order: [{}] }), 'SELECT * FROM `test_table`');
 });

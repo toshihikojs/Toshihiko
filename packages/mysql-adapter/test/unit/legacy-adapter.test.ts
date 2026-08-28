@@ -285,6 +285,22 @@ test('v1 insert reads composite primary keys using generated and supplied values
   });
 });
 
+test('v1 composite keys ignore generated non-primary values during readback', async () => {
+  const pool = createPool([
+    { affectedRows: 1, insertId: 8 },
+    [{ sequence: 8, tenant: 'east', code: 'A' }],
+  ]);
+  const adapter = new MySQLAdapter({ pool });
+  const Item = define(adapter, 'items', [
+    { name: 'sequence', type: Type.Integer, autoIncrement: true },
+    { name: 'tenant', type: Type.String, primaryKey: true },
+    { name: 'code', type: Type.String, primaryKey: true },
+  ]);
+
+  await adapter.insert(Item, null, dataFor(Item, { tenant: 'east', code: 'A' }));
+  assert.deepEqual(pool.calls[1]?.values, ['east', 'A']);
+});
+
 test('v1 insert without primary keys uses every supplied value plus insertId', async () => {
   const pool = createPool([
     { affectedRows: 1, insertId: 9 },
@@ -303,6 +319,20 @@ test('v1 insert without primary keys uses every supplied value plus insertId', a
     sql: 'SELECT `id`, `name`, `score` FROM `users` WHERE (`name` = ? AND `score` = ? AND `id` = ?) LIMIT 0, 1',
     values: ['Alice', 2.5, 9],
   });
+});
+
+test('v1 insertId does not invent a locator without an auto-increment field', async () => {
+  const pool = createPool([
+    { affectedRows: 1, insertId: 9 },
+    [{ name: 'Alice' }],
+  ]);
+  const adapter = new MySQLAdapter({ pool });
+  const User = define(adapter, 'users', [
+    { name: 'name', type: Type.String },
+  ]);
+
+  await adapter.insert(User, null, dataFor(User, { name: 'Alice' }));
+  assert.deepEqual(pool.calls[1]?.values, ['Alice']);
 });
 
 test('v1 insert without auto-increment uses supplied primary or full row values', async () => {
