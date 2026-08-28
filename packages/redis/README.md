@@ -2,7 +2,7 @@
 
 [![npm](https://img.shields.io/npm/v/@toshihiko/redis-cache.svg)](https://www.npmjs.com/package/@toshihiko/redis-cache)
 [![CI](https://github.com/toshihikojs/Toshihiko/actions/workflows/ci.yml/badge.svg?branch=v2)](https://github.com/toshihikojs/Toshihiko/actions/workflows/ci.yml)
-[![Coverage](https://codecov.io/gh/toshihikojs/Toshihiko/branch/v2/graph/badge.svg?component=redis-cache)](https://app.codecov.io/gh/toshihikojs/Toshihiko)
+[![Coverage](https://toshihikojs.github.io/Toshihiko/coverage/redis-cache/badge.svg)](https://toshihikojs.github.io/Toshihiko/coverage/redis-cache/)
 
 Promise-only Redis cache support for Toshihiko v2. It preserves the v1 key format and cache result behavior while using the current `ioredis` Promise API.
 

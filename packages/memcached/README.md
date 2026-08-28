@@ -2,7 +2,7 @@
 
 [![npm](https://img.shields.io/npm/v/@toshihiko/memcached-cache.svg)](https://www.npmjs.com/package/@toshihiko/memcached-cache)
 [![CI](https://github.com/toshihikojs/Toshihiko/actions/workflows/ci.yml/badge.svg?branch=v2)](https://github.com/toshihikojs/Toshihiko/actions/workflows/ci.yml)
-[![Coverage](https://codecov.io/gh/toshihikojs/Toshihiko/branch/v2/graph/badge.svg?component=memcached-cache)](https://app.codecov.io/gh/toshihikojs/Toshihiko)
+[![Coverage](https://toshihikojs.github.io/Toshihiko/coverage/memcached-cache/badge.svg)](https://toshihikojs.github.io/Toshihiko/coverage/memcached-cache/)
 
 Promise-only Memcached support for Toshihiko v2. It preserves the v1 key generation, batched reads, connection events, and custom key function.
 

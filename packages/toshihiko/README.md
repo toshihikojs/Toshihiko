@@ -2,7 +2,7 @@
 
 [![npm](https://img.shields.io/npm/v/toshihiko.svg)](https://www.npmjs.com/package/toshihiko)
 [![CI](https://github.com/toshihikojs/Toshihiko/actions/workflows/ci.yml/badge.svg?branch=v2)](https://github.com/toshihikojs/Toshihiko/actions/workflows/ci.yml)
-[![Coverage](https://codecov.io/gh/toshihikojs/Toshihiko/branch/v2/graph/badge.svg?component=toshihiko)](https://app.codecov.io/gh/toshihikojs/Toshihiko)
+[![Coverage](https://toshihikojs.github.io/Toshihiko/coverage/toshihiko/badge.svg)](https://toshihikojs.github.io/Toshihiko/coverage/toshihiko/)
 
 The typed core of Toshihiko: Model, Query, Yukari, field types, and Adapter and Cache contracts.
 

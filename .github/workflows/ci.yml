@@ -60,7 +60,6 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: read
-      id-token: write
 
     steps:
       - name: Checkout
@@ -83,12 +82,38 @@ jobs:
       - name: Normalize package coverage paths
         run: node scripts/normalize-lcov-paths.cjs
 
-      - name: Upload package coverage
-        uses: codecov/codecov-action@v7
+      - name: Build coverage site
+        run: node scripts/build-coverage-site.cjs
+
+      - name: Archive package coverage
+        uses: actions/upload-artifact@v4
         with:
-          fail_ci_if_error: true
-          files: packages/toshihiko/coverage/lcov.info,packages/base-adapter/coverage/lcov.info,packages/mysql-adapter/coverage/lcov.info,packages/base-cache/coverage/lcov.info,packages/redis/coverage/lcov.info,packages/memcached/coverage/lcov.info,packages/sql-utils/coverage/lcov.info
-          use_oidc: true
+          name: package-coverage
+          path: common/temp/coverage-site
+          retention-days: 14
+
+      - name: Upload coverage site for GitHub Pages
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/v2'
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: common/temp/coverage-site
+
+  deploy-coverage:
+    name: Publish coverage report
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/v2'
+    needs: coverage
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy coverage site to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
 
   mysql-integration:
     name: MySQL and cache integration / ${{ matrix.mysql-image }}
