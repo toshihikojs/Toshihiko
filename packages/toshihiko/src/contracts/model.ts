@@ -35,9 +35,14 @@ import {
   type ValidatedFieldDefinition,
 } from './field';
 import type { Toshihiko } from '../toshihiko';
+import {
+  createCache,
+  type Cache,
+  type CacheSource,
+} from './cache';
 
 export interface ModelOptions {
-  readonly cache?: unknown;
+  readonly cache?: CacheSource | false | null;
   readonly [key: string]: unknown;
 }
 
@@ -120,7 +125,7 @@ export class Model<
     readonly name: FieldNamesMap<Schema>;
     readonly column: Readonly<Record<string, Field<Schema[number]>>>;
   };
-  declare readonly cache: null;
+  declare readonly cache: Cache | null;
 
   constructor(
     name: Name,
@@ -156,10 +161,16 @@ export class Model<
 
     const typedNameToColumn = nameToColumn as NameToColumnMap<Schema>;
     const typedFieldNamesMap = fieldNamesMap as unknown as FieldNamesMap<Schema>;
+    const cache = resolvedOptions.cache
+      ? createCache(resolvedOptions.cache)
+      : resolvedOptions.cache === undefined && parent.cache
+        ? parent.cache
+        : null;
+
     Object.defineProperties(this, {
       ai: { enumerable: true, value: autoIncrementField, writable: true },
       autoIncrementField: { value: autoIncrementField },
-      cache: { enumerable: true, value: null },
+      cache: { enumerable: true, value: cache },
       columnToName: { value: columnToName },
       fieldColumnsMap: { value: fieldColumnsMap },
       fieldNamesMap: { value: typedFieldNamesMap },

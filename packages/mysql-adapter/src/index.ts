@@ -90,10 +90,10 @@ export class MySQLAdapter extends Adapter<
     query: MySQLQuery,
     options: AdapterFindOptions = defaultFindOptions,
   ): Promise<AdapterRow | readonly AdapterRow[] | null> {
-    return this.findWithNoCache(
-      query.model,
-      this.queryToOptions(query, options),
-    );
+    const normalized = this.queryToOptions(query, options);
+    return !query.cache || options.noCache
+      ? this.findWithNoCache(query.model, normalized)
+      : this.findWithCache(query.cache, query.model, normalized);
   }
 
   override async count(query: MySQLQuery): Promise<number> {
@@ -112,6 +112,7 @@ export class MySQLAdapter extends Adapter<
   override async updateByQuery(query: MySQLQuery): Promise<ResultSetHeader> {
     const options = this.queryToOptions(query);
     const compiled = this.builder.compileSql('update', query.model, options);
+    await this.invalidateQueryCache(query, options);
     return await this.execute(
       options.conn ?? null,
       compiled.sql,
@@ -122,6 +123,7 @@ export class MySQLAdapter extends Adapter<
   override async deleteByQuery(query: MySQLQuery): Promise<ResultSetHeader> {
     const options = this.queryToOptions(query);
     const compiled = this.builder.compileSql('delete', query.model, options);
+    await this.invalidateQueryCache(query, options);
     return await this.execute(
       options.conn ?? null,
       compiled.sql,
@@ -186,6 +188,20 @@ export class MySQLAdapter extends Adapter<
       update: updateData,
       where: primaryKey,
     });
+    if (model.cache) {
+      const primaryKeyNames = model.primaryKeys.map((field) => field.name);
+      const relatedRows = await this.findWithNoCache(model, {
+        conn: connection,
+        fields: primaryKeyNames,
+        limit: [0, 1],
+        where: { ...primaryKey },
+      });
+      await model.cache.deleteKeys(
+        this.getDBName(),
+        model.name,
+        Array.isArray(relatedRows) ? relatedRows : relatedRows ? [relatedRows] : [],
+      );
+    }
     const mutation = await this.execute(
       connection,
       compiled.sql,
@@ -259,6 +275,112 @@ export class MySQLAdapter extends Adapter<
       compiled.values,
     ) || []) as readonly AdapterRow[];
     return options.single ? rows[0] ?? null : rows;
+  }
+
+  async findWithCache(
+    cache: NonNullable<MySQLModel['cache']>,
+    model: MySQLModel,
+    options: MySQLQueryOptions = {},
+  ): Promise<AdapterRow | readonly AdapterRow[] | null> {
+    const primaryKeys = model.primaryKeys.map((field) => field.name);
+    const totalFields = model.schema.map((field) => field.name);
+    const originalFields = unique([...(options.fields ?? totalFields), ...primaryKeys]);
+
+    options.fields = primaryKeys;
+    let primaryRows: readonly AdapterRow[];
+    try {
+      primaryRows = await this.findWithNoCache(model, {
+        ...options,
+        single: false,
+      }) as readonly AdapterRow[];
+    } catch (error) {
+      options.fields = originalFields;
+      throw error;
+    }
+
+    let cachedRows: readonly unknown[] = [];
+    try {
+      cachedRows = await cache.getData(this.database, model.name, primaryRows);
+    } catch {
+      cachedRows = [];
+    }
+
+    const result: (AdapterRow | undefined)[] = [];
+    const missing: number[] = [];
+    for (let index = 0; index < primaryRows.length; index++) {
+      const primaryRow = primaryRows[index]!;
+      const cached = cachedRows.find((value) => {
+        const row = value as Readonly<Record<string, unknown>>;
+        return Object.keys(primaryRow).every((key) => primaryRow[key] === row[key]);
+      }) as AdapterRow | undefined;
+
+      if (cached !== undefined) {
+        (cached as Record<string, unknown>).$fromCache = true;
+        result.push(cached);
+      } else {
+        result.push(undefined);
+        missing.push(index);
+      }
+    }
+
+    const errors: unknown[] = [];
+    await runWithConcurrency(missing, 10, async (index) => {
+      const primaryRow = primaryRows[index]!;
+      let row: AdapterRow | null | undefined;
+      try {
+        const rows = await this.findWithNoCache(model, {
+          conn: options.conn ?? null,
+          fields: totalFields,
+          limit: [0, 1],
+          where: model.convertColumnToName(primaryRow),
+        });
+        row = Array.isArray(rows) ? rows[0] : rows;
+      } catch (error) {
+        errors.push(error);
+        return;
+      }
+      if (!row) return;
+      try {
+        await cache.setData(this.database, model.name, primaryRow, row);
+      } catch {
+        // Cache writes do not change successful database reads in v1.
+      }
+      result[index] = row;
+    });
+    const deletedColumns = model.schema
+      .filter((field) => !originalFields.includes(field.name))
+      .map((field) => field.column);
+    const liteResult = result.filter(Boolean).map((row) => {
+      const mutable = row as Record<string, unknown>;
+      for (const column of deletedColumns) delete mutable[column];
+      return row!;
+    });
+
+    options.fields = originalFields;
+    if (errors.length > 0) throw errors[0];
+    return options.single ? liteResult[0] ?? null : liteResult;
+  }
+
+  private async invalidateQueryCache(
+    query: MySQLQuery,
+    options: MySQLQueryOptions,
+  ): Promise<void> {
+    const cache = query.model.cache;
+    if (!cache) return;
+
+    const originalFields = options.fields;
+    options.fields = query.model.primaryKeys.map((field) => field.name);
+    const relatedRows = await this.findWithNoCache(query.model, options);
+    try {
+      await cache.deleteKeys(
+        this.getDBName(),
+        query.model.name,
+        Array.isArray(relatedRows) ? relatedRows : relatedRows ? [relatedRows] : [],
+      );
+    } finally {
+      if (originalFields === undefined) delete options.fields;
+      else options.fields = originalFields;
+    }
   }
 
   queryToOptions(
@@ -509,6 +631,28 @@ function joinStatements(
     sql: statements.map((statement) => statement.sql).join(separator),
     values: statements.flatMap((statement) => statement.values),
   };
+}
+
+function unique<Value>(values: readonly Value[]): Value[] {
+  return [...new Set(values)];
+}
+
+async function runWithConcurrency<Value>(
+  values: readonly Value[],
+  concurrency: number,
+  worker: (value: Value) => Promise<void>,
+): Promise<void> {
+  let index = 0;
+  const workers = Array.from(
+    { length: Math.min(concurrency, values.length) },
+    async () => {
+      while (index < values.length) {
+        const value = values[index++]!;
+        await worker(value);
+      }
+    },
+  );
+  await Promise.all(workers);
 }
 
 export { MySQLSqlBuilder } from './sql-builder';

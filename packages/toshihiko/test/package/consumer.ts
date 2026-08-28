@@ -7,6 +7,7 @@ import {
   type AdapterFindResult,
   type AdapterQuery,
   type AdapterRow,
+  type Cache,
 } from '../..';
 
 const toshihiko = new Toshihiko('mysql');
@@ -36,6 +37,19 @@ void updated;
 void saved;
 void deleted;
 void counted;
+
+const cache: Cache<{ id: number }> = {
+  async deleteData() {},
+  async deleteKeys() {},
+  async getData() { return [{ id: 1 }]; },
+  async setData() {},
+};
+const CachedUser = toshihiko.define('cached_user', [
+  { name: 'id', type: Type.Integer, primaryKey: true },
+], { cache });
+const cachedUser = CachedUser.findById(1);
+
+void cachedUser;
 
 class ConsumerAdapter implements Adapter {
   constructor(readonly options: { readonly database: string }) {}

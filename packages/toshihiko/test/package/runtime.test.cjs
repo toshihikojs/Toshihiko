@@ -293,12 +293,37 @@ test('built-in field types pass the direct v1 conversion matrix', () => {
   assert.equal(Type.Datetime.toJSON(formatted), json);
 });
 
-test('define keeps model-local options without interpreting infrastructure', () => {
+test('cache creation and model inheritance preserve the v1 option rules', () => {
   const toshihiko = new Toshihiko('mysql');
-  const cache = { name: 'memcached' };
+  const cache = {
+    async deleteData() {},
+    async deleteKeys() {},
+    async getData() { return []; },
+    async setData() {},
+  };
   const User = toshihiko.define('user', [{ name: 'id' }], { cache });
 
   assert.equal(User.options.cache, cache);
+  assert.equal(User.cache, cache);
+  assert.equal(Toshihiko.createCache(cache), cache);
+
+  const module = {
+    create(foo, bar) {
+      return { ...cache, foo, bar };
+    },
+  };
+  const configured = Toshihiko.createCache({
+    module,
+    bar: 'barrrr',
+    foo: 'fooooo',
+  });
+  assert.equal(configured.foo, 'fooooo');
+  assert.equal(configured.bar, 'barrrr');
+
+  const global = new Toshihiko('mysql', { cache });
+  assert.equal(global.define('inherited', [{ name: 'id' }]).cache, cache);
+  assert.equal(global.define('disabled', [{ name: 'id' }], { cache: false }).cache, null);
+  assert.equal(global.define('null-cache', [{ name: 'id' }], { cache: null }).cache, null);
 });
 
 test('define rejects fields without logical names', () => {
@@ -1196,6 +1221,49 @@ test('findById preserves v1 composite-key object forwarding', async () => {
 
   await Membership.findById({ userId: 1 });
   assert.deepEqual(adapter.calls[1].where, { userId: 1 });
+});
+
+test('findById preserves v1 cache hits and database fallback', async () => {
+  const cacheCalls = [];
+  let cacheError;
+  let cachedRows = [{ user_id: 1, name: 'cached' }];
+  const cache = {
+    async deleteData() {},
+    async deleteKeys() {},
+    async getData(database, table, id) {
+      cacheCalls.push({ database, id, table });
+      if (cacheError) throw cacheError;
+      return cachedRows;
+    },
+    async setData() {},
+  };
+  const adapter = new MemoryAdapter({
+    database: 'toshihiko',
+    rows: [{ user_id: 1, name: 'database' }],
+  });
+  const User = new Toshihiko(adapter).define('user', [
+    { name: 'id', column: 'user_id', type: Type.Integer, primaryKey: true },
+    { name: 'name' },
+  ], { cache });
+
+  const cached = await User.findById(1);
+  assert.equal(cached.name, 'cached');
+  assert.equal(adapter.calls.length, 0);
+  assert.deepEqual(cacheCalls[0], {
+    database: 'toshihiko',
+    id: { id: 1 },
+    table: 'user',
+  });
+
+  cacheError = new Error('cache unavailable');
+  const fallback = await User.findById(1);
+  assert.equal(fallback.name, 'database');
+  assert.equal(adapter.calls.length, 1);
+
+  cacheError = undefined;
+  cachedRows = [];
+  await User.findById(1);
+  assert.equal(adapter.calls.length, 2);
 });
 
 test('unresolved dialects fail clearly while synchronous Adapter values are adopted', async () => {

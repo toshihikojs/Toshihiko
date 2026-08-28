@@ -1,6 +1,7 @@
 import type {
   AdapterQuery,
 } from '@toshihiko/base-adapter';
+import type { Cache } from 'toshihiko';
 import type {
   Pool,
   PoolConnection,
@@ -44,14 +45,19 @@ export interface MySQLField {
 export interface MySQLModel {
   readonly ai: MySQLField | null;
   readonly autoIncrementField: MySQLField | null;
+  readonly cache: Cache | null;
   readonly fieldNamesMap: Readonly<Record<string, MySQLField | undefined>>;
   readonly name: string;
   readonly nameToColumn: Readonly<Record<string, string | undefined>>;
   readonly primaryKeys: readonly MySQLField[];
   readonly schema: readonly MySQLField[];
+  convertColumnToName(
+    value: Readonly<Record<string, unknown>>,
+  ): Readonly<Record<string, unknown>>;
 }
 
 export interface MySQLQuery extends AdapterQuery<MySQLModel, PoolConnection> {
+  readonly cache: Cache | null;
   readonly _updateData?: Readonly<Record<string, unknown>>;
 }
 

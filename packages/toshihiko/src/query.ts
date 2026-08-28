@@ -22,6 +22,7 @@ import type {
 } from './contracts/field';
 import type { Model } from './contracts/model';
 import { Yukari, type QueriedYukari } from './yukari';
+import type { Cache } from './contracts/cache';
 
 export type QueryOrderDirection = number | 'asc' | 'ASC' | 'desc' | 'DESC';
 
@@ -86,7 +87,7 @@ export class Query<
   Schema extends SchemaDefinition,
   AdapterInstance extends AdapterLike = Adapter,
 > {
-  declare readonly cache: null;
+  declare readonly cache: Cache | null;
   declare readonly model: Model<Name, Schema, AdapterInstance>;
   declare readonly toshihiko: Model<Name, Schema, AdapterInstance>['parent'];
 
@@ -292,6 +293,25 @@ export class Query<
   ): Promise<QueriedYukari<Name, Schema, AdapterInstance> | QueryJsonRow<Schema> | null> {
     const condition = this.primaryKeyCondition(id);
     this.where(condition);
+
+    if (this.cache) {
+      let data: readonly unknown[] = [];
+      try {
+        data = await this.cache.getData(
+          this.toshihiko.database,
+          this.model.name,
+          condition,
+        );
+      } catch {
+        data = [];
+      }
+
+      if (data.length !== 0) {
+        const row = this.hydrate(data[0] as AdapterRow);
+        return toJSON ? row.toJSON() : row;
+      }
+    }
+
     return toJSON ? await this.findOne(true) : await this.findOne(false);
   }
 

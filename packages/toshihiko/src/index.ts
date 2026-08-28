@@ -6,6 +6,13 @@ export { Toshihiko, type ToshihikoOptions } from './toshihiko';
 export const Escaper = { escape, escapeLike };
 
 export type {
+  Cache,
+  CacheKey,
+  CacheModule,
+  CacheOptions,
+  CacheSource,
+} from './contracts/cache';
+export type {
   BuiltYukari,
   QueriedYukari,
   Yukari,

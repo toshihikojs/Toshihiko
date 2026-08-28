@@ -35,6 +35,24 @@ const users = await User.where({ id: { $gte: 1 } }).find(true);
 
 `find`, `count`, writes, raw execution, and transaction methods all return native Promises.
 
+## Cache
+
+Attach a cache to Toshihiko or to one model. Models inherit the Toshihiko-level cache unless their own `cache` option replaces or disables it.
+
+```typescript
+import { MemcachedCache } from '@toshihiko/memcached-cache';
+
+const cache = new MemcachedCache('127.0.0.1:11211');
+const toshihiko = new Toshihiko(MySQLAdapter, {
+  cache,
+  database: 'app',
+});
+
+const UncachedAudit = toshihiko.define('audit', auditSchema, { cache: false });
+```
+
+MySQL reads cached rows and fills misses with the same behavior as Toshihiko v1. Updates and deletes invalidate matching primary-key entries before changing the database. Pass `{ noCache: true }` to `find` to bypass cache reads for one query.
+
 ## Raw SQL
 
 `execute` accepts either the normal v2 form or the legacy connection-first argument order. Both forms are Promise-only.

@@ -2,6 +2,7 @@ import type { AdapterData } from '@toshihiko/base-adapter';
 import { format } from 'mysql2';
 import {
   Toshihiko,
+  type ModelOptions,
   type Model,
   type SchemaDefinition,
   type ValidatedSchema,
@@ -103,6 +104,7 @@ export function define<
   adapter: MySQLAdapter,
   name: Name,
   schema: Schema & ValidatedSchema<Schema>,
+  options: ModelOptions = {},
 ): Model<Name, Schema, MySQLAdapter> {
   const toshihiko = new Toshihiko(adapter);
   const defineModel = toshihiko.define.bind(toshihiko) as unknown as <
@@ -111,6 +113,7 @@ export function define<
   >(
     modelName: ModelName,
     modelSchema: ModelSchema,
+    modelOptions?: ModelOptions,
   ) => Model<ModelName, ModelSchema, MySQLAdapter>;
-  return defineModel<Name, Schema>(name, schema);
+  return defineModel<Name, Schema>(name, schema, options);
 }

@@ -76,6 +76,11 @@
       "resolved": "https://registry.npmjs.org/@humanwhocodes/object-schema/-/object-schema-2.0.3.tgz",
       "integrity": "sha512-93zYdMES/c1D69yZiKDBj0V24vqNzB/koF26KPaagAfd3P/4gUlh3Dys5ogAK+Exi9QyzlD8x/08Zt7wIKcDcA=="
     },
+    "@ioredis/commands": {
+      "version": "2.0.0",
+      "resolved": "https://registry.npmjs.org/@ioredis/commands/-/commands-2.0.0.tgz",
+      "integrity": "sha512-vrx0AE/T0h7cRZwfo1M39Cr+ZhZrkf0V8mQN75wucKCxCLD9l/VX6no3gFvrLqD1IlG/1LtzWovqEw3t0Vr9zg=="
+    },
     "@jridgewell/resolve-uri": {
       "version": "3.1.2",
       "resolved": "https://registry.npmjs.org/@jridgewell/resolve-uri/-/resolve-uri-3.1.2.tgz",
@@ -133,12 +138,31 @@
         "typescript": "^5.9.3"
       }
     },
+    "@rush-temp/memcached-cache": {
+      "version": "file:projects/memcached-cache.tgz",
+      "integrity": "sha512-V2kyhos/WLDUGdnoZv2T9PI/C8wZFYLh3NrfGL9HmKA5+ItUtggvGxksYyayDY+tbVMS6mPGxoV/eLu8mCFL0g==",
+      "requires": {
+        "@types/memcached": "^2.2.10",
+        "@types/node": "^22.0.0",
+        "memcached": "^2.2.2",
+        "typescript": "^5.9.3"
+      }
+    },
     "@rush-temp/mysql-adapter": {
       "version": "file:projects/mysql-adapter.tgz",
       "integrity": "sha512-I0r6rEiRgq1D205vVfEvyNvcmekHZDj0awyU3dOHzVA4eh19yzS1sZp2KOKTLf9rkbeKJ/I+I31RDo+Iv0ULOw==",
       "requires": {
         "@types/node": "^22.0.0",
         "mysql2": "^3.24.2",
+        "typescript": "^5.9.3"
+      }
+    },
+    "@rush-temp/redis-cache": {
+      "version": "file:projects/redis-cache.tgz",
+      "integrity": "sha512-C0ne0D7NwL+5M0a5lbo6MEjvZ67ZEluCrWuq6y5RQQFLOHBmMeJg5nH5/k1q6EHpdvkp8F0uWPPJ0ETdEnZ4Bg==",
+      "requires": {
+        "@types/node": "^22.0.0",
+        "ioredis": "^6.0.0",
         "typescript": "^5.9.3"
       }
     },
@@ -192,6 +216,14 @@
       "version": "0.0.29",
       "resolved": "https://registry.npmjs.org/@types/json5/-/json5-0.0.29.tgz",
       "integrity": "sha512-dRLjCWHYg4oaA77cxO64oO+7JwCwnIzkZPdrrC71jQmQtlhM556pwKo5bUzqvZndkVbeFLIIi+9TC40JNF5hNQ=="
+    },
+    "@types/memcached": {
+      "version": "2.2.10",
+      "resolved": "https://registry.npmjs.org/@types/memcached/-/memcached-2.2.10.tgz",
+      "integrity": "sha512-AM9smvZN55Gzs2wRrqeMHVP7KE8KWgCJO/XL5yCly2xF6EKa4YlbpK+cLSAH4NG/Ah64HrlegmGqW8kYws7Vxg==",
+      "requires": {
+        "@types/node": "*"
+      }
     },
     "@types/node": {
       "version": "22.20.1",
@@ -572,6 +604,11 @@
         "domutils": "^3.0.1"
       }
     },
+    "cluster-key-slot": {
+      "version": "1.1.1",
+      "resolved": "https://registry.npmjs.org/cluster-key-slot/-/cluster-key-slot-1.1.1.tgz",
+      "integrity": "sha512-rwHwUfXL40Chm1r08yrhU3qpUvdVlgkKNeyeGPOxnW8/SyVDvgRaed/Uz54AqWNaTCAThlj6QAs3TZcKI0xDEw=="
+    },
     "color-convert": {
       "version": "2.0.1",
       "resolved": "https://registry.npmjs.org/color-convert/-/color-convert-2.0.1.tgz",
@@ -594,6 +631,11 @@
       "version": "0.0.1",
       "resolved": "https://registry.npmjs.org/concat-map/-/concat-map-0.0.1.tgz",
       "integrity": "sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg=="
+    },
+    "connection-parse": {
+      "version": "0.0.7",
+      "resolved": "https://registry.npmjs.org/connection-parse/-/connection-parse-0.0.7.tgz",
+      "integrity": "sha512-bTTG28diWg7R7/+qE5NZumwPbCiJOT8uPdZYu674brDjBWQctbaQbYlDKhalS+4i5HxIx+G8dZsnBHKzWpp01A=="
     },
     "create-require": {
       "version": "1.1.1",
@@ -689,6 +731,11 @@
         "has-property-descriptors": "^1.0.0",
         "object-keys": "^1.1.1"
       }
+    },
+    "denque": {
+      "version": "2.1.0",
+      "resolved": "https://registry.npmjs.org/denque/-/denque-2.1.0.tgz",
+      "integrity": "sha512-HVQE3AAb/pxF8fQAoiqpvg9i3evqug3hoiwakOyZAwJm+6vZehbkYXZ0l4JxS+I3QxM97v5aaRNhj8v5oBhekw=="
     },
     "diff": {
       "version": "4.0.4",
@@ -1459,6 +1506,15 @@
         "has-symbols": "^1.0.3"
       }
     },
+    "hashring": {
+      "version": "3.2.0",
+      "resolved": "https://registry.npmjs.org/hashring/-/hashring-3.2.0.tgz",
+      "integrity": "sha512-xCMovURClsQZ+TR30icCZj+34Fq1hs0y6YCASD6ZqdRfYRybb5Iadws2WS+w09mGM/kf9xyA5FCdJQGcgcraSA==",
+      "requires": {
+        "connection-parse": "0.0.x",
+        "simple-lru-cache": "0.0.x"
+      }
+    },
     "hasown": {
       "version": "2.0.4",
       "resolved": "https://registry.npmjs.org/hasown/-/hasown-2.0.4.tgz",
@@ -1534,6 +1590,19 @@
         "es-errors": "^1.3.0",
         "hasown": "^2.0.2",
         "side-channel": "^1.1.0"
+      }
+    },
+    "ioredis": {
+      "version": "6.0.0",
+      "resolved": "https://registry.npmjs.org/ioredis/-/ioredis-6.0.0.tgz",
+      "integrity": "sha512-f+Dtubxfpf6KYFq7WVXJoOLn0bk4TJrMrN9SzeE+jrWrCWj7XX3fA6vkryafhADX+GMymRxgDJDOI33COkJc0w==",
+      "requires": {
+        "@ioredis/commands": "2.0.0",
+        "cluster-key-slot": "1.1.1",
+        "debug": "4.4.3",
+        "denque": "2.1.0",
+        "redis-errors": "1.2.0",
+        "standard-as-callback": "2.1.0"
       }
     },
     "is-array-buffer": {
@@ -1773,6 +1842,14 @@
       "resolved": "https://registry.npmjs.org/isexe/-/isexe-2.0.0.tgz",
       "integrity": "sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw=="
     },
+    "jackpot": {
+      "version": "0.0.6",
+      "resolved": "https://registry.npmjs.org/jackpot/-/jackpot-0.0.6.tgz",
+      "integrity": "sha512-rbWXX+A9ooq03/dfavLg9OXQ8YB57Wa7PY5c4LfU3CgFpwEhhl3WyXTQVurkaT7zBM5I9SSOaiLyJ4I0DQmC0g==",
+      "requires": {
+        "retry": "0.6.0"
+      }
+    },
     "js-yaml": {
       "version": "4.3.1",
       "resolved": "https://registry.npmjs.org/js-yaml/-/js-yaml-4.3.1.tgz",
@@ -1873,6 +1950,15 @@
       "version": "1.1.0",
       "resolved": "https://registry.npmjs.org/math-intrinsics/-/math-intrinsics-1.1.0.tgz",
       "integrity": "sha512-/IXtbwEk5HTPyEwyKX6hGkYXxM9nbj64B+ilVJnC/R6B0pH5G4V3b0pVbL7DBj4tkhBAppbQUlf6F6Xl9LHu1g=="
+    },
+    "memcached": {
+      "version": "2.2.2",
+      "resolved": "https://registry.npmjs.org/memcached/-/memcached-2.2.2.tgz",
+      "integrity": "sha512-lHwUmqkT9WdUUgRsAvquO4xsKXYaBd644Orz31tuth+w/BIfFNuJMWwsG7sa7H3XXytaNfPTZ5R/yOG3d9zJMA==",
+      "requires": {
+        "hashring": "3.2.x",
+        "jackpot": ">=0.0.6"
+      }
     },
     "merge2": {
       "version": "1.4.1",
@@ -2177,6 +2263,11 @@
       "resolved": "https://registry.npmjs.org/queue-microtask/-/queue-microtask-1.2.3.tgz",
       "integrity": "sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A=="
     },
+    "redis-errors": {
+      "version": "1.2.0",
+      "resolved": "https://registry.npmjs.org/redis-errors/-/redis-errors-1.2.0.tgz",
+      "integrity": "sha512-1qny3OExCf0UvUV/5wpYKf2YwPcOqXzkwKKSmKHiE6ZMQs5heeE/c8eXK+PNllPvmjgAbfnsbpkGZWy8cBpn9w=="
+    },
     "reflect.getprototypeof": {
       "version": "1.0.10",
       "resolved": "https://registry.npmjs.org/reflect.getprototypeof/-/reflect.getprototypeof-1.0.10.tgz",
@@ -2227,6 +2318,11 @@
       "version": "4.0.0",
       "resolved": "https://registry.npmjs.org/resolve-from/-/resolve-from-4.0.0.tgz",
       "integrity": "sha512-pb/MYmXstAkysRFx8piNI1tGFNQIFA3vkE3Gq4EuA1dF6gHp/+vgZqsCGJapvy8N3Q+4o7FwvquPJcnZ7RYy4g=="
+    },
+    "retry": {
+      "version": "0.6.0",
+      "resolved": "https://registry.npmjs.org/retry/-/retry-0.6.0.tgz",
+      "integrity": "sha512-RgncoxLF1GqwAzTZs/K2YpZkWrdIYbXsmesdomi+iPilSzjUyr/wzNIuteoTVaWokzdwZIJ9NHRNQa/RUiOB2g=="
     },
     "reusify": {
       "version": "1.1.0",
@@ -2381,6 +2477,11 @@
         "side-channel-map": "^1.0.1"
       }
     },
+    "simple-lru-cache": {
+      "version": "0.0.2",
+      "resolved": "https://registry.npmjs.org/simple-lru-cache/-/simple-lru-cache-0.0.2.tgz",
+      "integrity": "sha512-uEv/AFO0ADI7d99OHDmh1QfYzQk/izT1vCmu/riQfh7qjBVUUgRT87E5s5h7CxWCA/+YoZerykpEthzVrW3LIw=="
+    },
     "slash": {
       "version": "3.0.0",
       "resolved": "https://registry.npmjs.org/slash/-/slash-3.0.0.tgz",
@@ -2409,6 +2510,11 @@
       "version": "1.5.1",
       "resolved": "https://registry.npmjs.org/sql-escaper/-/sql-escaper-1.5.1.tgz",
       "integrity": "sha512-4toX5E1fQbBrpfXidaHnF0669nkAdETeIPTs2SUjxxD7RRIs9ICG4gtpmfc68JCEKehsdwLFqBu9VlQqZ1P1gg=="
+    },
+    "standard-as-callback": {
+      "version": "2.1.0",
+      "resolved": "https://registry.npmjs.org/standard-as-callback/-/standard-as-callback-2.1.0.tgz",
+      "integrity": "sha512-qoRRSyROncaz1z0mvYqIE4lCd9p2R90i6GxW3uZv5ucSu8tU7B5HXUP1gG8pVZsYNVaXjk8ClXHPttLyxAL48A=="
     },
     "stop-iteration-iterator": {
       "version": "1.1.0",

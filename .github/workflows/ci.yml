@@ -55,7 +55,7 @@ jobs:
         run: rush test --verbose
 
   mysql-integration:
-    name: MySQL integration / ${{ matrix.mysql-image }}
+    name: MySQL and cache integration / ${{ matrix.mysql-image }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
@@ -78,6 +78,19 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=12
+      redis:
+        image: redis:7.2.5-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+      memcached:
+        image: memcached:1.6.29-alpine
+        ports:
+          - 11211:11211
 
     steps:
       - name: Checkout
@@ -94,16 +107,16 @@ jobs:
       - name: Install dependencies
         run: rush install
 
-      - name: Build MySQL adapter and dependencies
-        run: rush build --to @toshihiko/mysql-adapter --verbose
+      - name: Build service-backed packages
+        run: rush build --verbose
 
-      - name: Run MySQL integration tests
+      - name: Run MySQL and cache integration tests
         run: |
           set +e
-          rush test:integration --to @toshihiko/mysql-adapter --verbose > integration.log 2>&1
+          rush test:integration --verbose > integration.log 2>&1
           status=$?
           if [ "$status" -ne 0 ]; then
-            node -e 'const fs = require("node:fs"); const output = fs.readFileSync("integration.log", "utf8"); const failures = output.split("\n").filter((line) => /^\s*not ok\b/.test(line)).map((line) => line.trim()).slice(-20); const locations = [...new Set(output.match(/\.test-dist\/integration\/[^)\s]+:\d+:\d+/g) || [])].slice(-20); const summary = [...failures, ...locations].join("; ") || "Integration command failed without a named test failure."; console.log(`::error title=MySQL integration failure::${summary}`);'
+            node -e 'const fs = require("node:fs"); const output = fs.readFileSync("integration.log", "utf8"); const failures = output.split("\n").filter((line) => /^\s*not ok\b/.test(line)).map((line) => line.trim()).slice(-20); const locations = [...new Set(output.match(/\.test-dist\/integration\/[^)\s]+:\d+:\d+/g) || [])].slice(-20); const summary = [...failures, ...locations].join("; ") || "Integration command failed without a named test failure."; console.log(`::error title=Service integration failure::${summary}`);'
           fi
           exit "$status"
         env:
@@ -112,3 +125,7 @@ jobs:
           MYSQL_PASSWORD: toshihiko
           MYSQL_PORT: 3306
           MYSQL_USER: root
+          REDIS_HOST: 127.0.0.1
+          REDIS_PORT: 6379
+          MEMCACHED_HOST: 127.0.0.1
+          MEMCACHED_PORT: 11211

@@ -22,7 +22,7 @@ Version 2 carries that original philosophy into a TypeScript codebase. It keeps 
 - **Promise APIs.** Queries, adapters, validators, writes, and transactions use native Promises.
 - **The original model API.** Existing concepts such as Model, Query, Yukari, field types, `where()`, `find()`, and `findById()` remain recognizable.
 - **Explicit adapter boundaries.** Database-specific connections and result types stay inside adapter packages instead of leaking into the ORM core.
-- **Real compatibility tests.** GitHub Actions covers Node.js 22 and 24, plus MySQL 5.7 and 8.4 integration jobs.
+- **Real compatibility tests.** GitHub Actions covers Node.js 22 and 24, with service-backed tests for MySQL 5.7 and 8.4, Redis, and Memcached.
 
 ## Quick start
 
@@ -93,6 +93,8 @@ Toshihiko is developed as a monorepo, but each package keeps an independent publ
 | [`toshihiko`](packages/toshihiko) | `packages/toshihiko` | ORM core, Model, Query, Yukari, and built-in field types |
 | [`@toshihiko/base-adapter`](packages/base-adapter) | `packages/base-adapter` | Typed, Promise-only foundation for adapter authors; installed transitively by concrete adapters |
 | [`@toshihiko/mysql-adapter`](packages/mysql-adapter) | `packages/mysql-adapter` | MySQL adapter built on the `mysql2` Promise API |
+| [`@toshihiko/redis-cache`](packages/redis) | `packages/redis` | Redis cache preserving the v1 key and result behavior |
+| [`@toshihiko/memcached-cache`](packages/memcached) | `packages/memcached` | Memcached cache preserving v1 batching and custom keys |
 | [`@toshihiko/sql-utils`](packages/sql-utils) | `packages/sql-utils` | SQL identifier mapping and escaping utilities |
 
 The dependency direction is intentionally small:
@@ -102,6 +104,8 @@ flowchart LR
   mysql["@toshihiko/mysql-adapter"] --> base["@toshihiko/base-adapter"]
   mysql --> core["toshihiko"]
   mysql --> sql["@toshihiko/sql-utils"]
+  redis["@toshihiko/redis-cache"] --> core
+  memcached["@toshihiko/memcached-cache"] --> core
   base --> core
   core --> sql
 ```
@@ -148,6 +152,25 @@ const database = new Toshihiko(MySQLAdapter, {
 
 No runtime package-name lookup is required. The MySQL adapter uses `mysql2` prepared execution for bound values and preserves the original Toshihiko query operators for migration compatibility.
 
+## Caching
+
+Redis and Memcached cache implementations are developed and released from this monorepo. Cache instances can be configured globally and inherited by Models, overridden for one Model, or disabled with `cache: false`. The MySQL cache path is regression-tested with Memcached; the Redis package separately preserves its v1 positional `null` miss results.
+
+```typescript
+import { MemcachedCache } from '@toshihiko/memcached-cache';
+
+const cache = new MemcachedCache('127.0.0.1:11211', {
+  prefix: 'app:',
+});
+
+const cachedDatabase = new Toshihiko(MySQLAdapter, {
+  cache,
+  database: 'app',
+});
+```
+
+Queries read and fill the configured cache using the original Toshihiko key flow. Updates and deletes invalidate matching primary-key entries before the database mutation. Pass `{ noCache: true }` to `find()` to bypass cache reads for one query.
+
 ## Development
 
 ### Requirements
@@ -193,7 +216,7 @@ rush build
 rush test
 ```
 
-MySQL integration tests run in GitHub Actions against MySQL 5.7 and MySQL 8.4. Local development does not require Docker. If you already have a compatible MySQL server, you can run the integration suite explicitly:
+Service-backed tests run in GitHub Actions against MySQL 5.7 and MySQL 8.4 together with Redis and Memcached. Local development does not require Docker. If you already have compatible services, run the integration suite explicitly:
 
 ```bash
 MYSQL_DATABASE=toshihiko_test \
@@ -201,14 +224,18 @@ MYSQL_HOST=127.0.0.1 \
 MYSQL_PASSWORD=toshihiko \
 MYSQL_PORT=3306 \
 MYSQL_USER=root \
-rush test:integration --to @toshihiko/mysql-adapter
+REDIS_HOST=127.0.0.1 \
+REDIS_PORT=6379 \
+MEMCACHED_HOST=127.0.0.1 \
+MEMCACHED_PORT=11211 \
+rush test:integration
 ```
 
 ## Versioning and releases
 
 Rush tracks changes and publishes packages independently:
 
-- `toshihiko`, `@toshihiko/base-adapter`, and `@toshihiko/mysql-adapter` are locked to major version 2, but do not need to publish together.
+- `toshihiko`, `@toshihiko/base-adapter`, `@toshihiko/mysql-adapter`, `@toshihiko/redis-cache`, and `@toshihiko/memcached-cache` are locked to major version 2, but do not need to publish together.
 - `@toshihiko/sql-utils` remains on its independent 1.x version line.
 - A change to an adapter does not force an unrelated core release.
 

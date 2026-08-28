@@ -30,6 +30,11 @@ import type {
   AdapterValue,
 } from './contracts/adapter';
 import type { Query } from './query';
+import {
+  createCache,
+  type Cache,
+  type CacheSource,
+} from './contracts/cache';
 
 export type ToshihikoOptions = object;
 
@@ -102,6 +107,7 @@ export class Toshihiko<
   Options extends object = ToshihikoOptions,
 > extends EventEmitter2 {
   readonly adapter: AdapterInstance | null;
+  declare readonly cache: Cache | null | undefined;
   readonly dialect: string | null;
   readonly options: Options;
   declare readonly pool: AdapterInstance extends { readonly mysql: infer Pool }
@@ -130,6 +136,15 @@ export class Toshihiko<
     }
 
     attachAdapterCompatibility(this, this.adapter);
+
+    const cacheSource = (this.options as { readonly cache?: CacheSource }).cache;
+    if (cacheSource) {
+      (this as { cache: Cache | null }).cache = Toshihiko.createCache(cacheSource);
+    }
+  }
+
+  static createCache(source: unknown): Cache | null {
+    return createCache(source);
   }
 
   get database(): string {

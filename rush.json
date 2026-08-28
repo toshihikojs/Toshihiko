@@ -27,6 +27,16 @@
       "versionPolicyName": "toshihiko-v2"
     },
     {
+      "packageName": "@toshihiko/redis-cache",
+      "projectFolder": "packages/redis",
+      "versionPolicyName": "toshihiko-v2"
+    },
+    {
+      "packageName": "@toshihiko/memcached-cache",
+      "projectFolder": "packages/memcached",
+      "versionPolicyName": "toshihiko-v2"
+    },
+    {
       "packageName": "@toshihiko/sql-utils",
       "projectFolder": "packages/sql-utils",
       "versionPolicyName": "sql-utils-v1"
