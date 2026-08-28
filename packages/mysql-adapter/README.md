@@ -12,13 +12,12 @@ npm install toshihiko @toshihiko/mysql-adapter
 
 ## Usage
 
-Pass the Adapter constructor directly to Toshihiko. The original `define` API remains unchanged.
+Install the package and use the original `mysql` dialect name. The `define` API remains unchanged.
 
 ```typescript
-import { MySQLAdapter } from '@toshihiko/mysql-adapter';
 import { Toshihiko, Type } from 'toshihiko';
 
-const toshihiko = new Toshihiko(MySQLAdapter, {
+const toshihiko = new Toshihiko('mysql', {
   database: 'app',
   host: '127.0.0.1',
   password: 'secret',
@@ -35,6 +34,16 @@ const users = await User.where({ id: { $gte: 1 } }).find(true);
 
 `find`, `count`, writes, raw execution, and transaction methods all return native Promises.
 
+The Adapter constructor and a prebuilt Adapter instance can also be passed directly when an application needs explicit dependency injection:
+
+```typescript
+import { MySQLAdapter } from '@toshihiko/mysql-adapter';
+
+const toshihiko = new Toshihiko(MySQLAdapter, {
+  database: 'app',
+});
+```
+
 ## Cache
 
 Attach a cache to Toshihiko or to one model. Models inherit the Toshihiko-level cache unless their own `cache` option replaces or disables it.
@@ -43,7 +52,7 @@ Attach a cache to Toshihiko or to one model. Models inherit the Toshihiko-level 
 import { MemcachedCache } from '@toshihiko/memcached-cache';
 
 const cache = new MemcachedCache('127.0.0.1:11211');
-const toshihiko = new Toshihiko(MySQLAdapter, {
+const toshihiko = new Toshihiko('mysql', {
   cache,
   database: 'app',
 });
@@ -55,10 +64,10 @@ MySQL reads cached rows and fills misses with the same behavior as Toshihiko v1.
 
 ## Raw SQL
 
-`execute` accepts either the normal v2 form or the legacy connection-first argument order. Both forms are Promise-only.
+`execute` retains the v1 argument order, with an optional connection before the SQL string at the Adapter layer. All forms are Promise-only.
 
 ```typescript
-await toshihiko.adapter?.execute(
+await toshihiko.adapter.execute(
   'UPDATE `users` SET `name` = ? WHERE `user_id` = ?',
   ['Alice', 1],
 );

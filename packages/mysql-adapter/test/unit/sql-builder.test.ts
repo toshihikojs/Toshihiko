@@ -70,7 +70,7 @@ test('find, update, delete, and raw expressions retain the original call shape',
   );
   assert.throws(
     () => builder.makeDelete(Model, { limit: [2, 1] }),
-    /non-zero offset/,
+    /Invalid limit in delete/,
   );
   assert.throws(() => builder.makeUpdate(Model, { update: {} }), /no set data/);
 });

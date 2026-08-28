@@ -5,7 +5,23 @@ const test = require('node:test');
 const { format } = require('mysql2');
 
 const { MySQLAdapter } = require('../..');
-const { Toshihiko, Type } = require('toshihiko');
+const { Adapter, Toshihiko, Type } = require('toshihiko');
+
+test('the v1 mysql dialect name resolves the scoped adapter package', () => {
+  const pool = {
+    format,
+    on() {
+      return this;
+    },
+  };
+  const toshihiko = new Toshihiko('mysql', { pool, database: 'package' });
+
+  assert.ok(toshihiko.adapter instanceof MySQLAdapter);
+  assert.equal(Adapter.mysql, MySQLAdapter);
+  assert.equal(toshihiko.adapter.parent, toshihiko);
+  assert.equal(toshihiko.pool, pool);
+  assert.equal(toshihiko.database, 'package');
+});
 
 test('published package connects directly to Toshihiko and hydrates rows', async () => {
   const queries = [];

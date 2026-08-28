@@ -1,4 +1,16 @@
-import type { ToshihikoOptions } from '../toshihiko';
+import type { Toshihiko, ToshihikoOptions } from '../toshihiko';
+
+export declare const adapterExecuteSpec: unique symbol;
+
+export interface AdapterExecuteSpec<
+  Arguments extends readonly unknown[],
+  QueryArguments extends readonly unknown[],
+  Result,
+> {
+  readonly arguments: Arguments;
+  readonly queryArguments: QueryArguments;
+  readonly result: Result;
+}
 
 export interface AdapterFindOptions {
   readonly noCache: boolean;
@@ -92,6 +104,10 @@ export interface AdapterLike {
   readonly deleteByQuery: (
     query: never,
   ) => Promise<unknown>;
+  execute?(...arguments_: readonly unknown[]): Promise<unknown>;
+  beginTransaction?(): Promise<unknown>;
+  commit?(connection: unknown): Promise<unknown>;
+  rollback?(connection: unknown): Promise<unknown>;
   getDBName(): string;
 }
 
@@ -102,12 +118,12 @@ export type AdapterConnection<Instance extends AdapterLike> =
   Exclude<Parameters<Instance['insert']>[1], null>;
 
 export type AdapterField<Instance extends AdapterLike> =
-  Parameters<Instance['insert']>[2][number] extends AdapterData<infer Field, unknown>
+  Parameters<Instance['insert']>[2][number] extends AdapterData<infer Field, infer _Value>
     ? Field
     : never;
 
 export type AdapterValue<Instance extends AdapterLike> =
-  Parameters<Instance['insert']>[2][number] extends AdapterData<unknown, infer Value>
+  Parameters<Instance['insert']>[2][number] extends AdapterData<infer _Field, infer Value>
     ? Value
     : never;
 
@@ -124,12 +140,12 @@ export type AdapterUpdateConnection<Instance extends AdapterLike> =
   Exclude<Parameters<Instance['update']>[1], null>;
 
 export type AdapterUpdateField<Instance extends AdapterLike> =
-  Parameters<Instance['update']>[3][number] extends AdapterData<infer Field, unknown>
+  Parameters<Instance['update']>[3][number] extends AdapterData<infer Field, infer _Value>
     ? Field
     : never;
 
 export type AdapterUpdateValue<Instance extends AdapterLike> =
-  Parameters<Instance['update']>[3][number] extends AdapterData<unknown, infer Value>
+  Parameters<Instance['update']>[3][number] extends AdapterData<infer _Field, infer Value>
     ? Value
     : never;
 
@@ -137,9 +153,14 @@ export type AdapterDeleteQueryType<Instance extends AdapterLike> =
   Parameters<Instance['deleteByQuery']>[0];
 
 type AdapterMethodValue<
-  Instance extends AdapterLike,
-  Name extends keyof AdapterLike,
-> = Exclude<Instance[Name], undefined>;
+  Instance,
+  Name extends PropertyKey,
+> = Name extends keyof Instance ? Exclude<Instance[Name], undefined> : undefined;
+
+type AdapterDeclaredExecuteSpec<Instance> =
+  typeof adapterExecuteSpec extends keyof Instance
+    ? Instance[typeof adapterExecuteSpec]
+    : undefined;
 
 export type AdapterUpdateByQueryType<Instance extends AdapterLike> =
   AdapterMethodValue<Instance, 'updateByQuery'> extends (
@@ -149,15 +170,30 @@ export type AdapterUpdateByQueryType<Instance extends AdapterLike> =
 export type AdapterUpdateByQueryResult<Instance extends AdapterLike> =
   AdapterMethodValue<Instance, 'updateByQuery'> extends (
     query: infer _Query,
-  ) => infer Result ? Awaited<Result> : unknown;
+  ) => infer Result ? Awaited<Result> : never;
+
+export type AdapterUpdateByQueryCallArguments<Instance extends AdapterLike> =
+  AdapterMethodValue<Instance, 'updateByQuery'> extends (
+    query: infer _Query,
+  ) => infer _Result
+    ? readonly []
+    : readonly [unsupportedAdapterUpdateByQuery: never];
 
 export type AdapterDeleteByQueryResult<Instance extends AdapterLike> =
   Awaited<ReturnType<Instance['deleteByQuery']>>;
 
 export type AdapterExecuteArguments<Instance extends AdapterLike> =
-  Instance extends { execute(...arguments_: infer Arguments): unknown }
+  AdapterDeclaredExecuteSpec<Instance> extends AdapterExecuteSpec<
+    infer Arguments,
+    infer _QueryArguments,
+    infer _Result
+  >
     ? Arguments
-    : readonly unknown[];
+    : AdapterMethodValue<Instance, 'execute'> extends (
+      ...arguments_: infer Arguments
+    ) => infer _Result
+      ? Arguments
+      : readonly [unsupportedAdapterExecute: never];
 
 type WithoutConnection<Arguments, Connection> =
   Arguments extends readonly [Connection | null, ...infer Rest]
@@ -165,36 +201,74 @@ type WithoutConnection<Arguments, Connection> =
     : Arguments;
 
 export type AdapterQueryExecuteArguments<Instance extends AdapterLike> =
-  WithoutConnection<
-    AdapterExecuteArguments<Instance>,
-    AdapterConnection<Instance>
-  >;
+  AdapterDeclaredExecuteSpec<Instance> extends AdapterExecuteSpec<
+    infer _Arguments,
+    infer QueryArguments,
+    infer _Result
+  >
+    ? QueryArguments
+    : AdapterMethodValue<Instance, 'execute'> extends (
+      ...arguments_: infer Arguments
+    ) => infer _Result
+      ? WithoutConnection<Arguments, AdapterConnection<Instance>>
+      : readonly [unsupportedAdapterExecute: never];
 
 export type AdapterExecuteResult<Instance extends AdapterLike> =
-  Instance extends { execute(...arguments_: any): infer Result }
-    ? Awaited<Result>
-    : unknown;
+  AdapterDeclaredExecuteSpec<Instance> extends AdapterExecuteSpec<
+    infer _Arguments,
+    infer _QueryArguments,
+    infer Result
+  >
+    ? Result
+    : AdapterMethodValue<Instance, 'execute'> extends (
+      ...arguments_: infer _Arguments
+    ) => infer Result
+      ? Awaited<Result>
+      : never;
 
 export type AdapterTransactionConnection<Instance extends AdapterLike> =
-  Instance extends { beginTransaction(): infer Result }
+  AdapterMethodValue<Instance, 'beginTransaction'> extends () => infer Result
     ? Awaited<Result>
-    : AdapterConnection<Instance>;
+    : never;
+
+export type AdapterBeginTransactionArguments<Instance extends AdapterLike> =
+  AdapterMethodValue<Instance, 'beginTransaction'> extends () => infer _Result
+    ? readonly []
+    : readonly [unsupportedAdapterTransaction: never];
 
 export type AdapterCommitResult<Instance extends AdapterLike> =
-  Instance extends {
-    commit(connection: AdapterTransactionConnection<Instance>): infer Result;
-  } ? Awaited<Result> : unknown;
+  AdapterMethodValue<Instance, 'commit'> extends (
+    ...arguments_: infer _Arguments
+  ) => infer Result
+    ? Awaited<Result>
+    : never;
+
+export type AdapterCommitArguments<Instance extends AdapterLike> =
+  AdapterMethodValue<Instance, 'commit'> extends (
+    ...arguments_: infer _Arguments
+  ) => infer _Result
+    ? readonly [connection: AdapterTransactionConnection<Instance>]
+    : readonly [unsupportedAdapterCommit: never];
 
 export type AdapterRollbackResult<Instance extends AdapterLike> =
-  Instance extends {
-    rollback(connection: AdapterTransactionConnection<Instance>): infer Result;
-  } ? Awaited<Result> : unknown;
+  AdapterMethodValue<Instance, 'rollback'> extends (
+    ...arguments_: infer _Arguments
+  ) => infer Result
+    ? Awaited<Result>
+    : never;
+
+export type AdapterRollbackArguments<Instance extends AdapterLike> =
+  AdapterMethodValue<Instance, 'rollback'> extends (
+    ...arguments_: infer _Arguments
+  ) => infer _Result
+    ? readonly [connection: AdapterTransactionConnection<Instance>]
+    : readonly [unsupportedAdapterRollback: never];
 
 export interface AdapterConstructor<
   Options extends object = ToshihikoOptions,
   Instance extends AdapterLike = Adapter,
 > {
-  new(options: Options): Instance;
+  new(parent: Toshihiko<Instance, Options>, options: Options): Instance;
 }
 
 export type AdapterSource<

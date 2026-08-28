@@ -1,9 +1,32 @@
 import { escape, escapeLike } from '@toshihiko/sql-utils';
+import type {
+  Adapter as AdapterContract,
+  AdapterConstructor,
+  AdapterQuery,
+} from './contracts/adapter';
+import { loadAdapter } from './toshihiko';
 
 export { Type, type JsonValue } from './field-types';
 export { Toshihiko, type ToshihikoOptions } from './toshihiko';
 
 export const Escaper = { escape, escapeLike };
+
+export const Adapter = {
+  get base(): AdapterConstructor {
+    return loadAdapter('base');
+  },
+  get mysql(): AdapterConstructor {
+    return loadAdapter('mysql');
+  },
+};
+
+export type Adapter<
+  Model = unknown,
+  Connection = unknown,
+  Field = unknown,
+  Value = unknown,
+  Query extends AdapterQuery<Model, Connection> = AdapterQuery<Model, Connection>,
+> = AdapterContract<Model, Connection, Field, Value, Query>;
 
 export type {
   Cache,
@@ -23,8 +46,10 @@ export type {
   YukariSource,
 } from './yukari';
 export type {
-  Adapter,
+  adapterExecuteSpec,
+  AdapterBeginTransactionArguments,
   AdapterConnection,
+  AdapterCommitArguments,
   AdapterCommitResult,
   AdapterConstructor,
   AdapterCountQueryType,
@@ -33,17 +58,20 @@ export type {
   AdapterDeleteByQueryResult,
   AdapterExecuteArguments,
   AdapterExecuteResult,
+  AdapterExecuteSpec,
   AdapterFindOptions,
   AdapterFindResult,
   AdapterLike,
   AdapterModel,
   AdapterQuery,
   AdapterQueryExecuteArguments,
+  AdapterRollbackArguments,
   AdapterRow,
   AdapterSource,
   AdapterTransactionConnection,
   AdapterUpdateConnection,
   AdapterUpdateByQueryResult,
+  AdapterUpdateByQueryCallArguments,
   AdapterUpdateByQueryType,
   AdapterUpdateField,
   AdapterUpdateModel,
@@ -56,7 +84,9 @@ export type {
   FieldDefinition,
   FieldDefinitionJsonValue,
   FieldDefinitionNonNullValue,
+  FieldDefinitionStorageValue,
   FieldType,
+  FieldTypeStorageValue,
   FieldValidator,
   JsonRowFromSchema,
   PrimaryKeyNames,
@@ -81,6 +111,8 @@ export type {
   Query,
   QueryFieldCondition,
   QueryFieldOperators,
+  QueryFindManyOptions,
+  QueryFindOneOptions,
   QueryFindOptions,
   QueryJsonRow,
   QueryOrder,

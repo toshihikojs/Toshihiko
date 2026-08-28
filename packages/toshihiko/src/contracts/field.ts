@@ -20,7 +20,7 @@ type FieldTypeJsonMethod<Value, JsonValue> = SameType<Value, JsonValue> extends 
 
 export type FieldType<
   Value,
-  StorageValue = unknown,
+  StorageValue = Value,
   JsonValue = Value,
 > = {
   readonly [fieldTypeValue]?: Value;
@@ -52,12 +52,15 @@ export type FieldTypeValue<Type extends FieldTypeLike> =
     ? Exclude<Type[typeof fieldTypeValue], undefined>
     : ReturnType<Type['parse']>;
 
+export type FieldTypeStorageValue<Type extends FieldTypeLike> =
+  ReturnType<Type['restore']>;
+
 export type FieldValidator<Value> = (
   value: Value,
 ) => string | void | Promise<string | void>;
 
 type FieldValidatorShape = {
-  validate(value: any): string | void | Promise<string | void>;
+  validate(value: never): string | void | Promise<string | void>;
 }['validate'];
 
 export interface FieldDefinitionShape {
@@ -105,6 +108,9 @@ export type FieldDefinitionValue<Definition extends FieldDefinitionShape> =
 
 export type FieldDefinitionNonNullValue<Definition extends FieldDefinitionShape> =
   FieldTypeValue<FieldTypeFromDefinition<Definition>>;
+
+export type FieldDefinitionStorageValue<Definition extends FieldDefinitionShape> =
+  FieldTypeStorageValue<FieldTypeFromDefinition<Definition>>;
 
 export type FieldDefinitionJsonValue<Definition extends FieldDefinitionShape> =
   null extends FieldDefinitionValue<Definition>
@@ -247,8 +253,10 @@ export class Field<
     return this.type.parse(value as never) as FieldDefinitionValue<Definition>;
   }
 
-  restore(value: FieldDefinitionValue<Definition>): unknown {
-    return this.type.restore(value as never);
+  restore(
+    value: FieldDefinitionValue<Definition>,
+  ): FieldDefinitionStorageValue<Definition> {
+    return this.type.restore(value as never) as FieldDefinitionStorageValue<Definition>;
   }
 
   equal(

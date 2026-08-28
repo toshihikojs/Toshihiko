@@ -85,9 +85,9 @@ export class Yukari<
   declare $origData: YukariOriginalData<Schema>;
   declare readonly $dbName: string;
   declare readonly $tableName: string;
-  declare readonly $cache: unknown;
+  declare readonly $cache: Model<Name, Schema, AdapterInstance>['cache'];
   declare $fromCache: boolean;
-  declare readonly $adapter: AdapterInstance | null;
+  declare readonly $adapter: AdapterInstance;
 
   constructor(model: Model<Name, Schema, AdapterInstance>, source: YukariSource) {
     Object.defineProperties(this, {
@@ -142,6 +142,7 @@ export class Yukari<
       readonly fieldIdx: number;
       data: FieldDefinitionValue<Schema[number]>;
     }> = {};
+    this.$origData = originalData as YukariOriginalData<Schema>;
 
     for (const [fieldIdx, field] of this.$schema.entries()) {
       const runtimeField = field as unknown as RuntimeField;
@@ -158,16 +159,18 @@ export class Yukari<
         fieldIdx,
         data: parsed,
       };
+    }
 
-      Object.defineProperty(this, runtimeField.name, {
+    for (const [name, entry] of Object.entries(originalData)) {
+      if (entry === undefined) continue;
+      Object.defineProperty(this, name, {
         configurable: false,
         enumerable: true,
-        value: cloneValue(parsed),
+        value: cloneValue(entry.data),
         writable: true,
       });
     }
 
-    this.$origData = originalData as YukariOriginalData<Schema>;
     if (row.$fromCache) {
       Reflect.set(this, '$fromCache', true);
     }
@@ -196,11 +199,17 @@ export class Yukari<
       && typeof values[name] !== 'function'
       && this.fieldIndex(name) !== -1
     ));
-    for (let index = 0; index < names.length; index += 10) {
-      await Promise.all(names.slice(index, index + 10).map(async (name) => {
-        await this.validateField(name, values[name]);
-      }));
-    }
+    let index = 0;
+    const workers = Array.from(
+      { length: Math.min(10, names.length) },
+      async () => {
+        while (index < names.length) {
+          const name = names[index++]!;
+          await this.validateField(name, values[name]);
+        }
+      },
+    );
+    await Promise.all(workers);
   }
 
   async insert(
@@ -211,7 +220,7 @@ export class Yukari<
     }
     await this.validateAll();
 
-    const adapter = (this.$adapter ?? this.$model.parent.getAdapter()) as unknown as Adapter<
+    const adapter = this.$adapter as unknown as Adapter<
       AdapterModel<AdapterInstance>,
       AdapterConnection<AdapterInstance>,
       AdapterField<AdapterInstance>,
@@ -258,7 +267,7 @@ export class Yukari<
     const primaryKey = this.originalLocator();
     await this.validateAll();
 
-    const adapter = (this.$adapter ?? this.$model.parent.getAdapter()) as unknown as Adapter<
+    const adapter = this.$adapter as unknown as Adapter<
       AdapterModel<AdapterInstance>,
       AdapterConnection<AdapterInstance>,
       AdapterField<AdapterInstance>,
@@ -276,10 +285,7 @@ export class Yukari<
     const originalData = this.$origData as unknown as RuntimeOriginalData;
     for (const entry of data) {
       const field = entry.field as Field<Schema[number]>;
-      const original = originalData[field.name];
-      if (original !== undefined) {
-        original.data = entry.value;
-      }
+      originalData[field.name]!.data = entry.value;
     }
     Reflect.set(this, '$source', 'query');
     return this;
@@ -298,7 +304,7 @@ export class Yukari<
       .limit(0, 1);
     query.conn(connection);
 
-    const adapter = (this.$adapter ?? this.$model.parent.getAdapter()) as unknown as {
+    const adapter = this.$adapter as unknown as {
       readonly deleteByQuery: (
         query: AdapterDeleteQueryType<AdapterInstance>,
       ) => Promise<unknown>;
@@ -432,10 +438,10 @@ function callValidator<Value>(
   validator: FieldValidator<Value>,
   model: object,
   value: unknown,
-): unknown {
+): ReturnType<FieldValidator<Value>> {
   const callable = validator as unknown as (
     this: object,
     input: unknown,
-  ) => unknown;
+  ) => ReturnType<FieldValidator<Value>>;
   return callable.call(model, value);
 }

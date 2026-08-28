@@ -4,12 +4,28 @@ const assert = require('node:assert/strict');
 const test = require('node:test');
 const moment = require('moment');
 
-const { Escaper, Toshihiko, Type } = require('../..');
+const packageExports = require('../..');
+const { Escaper, Toshihiko, Type } = packageExports;
 const { Yukari } = require('../../dist/yukari.js');
 
+test('the CommonJS entry point preserves the v1 runtime exports', () => {
+  assert.deepEqual(Object.keys(packageExports).sort(), [
+    'Adapter',
+    'Escaper',
+    'Toshihiko',
+    'Type',
+  ]);
+  assert.deepEqual(Object.keys(packageExports.Adapter).sort(), ['base', 'mysql']);
+  assert.equal(packageExports.Query, undefined);
+  assert.equal(packageExports.Model, undefined);
+  assert.equal(packageExports.Yukari, undefined);
+});
+
 class MemoryAdapter {
-  constructor(options) {
-    this.options = options;
+  constructor(parentOrOptions, adapterOptions) {
+    const hasParent = arguments.length >= 2;
+    this.parent = hasParent ? parentOrOptions : undefined;
+    this.options = (hasParent ? adapterOptions : parentOrOptions) ?? {};
     this.calls = [];
     this.countCalls = [];
     this.deleteCalls = [];
@@ -120,7 +136,8 @@ class MemoryAdapter {
 }
 
 test('define compiles the documented schema into model metadata', () => {
-  const toshihiko = new Toshihiko('mysql', { database: 'toshihiko' });
+  const options = { database: 'toshihiko' };
+  const toshihiko = new Toshihiko(MemoryAdapter, options);
   const User = toshihiko.define('user', [
     {
       name: 'id',
@@ -135,6 +152,8 @@ test('define compiles the documented schema into model metadata', () => {
 
   assert.equal(User.name, 'user');
   assert.equal(User.parent, toshihiko);
+  assert.equal(toshihiko.adapter.parent, toshihiko);
+  assert.equal(toshihiko.adapter.options, options);
   assert.deepEqual(User.nameToColumn, {
     id: 'user_id',
     username: 'username',
@@ -189,7 +208,7 @@ test('built-in field types retain v1 restore coercion for JavaScript callers', (
   assert.equal(Escaper.escape("a'b"), "a\\'b");
   assert.equal(Escaper.escapeLike('a_b%'), 'a\\_b\\%');
 
-  const Legacy = new Toshihiko('mysql').define('legacy', [{
+  const Legacy = new Toshihiko(MemoryAdapter).define('legacy', [{
     name: 'legacy_name',
     allow_null: true,
     primary_key: true,
@@ -294,7 +313,7 @@ test('built-in field types pass the direct v1 conversion matrix', () => {
 });
 
 test('cache creation and model inheritance preserve the v1 option rules', () => {
-  const toshihiko = new Toshihiko('mysql');
+  const toshihiko = new Toshihiko(MemoryAdapter);
   const cache = {
     async deleteData() {},
     async deleteKeys() {},
@@ -320,14 +339,14 @@ test('cache creation and model inheritance preserve the v1 option rules', () => 
   assert.equal(configured.foo, 'fooooo');
   assert.equal(configured.bar, 'barrrr');
 
-  const global = new Toshihiko('mysql', { cache });
+  const global = new Toshihiko(MemoryAdapter, { cache });
   assert.equal(global.define('inherited', [{ name: 'id' }]).cache, cache);
   assert.equal(global.define('disabled', [{ name: 'id' }], { cache: false }).cache, null);
   assert.equal(global.define('null-cache', [{ name: 'id' }], { cache: null }).cache, null);
 });
 
 test('define rejects fields without logical names', () => {
-  const toshihiko = new Toshihiko('mysql');
+  const toshihiko = new Toshihiko(MemoryAdapter);
 
   assert.throws(
     () => toshihiko.define('user', [{}]),
@@ -336,7 +355,7 @@ test('define rejects fields without logical names', () => {
 });
 
 test('define preserves v1 validator normalization for JavaScript callers', () => {
-  const toshihiko = new Toshihiko('mysql');
+  const toshihiko = new Toshihiko(MemoryAdapter);
   const validator = () => undefined;
   const ignored = toshihiko.define('ignored', [{ name: 'id', validators: 'required' }]);
   const retained = toshihiko.define('retained', [{ name: 'id', validators: ['required'] }]);
@@ -352,7 +371,7 @@ test('define preserves v1 validator normalization for JavaScript callers', () =>
 });
 
 test('Field retains v1 fallback behavior for empty columns and undefined defaults', () => {
-  const Model = new Toshihiko('mysql').define('fallbacks', [
+  const Model = new Toshihiko(MemoryAdapter).define('fallbacks', [
     { name: 'emptyColumn', column: '' },
     { name: 'undefinedDefault', defaultValue: undefined },
     { name: 'nullDefault', defaultValue: null, allowNull: true },
@@ -370,7 +389,7 @@ test('Field retains v1 fallback behavior for empty columns and undefined default
 });
 
 test('build creates a new Yukari and clones field defaults', () => {
-  const toshihiko = new Toshihiko('mysql');
+  const toshihiko = new Toshihiko(MemoryAdapter);
   const User = toshihiko.define('user', [
     { name: 'id', type: Type.Integer },
     { name: 'name', type: Type.String, defaultValue: 'anonymous' },
@@ -436,7 +455,7 @@ test('custom FieldType values keep their class and v1 fallback equality', async 
 });
 
 test('Field.parse delegates null coercion to the v1 FieldType', () => {
-  const Model = new Toshihiko('mysql').define('nullable', [
+  const Model = new Toshihiko(MemoryAdapter).define('nullable', [
     { name: 'required', type: Type.Integer },
     { name: 'optional', type: Type.Integer, allowNull: true },
   ]);
@@ -446,7 +465,7 @@ test('Field.parse delegates null coercion to the v1 FieldType', () => {
 });
 
 test('define preserves v1 field-name behavior without a reserved-name policy', () => {
-  const toshihiko = new Toshihiko('mysql');
+  const toshihiko = new Toshihiko(MemoryAdapter);
 
   for (const name of [
     'insert',
@@ -464,7 +483,7 @@ test('define preserves v1 field-name behavior without a reserved-name policy', (
 
 test('Yukari validation accepts sync and Promise validators in declaration order', async () => {
   const calls = [];
-  const toshihiko = new Toshihiko('mysql');
+  const toshihiko = new Toshihiko(MemoryAdapter);
   const User = toshihiko.define('user', [{
     name: 'score',
     type: Type.Integer,
@@ -490,7 +509,7 @@ test('Yukari validation accepts sync and Promise validators in declaration order
 });
 
 test('Yukari validation rejects nulls and preserves v1 synchronous messages', async () => {
-  const toshihiko = new Toshihiko('mysql');
+  const toshihiko = new Toshihiko(MemoryAdapter);
   const User = toshihiko.define('user', [
     { name: 'name', type: Type.String, allowNull: false },
     { name: 'legacy', validators: () => 'invalid' },
@@ -960,7 +979,7 @@ test('count preserves Adapter failures and returns Adapter values unchanged', as
 });
 
 test('Yukari restores database columns without applying build defaults', () => {
-  const toshihiko = new Toshihiko('mysql');
+  const toshihiko = new Toshihiko(MemoryAdapter);
   const User = toshihiko.define('user', [
     { name: 'id', column: 'user_id', type: Type.Integer },
     { name: 'name', type: Type.String, defaultValue: 'anonymous' },
@@ -988,7 +1007,7 @@ test('Yukari restores database columns without applying build defaults', () => {
 });
 
 test('Yukari serializes current and original rows and extracts Adapter data', () => {
-  const toshihiko = new Toshihiko('mysql');
+  const toshihiko = new Toshihiko(MemoryAdapter);
   const User = toshihiko.define('user', [
     { name: 'id', column: 'user_id', type: Type.Integer },
     { name: 'settings', type: Type.Json },
@@ -1112,6 +1131,21 @@ test('a Promise Adapter plugs directly into the original Model query API', async
     noCache: true,
     single: false,
   });
+
+  const single = await User.find({ single: true });
+  assert.equal(single instanceof Yukari, true);
+  assert.equal(single.id, 7);
+  assert.deepEqual(toshihiko.adapter.calls[5].options, {
+    noCache: false,
+    single: true,
+  });
+
+  const singleJSON = await User.find({ noCache: true, single: true }, true);
+  assert.deepEqual(singleJSON, { id: 7, name: 'Alice' });
+  assert.deepEqual(toshihiko.adapter.calls[6].options, {
+    noCache: true,
+    single: true,
+  });
 });
 
 test('Query and Model configuration retains the v1 argument behavior', () => {
@@ -1189,6 +1223,8 @@ test('Query and Model configuration retains the v1 argument behavior', () => {
     { id: 1 },
     { other: -1 },
   ]);
+  assert.deepEqual(query.order(1)._order, []);
+  assert.throws(() => query.order(null), TypeError);
 
   const connection = { transaction: true };
   assert.equal(query.conn(connection), query);
@@ -1266,16 +1302,7 @@ test('findById preserves v1 cache hits and database fallback', async () => {
   assert.equal(adapter.calls.length, 2);
 });
 
-test('unresolved dialects fail clearly while synchronous Adapter values are adopted', async () => {
-  const unresolved = new Toshihiko('mysql');
-  const User = unresolved.define('user', [
-    { name: 'id', type: Type.Integer, primaryKey: true },
-  ]);
-  await assert.rejects(
-    User.find(),
-    /Pass an Adapter constructor or instance instead/,
-  );
-
+test('synchronous Adapter values are adopted', async () => {
   const synchronousAdapter = {
     find() {
       return [];

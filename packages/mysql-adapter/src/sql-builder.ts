@@ -96,7 +96,7 @@ export class MySQLSqlBuilder {
     logic: string = 'AND',
   ): MySQLStatement {
     if (!Array.isArray(condition)) {
-      throw new TypeError('Non-array condition.');
+      throw new Error('Non-array condition.');
     }
 
     const normalizedLogic = normalizeLogic(logic);
@@ -124,10 +124,6 @@ export class MySQLSqlBuilder {
     if (Array.isArray(condition)) {
       return this.compileArrayWhere(model, condition, normalizedLogic);
     }
-    if (!isRecord(condition)) {
-      throw new TypeError('SQL condition must be an object or array.');
-    }
-
     const fragments: MySQLStatement[] = [];
     for (const [key, value] of Object.entries(condition)) {
       if (key === '$and' || key === '$or') {
@@ -135,13 +131,13 @@ export class MySQLSqlBuilder {
         if (Array.isArray(value)) {
           fragments.push(this.compileArrayWhere(
             model,
-            value.map(assertConditionRecord),
+            value as readonly Readonly<Record<string, unknown>>[],
             nestedLogic,
           ));
         } else {
           fragments.push(this.compileWhere(
             model,
-            assertConditionRecord(value),
+            value as Readonly<Record<string, unknown>>,
             nestedLogic,
           ));
         }
@@ -293,7 +289,12 @@ export class MySQLSqlBuilder {
       } else if (limit[0] === 0) {
         result = appendStatement(result, statement(` LIMIT ${normalizeLimit(limit[1])}`));
       } else {
-        throw new Error('MySQL DELETE supports a row count but not a non-zero offset.');
+        throw new Error(
+          'Invalid limit in delete. Refer to '
+          + 'http://dev.mysql.com/doc/refman/5.7/en/delete.html#idm139816273062400, '
+          + 'https://www.techonthenet.com/mysql/delete_limit.php and '
+          + 'http://stackoverflow.com/questions/7142097/mysql-delete-statement-with-limit#answer-7142118',
+        );
       }
     }
     return result;
@@ -549,13 +550,6 @@ function isFieldOperator(value: string): value is FieldOperator {
 
 function isRecord(value: unknown): value is Readonly<Record<string, unknown>> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
-}
-
-function assertConditionRecord(value: unknown): Readonly<Record<string, unknown>> {
-  if (!isRecord(value)) {
-    throw new TypeError('nested SQL condition must be an object.');
-  }
-  return value;
 }
 
 function isRawExpression(value: unknown): value is string {

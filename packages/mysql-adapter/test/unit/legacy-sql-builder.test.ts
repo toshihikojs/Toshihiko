@@ -112,6 +112,14 @@ test('v1 object and array where trees retain ordering and logic', () => {
 
 test('v1 empty and invalid where inputs retain their guards', () => {
   assert.equal(builder.makeWhere(Model, {}), '()');
+  assert.equal(
+    builder.makeWhere(Model, 1 as unknown as Readonly<Record<string, unknown>>),
+    '()',
+  );
+  assert.equal(
+    builder.makeWhere(Model, { $and: 1 }),
+    '(())',
+  );
   assert.throws(() => builder.makeWhere(Model, { missing: 100 }), /missing/);
   assert.throws(
     () => builder.makeArrayWhere(
@@ -210,7 +218,7 @@ test('v1 delete generation retains order and MySQL limit restrictions', () => {
     'DELETE FROM `test_table` WHERE (`id` = 1) ORDER BY `key2` DESC LIMIT 1',
   );
   assert.equal(builder.makeDelete(Model), 'DELETE FROM `test_table`');
-  assert.throws(() => builder.makeDelete(Model, { limit: [1, 1] }), /non-zero offset/);
+  assert.throws(() => builder.makeDelete(Model, { limit: [1, 1] }), /Invalid limit in delete/);
 });
 
 test('compiled v1 scenarios bind data in deterministic order', () => {

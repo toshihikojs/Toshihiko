@@ -12,6 +12,7 @@ import type {
   AdapterQueryType,
   AdapterRow,
   AdapterUpdateByQueryResult,
+  AdapterUpdateByQueryCallArguments,
   AdapterUpdateByQueryType,
 } from './contracts/adapter';
 import type { FieldName } from './contracts/common';
@@ -65,6 +66,15 @@ export type QueryOrder<Row extends object> =
 
 export interface QueryFindOptions {
   readonly noCache?: boolean;
+  readonly single?: boolean;
+}
+
+export interface QueryFindManyOptions extends QueryFindOptions {
+  readonly single?: false;
+}
+
+export interface QueryFindOneOptions extends QueryFindOptions {
+  readonly single: true;
 }
 
 export type QueryJsonRow<Schema extends SchemaDefinition> = Partial<
@@ -87,6 +97,7 @@ export class Query<
   Schema extends SchemaDefinition,
   AdapterInstance extends AdapterLike = Adapter,
 > {
+  declare readonly adapter: AdapterInstance;
   declare readonly cache: Cache | null;
   declare readonly model: Model<Name, Schema, AdapterInstance>;
   declare readonly toshihiko: Model<Name, Schema, AdapterInstance>['parent'];
@@ -100,9 +111,8 @@ export class Query<
   _where: QueryWhere<RowFromSchema<Schema>> = {};
 
   constructor(model: Model<Name, Schema, AdapterInstance>) {
-    const adapter = model.parent.adapter;
     Object.defineProperties(this, {
-      adapter: { get: () => adapter ?? model.parent.getAdapter() },
+      adapter: { value: model.parent.adapter },
       cache: { value: model.cache },
       field: { value: this.fields, writable: true },
       model: { value: model },
@@ -110,10 +120,6 @@ export class Query<
       toshihiko: { value: model.parent },
     });
     this._fields = model.schema.map((field) => field.name);
-  }
-
-  get adapter(): AdapterInstance {
-    return this.toshihiko.getAdapter();
   }
 
   index(indexName: string): this {
@@ -190,19 +196,16 @@ export class Query<
   }
 
   async count(): Promise<number> {
-    const adapter = this.adapter as unknown as {
-      readonly count: (
-        query: AdapterCountQueryType<AdapterInstance>,
-      ) => Promise<number>;
-    };
-    return await adapter.count(
-      this as unknown as AdapterCountQueryType<AdapterInstance>,
+    return await this.adapter.count(
+      this as AdapterCountQueryType<AdapterInstance>,
     );
   }
 
   async update(
     data: Partial<RowFromSchema<Schema>>,
+    ..._support: AdapterUpdateByQueryCallArguments<AdapterInstance>
   ): Promise<AdapterUpdateByQueryResult<AdapterInstance>> {
+    void _support;
     this._updateData = data;
     const adapter = this.adapter as unknown as {
       updateByQuery(query: AdapterUpdateByQueryType<AdapterInstance>): Promise<AdapterUpdateByQueryResult<AdapterInstance>>;
@@ -232,29 +235,67 @@ export class Query<
 
   find(): Promise<readonly QueriedYukari<Name, Schema, AdapterInstance>[]>;
   find(
-    options: QueryFindOptions,
+    options: QueryFindManyOptions,
+  ): Promise<readonly QueriedYukari<Name, Schema, AdapterInstance>[]>;
+  find(
+    options: QueryFindOneOptions,
+  ): Promise<QueriedYukari<Name, Schema, AdapterInstance> | null>;
+  find(
+    toJSON: false,
+    options?: QueryFindManyOptions,
   ): Promise<readonly QueriedYukari<Name, Schema, AdapterInstance>[]>;
   find(
     toJSON: false,
-    options?: QueryFindOptions,
-  ): Promise<readonly QueriedYukari<Name, Schema, AdapterInstance>[]>;
+    options: QueryFindOneOptions,
+  ): Promise<QueriedYukari<Name, Schema, AdapterInstance> | null>;
   find(
     toJSON: true,
-    options?: QueryFindOptions,
+    options?: QueryFindManyOptions,
   ): Promise<readonly QueryJsonRow<Schema>[]>;
+  find(
+    toJSON: true,
+    options: QueryFindOneOptions,
+  ): Promise<QueryJsonRow<Schema> | null>;
+  find(
+    options: QueryFindManyOptions,
+    toJSON: true,
+  ): Promise<readonly QueryJsonRow<Schema>[]>;
+  find(
+    options: QueryFindOneOptions,
+    toJSON: false,
+  ): Promise<QueriedYukari<Name, Schema, AdapterInstance> | null>;
+  find(
+    options: QueryFindOneOptions,
+    toJSON: true,
+  ): Promise<QueryJsonRow<Schema> | null>;
   async find(
     toJSONOrOptions: boolean | QueryFindOptions = false,
-    maybeOptions: QueryFindOptions = {},
-  ): Promise<readonly QueriedYukari<Name, Schema, AdapterInstance>[] | readonly QueryJsonRow<Schema>[]> {
-    const toJSON = typeof toJSONOrOptions === 'boolean' ? toJSONOrOptions : false;
-    const options = toJSONOrOptions !== null && typeof toJSONOrOptions === 'object'
-      ? toJSONOrOptions
-      : maybeOptions;
+    maybeOptions?: boolean | QueryFindOptions,
+  ): Promise<
+    | readonly QueriedYukari<Name, Schema, AdapterInstance>[]
+    | QueriedYukari<Name, Schema, AdapterInstance>
+    | readonly QueryJsonRow<Schema>[]
+    | QueryJsonRow<Schema>
+    | null
+  > {
+    let toJSON = false;
+    let options: QueryFindOptions = {};
+    for (const argument of [toJSONOrOptions, maybeOptions]) {
+      if (typeof argument === 'boolean') toJSON = argument;
+      else if (argument !== null && typeof argument === 'object') options = argument;
+    }
     const normalizedOptions = options && typeof options === 'object' ? options : {};
+    const single = Boolean(normalizedOptions.single);
     const result = await this.fetch({
       noCache: Boolean(normalizedOptions.noCache),
-      single: false,
+      single,
     });
+
+    if (single) {
+      if (!result) return result as null;
+      const row = this.hydrate(result as AdapterRow);
+      return toJSON ? row.toJSON() : row;
+    }
 
     if (!result || !isReadonlyArray(result) || result.length === 0) {
       return result as unknown as readonly QueriedYukari<Name, Schema, AdapterInstance>[];
@@ -295,9 +336,9 @@ export class Query<
     this.where(condition);
 
     if (this.cache) {
-      let data: readonly unknown[] = [];
+      let data: readonly (AdapterRow | null)[] = [];
       try {
-        data = await this.cache.getData(
+        data = await this.cache.getData<AdapterRow>(
           this.toshihiko.database,
           this.model.name,
           condition,
@@ -316,15 +357,8 @@ export class Query<
   }
 
   private async fetch(options: AdapterFindOptions): Promise<AdapterFindResult> {
-    const adapter = this.adapter as unknown as Adapter<
-      unknown,
-      unknown,
-      unknown,
-      unknown,
-      AdapterQueryType<AdapterInstance>
-    >;
-    return adapter.find(
-      this as unknown as AdapterQueryType<AdapterInstance>,
+    return this.adapter.find(
+      this as AdapterQueryType<AdapterInstance>,
       options,
     );
   }
@@ -377,9 +411,6 @@ function normalizeOrder<Row extends object>(
       : normalizeOrderObject(entry));
   }
 
-  if (order === null || typeof order !== 'object') {
-    throw new TypeError('query order must be a string, object, or array.');
-  }
   return normalizeOrderObject(order);
 }
 

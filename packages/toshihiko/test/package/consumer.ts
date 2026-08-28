@@ -54,7 +54,10 @@ const cachedUser = CachedUser.findById(1);
 void cachedUser;
 
 class ConsumerAdapter implements Adapter {
-  constructor(readonly options: { readonly database: string }) {}
+  constructor(
+    readonly parent: object,
+    readonly options: { readonly database: string },
+  ) {}
 
   async find(
     query: AdapterQuery,

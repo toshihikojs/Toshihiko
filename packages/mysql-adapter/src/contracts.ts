@@ -87,6 +87,11 @@ export type MySQLExecuteArguments =
     values?: MySQLValues,
   ];
 
+export type MySQLQueryExecuteArguments = readonly [
+  sql: string,
+  values?: MySQLValues,
+];
+
 export type {
   Pool as MySQLPool,
   PoolConnection as MySQLConnection,

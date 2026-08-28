@@ -5,6 +5,10 @@ import {
   type AdapterFindOptions,
   type AdapterRow,
 } from '@toshihiko/base-adapter';
+import type {
+  adapterExecuteSpec,
+  AdapterExecuteSpec,
+} from 'toshihiko';
 import { createPool } from 'mysql2/promise';
 import type {
   Pool,
@@ -22,6 +26,7 @@ import type {
   MySQLField,
   MySQLModel,
   MySQLQuery,
+  MySQLQueryExecuteArguments,
   MySQLQueryOptions,
   MySQLStatement,
   MySQLValues,
@@ -50,6 +55,11 @@ export class MySQLAdapter extends Adapter<
   unknown,
   MySQLQuery
 > {
+  declare readonly [adapterExecuteSpec]: AdapterExecuteSpec<
+    MySQLExecuteArguments,
+    MySQLQueryExecuteArguments,
+    QueryResult
+  >;
   readonly database: string;
   declare readonly mysql: Pool;
   readonly package = 'mysql2';
@@ -58,8 +68,16 @@ export class MySQLAdapter extends Adapter<
   declare private readonly builder: MySQLSqlBuilder;
   declare private readonly showSql: ((sql: string) => void) | null;
 
-  constructor(options: MySQLAdapterOptions = {}) {
-    super(sanitizePublicOptions(options));
+  constructor(options?: MySQLAdapterOptions);
+  constructor(parent: object, options: MySQLAdapterOptions);
+  constructor(
+    parentOrOptions?: object,
+    adapterOptions?: MySQLAdapterOptions,
+  ) {
+    const hasParent = arguments.length >= 2;
+    const parent = hasParent ? parentOrOptions : undefined;
+    const options = (hasParent ? adapterOptions : parentOrOptions) as MySQLAdapterOptions | undefined ?? {};
+    super(parent ?? sanitizePublicOptions(options), hasParent ? sanitizePublicOptions(options) : undefined);
     const normalized = normalizeOptions(options);
     this.database = normalized.database;
     this.username = normalized.user;
@@ -173,6 +191,9 @@ export class MySQLAdapter extends Adapter<
     primaryKey: Readonly<Record<string, unknown>>,
     data: readonly AdapterData<MySQLField, unknown>[],
   ): Promise<ResultSetHeader> {
+    if (!primaryKey || !data) {
+      throw new Error('Invalid parameters.');
+    }
     if (Object.keys(primaryKey).length === 0) {
       throw new Error('Broken yukari object.');
     }
@@ -565,10 +586,7 @@ function parseExecuteArguments(arguments_: MySQLExecuteArguments): {
       : { connection: null, sql: first, values };
   }
 
-  const sql = entries[1];
-  if (typeof sql !== 'string') {
-    throw new TypeError('execute() requires a SQL string.');
-  }
+  const sql = entries[1] as string;
   const connection = first as PoolConnection | null;
   const values = entries[2] as MySQLValues | undefined;
   return values === undefined

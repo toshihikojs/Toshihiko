@@ -2,15 +2,19 @@ import { EventEmitter2 } from 'eventemitter2';
 import type { FieldName } from './common';
 import type {
   Adapter,
+  AdapterBeginTransactionArguments,
+  AdapterCommitArguments,
   AdapterCommitResult,
   AdapterConnection,
   AdapterDeleteByQueryResult,
   AdapterExecuteResult,
   AdapterLike,
   AdapterQueryExecuteArguments,
+  AdapterRollbackArguments,
   AdapterRollbackResult,
   AdapterTransactionConnection,
   AdapterUpdateByQueryResult,
+  AdapterUpdateByQueryCallArguments,
 } from './adapter';
 import {
   Yukari,
@@ -20,6 +24,8 @@ import {
 import {
   Query,
   type FindByIdInput,
+  type QueryFindManyOptions,
+  type QueryFindOneOptions,
   type QueryFindOptions,
   type QueryJsonRow,
   type QueryOrder,
@@ -204,7 +210,10 @@ export class Model<
     return this.parent;
   }
 
-  beginTransaction(): Promise<AdapterTransactionConnection<AdapterInstance>> {
+  beginTransaction(
+    ..._support: AdapterBeginTransactionArguments<AdapterInstance>
+  ): Promise<AdapterTransactionConnection<AdapterInstance>> {
+    void _support;
     const adapter = this.parent.getAdapter() as unknown as {
       beginTransaction(): Promise<AdapterTransactionConnection<AdapterInstance>>;
     };
@@ -212,7 +221,7 @@ export class Model<
   }
 
   commit(
-    connection: AdapterTransactionConnection<AdapterInstance>,
+    ...[connection]: AdapterCommitArguments<AdapterInstance>
   ): Promise<AdapterCommitResult<AdapterInstance>> {
     const adapter = this.parent.getAdapter() as unknown as {
       commit(value: AdapterTransactionConnection<AdapterInstance>): Promise<AdapterCommitResult<AdapterInstance>>;
@@ -221,7 +230,7 @@ export class Model<
   }
 
   rollback(
-    connection: AdapterTransactionConnection<AdapterInstance>,
+    ...[connection]: AdapterRollbackArguments<AdapterInstance>
   ): Promise<AdapterRollbackResult<AdapterInstance>> {
     const adapter = this.parent.getAdapter() as unknown as {
       rollback(value: AdapterTransactionConnection<AdapterInstance>): Promise<AdapterRollbackResult<AdapterInstance>>;
@@ -285,8 +294,11 @@ export class Model<
     return new Query(this).count();
   }
 
-  update(data: Partial<RowFromSchema<Schema>>): Promise<AdapterUpdateByQueryResult<AdapterInstance>> {
-    return new Query(this).update(data);
+  update(
+    data: Partial<RowFromSchema<Schema>>,
+    ...support: AdapterUpdateByQueryCallArguments<AdapterInstance>
+  ): Promise<AdapterUpdateByQueryResult<AdapterInstance>> {
+    return new Query(this).update(data, ...support);
   }
 
   delete(): Promise<AdapterDeleteByQueryResult<AdapterInstance>> {
@@ -301,26 +313,61 @@ export class Model<
 
   find(): Promise<readonly QueriedYukari<Name, Schema, AdapterInstance>[]>;
   find(
-    options: QueryFindOptions,
+    options: QueryFindManyOptions,
+  ): Promise<readonly QueriedYukari<Name, Schema, AdapterInstance>[]>;
+  find(
+    options: QueryFindOneOptions,
+  ): Promise<QueriedYukari<Name, Schema, AdapterInstance> | null>;
+  find(
+    toJSON: false,
+    options?: QueryFindManyOptions,
   ): Promise<readonly QueriedYukari<Name, Schema, AdapterInstance>[]>;
   find(
     toJSON: false,
-    options?: QueryFindOptions,
-  ): Promise<readonly QueriedYukari<Name, Schema, AdapterInstance>[]>;
+    options: QueryFindOneOptions,
+  ): Promise<QueriedYukari<Name, Schema, AdapterInstance> | null>;
   find(
     toJSON: true,
-    options?: QueryFindOptions,
+    options?: QueryFindManyOptions,
   ): Promise<readonly QueryJsonRow<Schema>[]>;
   find(
+    toJSON: true,
+    options: QueryFindOneOptions,
+  ): Promise<QueryJsonRow<Schema> | null>;
+  find(
+    options: QueryFindManyOptions,
+    toJSON: true,
+  ): Promise<readonly QueryJsonRow<Schema>[]>;
+  find(
+    options: QueryFindOneOptions,
+    toJSON: false,
+  ): Promise<QueriedYukari<Name, Schema, AdapterInstance> | null>;
+  find(
+    options: QueryFindOneOptions,
+    toJSON: true,
+  ): Promise<QueryJsonRow<Schema> | null>;
+  find(
     toJSONOrOptions: boolean | QueryFindOptions = false,
-    options: QueryFindOptions = {},
-  ): Promise<readonly QueriedYukari<Name, Schema, AdapterInstance>[]> | Promise<readonly QueryJsonRow<Schema>[]> {
-    if (typeof toJSONOrOptions !== 'boolean') {
-      return new Query(this).find(toJSONOrOptions);
-    }
-    return toJSONOrOptions
-      ? new Query(this).find(true, options)
-      : new Query(this).find(false, options);
+    options?: boolean | QueryFindOptions,
+  ): Promise<
+    | readonly QueriedYukari<Name, Schema, AdapterInstance>[]
+    | QueriedYukari<Name, Schema, AdapterInstance>
+    | readonly QueryJsonRow<Schema>[]
+    | QueryJsonRow<Schema>
+    | null
+  > {
+    const query = new Query(this);
+    const find = query.find as (
+      first: boolean | QueryFindOptions,
+      second?: boolean | QueryFindOptions,
+    ) => Promise<
+      | readonly QueriedYukari<Name, Schema, AdapterInstance>[]
+      | QueriedYukari<Name, Schema, AdapterInstance>
+      | readonly QueryJsonRow<Schema>[]
+      | QueryJsonRow<Schema>
+      | null
+    >;
+    return find.call(query, toJSONOrOptions, options);
   }
 
   findOne(): Promise<QueriedYukari<Name, Schema, AdapterInstance> | null>;

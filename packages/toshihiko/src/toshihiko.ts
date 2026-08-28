@@ -1,4 +1,6 @@
 import { EventEmitter2 } from 'eventemitter2';
+import { createRequire } from 'node:module';
+import { join } from 'node:path';
 import {
   Model,
   type ModelOptions,
@@ -106,7 +108,7 @@ export class Toshihiko<
   AdapterInstance extends AdapterLike = Adapter,
   Options extends object = ToshihikoOptions,
 > extends EventEmitter2 {
-  readonly adapter: AdapterInstance | null;
+  readonly adapter: AdapterInstance;
   declare readonly cache: Cache | null | undefined;
   readonly dialect: string | null;
   readonly options: Options;
@@ -124,11 +126,12 @@ export class Toshihiko<
     this.options = (options ?? {}) as Options;
 
     if (typeof adapter === 'string') {
-      this.adapter = null;
+      const Constructor = loadAdapter<Options, AdapterInstance>(adapter);
+      this.adapter = new Constructor(this, this.options);
       this.dialect = adapter;
     } else if (typeof adapter === 'function') {
       const Constructor = adapter as AdapterConstructor<Options, AdapterInstance>;
-      this.adapter = new Constructor(this.options);
+      this.adapter = new Constructor(this, this.options);
       this.dialect = Constructor.name || null;
     } else {
       this.adapter = adapter;
@@ -148,17 +151,10 @@ export class Toshihiko<
   }
 
   get database(): string {
-    return this.adapter?.getDBName() ?? '';
+    return this.adapter.getDBName();
   }
 
   getAdapter(): AdapterInstance {
-    if (this.adapter === null) {
-      throw new Error(
-        `Adapter "${this.dialect ?? 'unknown'}" is not available in the v2 core. `
-        + 'Pass an Adapter constructor or instance instead.',
-      );
-    }
-
     return this.adapter;
   }
 
@@ -192,12 +188,13 @@ export class Toshihiko<
   }
 }
 
-function attachAdapterCompatibility(
-  parent: Toshihiko<AdapterLike, object>,
-  adapter: AdapterLike | null,
+function attachAdapterCompatibility<
+  AdapterInstance extends AdapterLike,
+  Options extends object,
+>(
+  parent: Toshihiko<AdapterInstance, Options>,
+  adapter: AdapterInstance,
 ): void {
-  if (adapter === null) return;
-
   if (!Object.prototype.hasOwnProperty.call(adapter, 'parent')) {
     try {
       Object.defineProperty(adapter, 'parent', {
@@ -215,7 +212,32 @@ function attachAdapterCompatibility(
     Object.defineProperty(parent, 'pool', {
       configurable: true,
       enumerable: false,
-      get: () => (adapter as AdapterLike & { readonly mysql: unknown }).mysql,
+      get: () => adapter.mysql,
     });
   }
+}
+
+export function loadAdapter<
+  Options extends object = ToshihikoOptions,
+  AdapterInstance extends AdapterLike = Adapter,
+>(name: string): AdapterConstructor<Options, AdapterInstance> {
+  const packageName = name.startsWith('.') || name.startsWith('/') || name.startsWith('@')
+    ? name
+    : `@toshihiko/${name}-adapter`;
+  let loader = require;
+  let resolved: string;
+  try {
+    resolved = loader.resolve(packageName);
+  } catch {
+    loader = createRequire(join(process.cwd(), 'package.json'));
+    resolved = loader.resolve(packageName);
+  }
+  const loaded = loader(resolved) as
+    | AdapterConstructor<Options, AdapterInstance>
+    | {
+        readonly Adapter?: AdapterConstructor<Options, AdapterInstance>;
+        readonly default?: AdapterConstructor<Options, AdapterInstance>;
+      };
+  if (typeof loaded === 'function') return loaded;
+  return loaded.default ?? loaded.Adapter!;
 }

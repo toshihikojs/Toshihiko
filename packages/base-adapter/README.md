@@ -46,13 +46,15 @@ class MyAdapter extends Adapter<MyAdapterOptions> {
 }
 ```
 
-The adapter constructor can then be passed directly to Toshihiko:
+The adapter constructor can then be passed directly to Toshihiko. Toshihiko invokes it with the v1 `(toshihiko, options)` constructor contract. The base class stores the parent and copies the options before the subclass methods run.
 
 ```typescript
 import { Toshihiko } from 'toshihiko';
 
 const toshihiko = new Toshihiko(MyAdapter, { database: 'app' });
 ```
+
+For tests and adapter-local utilities, the standalone `new MyAdapter(options)` form remains available.
 
 ## Merging Options
 

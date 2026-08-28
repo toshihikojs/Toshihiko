@@ -35,10 +35,9 @@ npm install toshihiko @toshihiko/mysql-adapter
 Define a model using the original Toshihiko API:
 
 ```typescript
-import { MySQLAdapter } from '@toshihiko/mysql-adapter';
 import { Toshihiko, Type } from 'toshihiko';
 
-const database = new Toshihiko(MySQLAdapter, {
+const database = new Toshihiko('mysql', {
   database: 'app',
   host: '127.0.0.1',
   password: 'secret',
@@ -144,15 +143,25 @@ Article.where({ title: { $like: 'Typed%' } });
 
 ## Adapter model
 
-The core depends on a small Promise-based adapter contract. Concrete adapters own their connection, query, field, and mutation result types. An adapter constructor or instance can be passed directly to Toshihiko:
+The core depends on a small Promise-based adapter contract. Concrete adapters own their connection, query, field, and mutation result types. The v1 dialect name remains available when the corresponding package is installed:
 
 ```typescript
-const database = new Toshihiko(MySQLAdapter, {
+const database = new Toshihiko('mysql', {
   database: 'app',
 });
 ```
 
-No runtime package-name lookup is required. The MySQL adapter uses `mysql2` prepared execution for bound values and preserves the original Toshihiko query operators for migration compatibility.
+Adapter constructors and instances can also be injected directly. Toshihiko calls a constructor with the v1 `(toshihiko, options)` arguments; `@toshihiko/base-adapter` and `@toshihiko/mysql-adapter` also retain standalone `new Adapter(options)` construction.
+
+```typescript
+import { MySQLAdapter } from '@toshihiko/mysql-adapter';
+
+const injectedDatabase = new Toshihiko(MySQLAdapter, {
+  database: 'app',
+});
+```
+
+The MySQL Adapter uses `mysql2` prepared execution for bound values and preserves the original Toshihiko query operators for migration compatibility.
 
 ## Caching
 
@@ -165,7 +174,7 @@ const cache = new MemcachedCache('127.0.0.1:11211', {
   prefix: 'app:',
 });
 
-const cachedDatabase = new Toshihiko(MySQLAdapter, {
+const cachedDatabase = new Toshihiko('mysql', {
   cache,
   database: 'app',
 });

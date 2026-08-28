@@ -438,6 +438,10 @@ test('v1 update rejects broken state and stale records', async () => {
   ]);
   const data = dataFor(Item, { name: 'Bob' });
 
+  await assert.rejects(
+    adapter.update(Item, null, null as unknown as Readonly<Record<string, unknown>>, data),
+    /Invalid parameters/,
+  );
   await assert.rejects(adapter.update(Item, null, {}, data), /Broken yukari object/);
   await assert.rejects(adapter.update(Item, null, { id: 1 }, []), /Broken update data information/);
   await assert.rejects(adapter.update(Item, null, { id: 1 }, data), /Out-dated yukari data/);

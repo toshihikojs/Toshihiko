@@ -35,6 +35,9 @@ const toshihiko = new Toshihiko('mysql', {
   database: 'toshihiko',
 });
 
+const legacyExecuteResult: Promise<unknown> = toshihiko.execute('SELECT 1');
+void legacyExecuteResult;
+
 const User = toshihiko.define('user', [
   {
     name: 'id',
@@ -74,6 +77,15 @@ const Validated = toshihiko.define('validated', [
     },
   },
 ]);
+
+const legacyUpdateResult: Promise<unknown> = Validated.update({ score: 1 });
+const legacyTransaction: Promise<unknown> = Validated.beginTransaction();
+legacyTransaction.then(async (connection) => {
+  await Validated.commit(connection);
+  await Validated.rollback(connection);
+});
+
+void legacyUpdateResult;
 
 const Fallbacks = toshihiko.define('fallbacks', [
   { name: 'emptyColumn', column: '' },
@@ -128,13 +140,31 @@ const partialUser = User.build({
 const optionalBirthday: Date | null | undefined = partialUser.birthday;
 const validation: Promise<void> = Validated.build({ score: 1 }).validateAll();
 const serializedBirthday: string | null | undefined = user.toJSON().birthday;
+const restoredIndustry: string = User.schema[3].restore({
+  big: 'internet',
+  small: 'financial',
+});
 
 void optionalBirthday;
 void validation;
 void serializedBirthday;
+void restoredIndustry;
+
+User.find({ single: true }).then((row) => {
+  const id: number | undefined = row?.id;
+  void id;
+});
+
+User.find({ single: true }, true).then((row) => {
+  const id: number | undefined = row?.id;
+  void id;
+});
 
 class TestAdapter implements Adapter {
-  constructor(readonly options: { readonly database: string }) {}
+  constructor(
+    readonly parent: object,
+    readonly options: { readonly database: string },
+  ) {}
 
   async find(
     query: AdapterQuery,
@@ -220,7 +250,10 @@ class TypedConnectionAdapter implements Adapter<
   unknown,
   AdapterQuery<TypedModel, TypedConnection>
 > {
-  constructor(readonly options: { readonly database: string }) {}
+  constructor(
+    readonly parent: object,
+    readonly options: { readonly database: string },
+  ) {}
 
   async find(
     query: AdapterQuery<TypedModel, TypedConnection>,
@@ -283,6 +316,21 @@ TypedConnectionModel.findOne().then((row) => {
 });
 const concreteAdapter: TypedConnectionAdapter = TypedConnectionModel.parent.getAdapter();
 void concreteAdapter;
+
+// @ts-expect-error Query update requires an Adapter updateByQuery() implementation.
+TypedConnectionModel.update({ id: '1' });
+
+// @ts-expect-error Query execute requires an Adapter execute() implementation.
+TypedConnectionModel.execute();
+
+// @ts-expect-error Transactions require an Adapter beginTransaction() implementation.
+TypedConnectionModel.beginTransaction();
+
+// @ts-expect-error Transactions require an Adapter commit() implementation.
+TypedConnectionModel.commit({ transaction: 1 });
+
+// @ts-expect-error Transactions require an Adapter rollback() implementation.
+TypedConnectionModel.rollback({ transaction: 1 });
 
 // @ts-expect-error Required Adapter constructor options cannot be omitted.
 new Toshihiko(TypedConnectionAdapter);

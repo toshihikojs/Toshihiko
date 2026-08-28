@@ -27,14 +27,31 @@ export class Adapter<
   Value,
   Query
 > {
+  declare readonly parent: object | undefined;
   declare options: Options;
 
   constructor(
     ...[options]: {} extends Options
       ? readonly [options?: Options | null]
       : readonly [options: Options]
+  );
+  constructor(parent: object, options: Options | null | undefined);
+  constructor(
+    parentOrOptions?: object | null,
+    adapterOptions?: Options | null,
   ) {
     super();
+    const hasParent = arguments.length >= 2 && adapterOptions !== undefined;
+    const parent = hasParent ? parentOrOptions ?? undefined : undefined;
+    const options = (hasParent ? adapterOptions : parentOrOptions) as Options | null | undefined;
+    if (hasParent) {
+      Object.defineProperty(this, 'parent', {
+        configurable: false,
+        enumerable: false,
+        value: parent,
+        writable: false,
+      });
+    }
     Object.defineProperty(this, 'options', {
       configurable: false,
       enumerable: true,
@@ -140,6 +157,7 @@ function copyOptions<Options extends object>(
 }
 
 export { extend };
+export default Adapter;
 export type {
   AdapterFindOptions,
   AdapterFindResult,

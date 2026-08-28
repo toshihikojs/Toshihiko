@@ -7,7 +7,15 @@ const {
   Adapter,
   extend,
 } = require('../..');
-const { Toshihiko, Type } = require('toshihiko');
+const { Adapter: CoreAdapter, Toshihiko, Type } = require('toshihiko');
+
+test('the v1 base dialect name resolves the scoped adapter package', () => {
+  const toshihiko = new Toshihiko('base', { database: 'typed' });
+
+  assert.ok(toshihiko.adapter instanceof Adapter);
+  assert.equal(CoreAdapter.base, Adapter);
+  assert.equal(toshihiko.adapter.parent, toshihiko);
+});
 
 test('Adapter copies options and remains directly usable by Toshihiko', async () => {
   const options = { database: 'typed' };
