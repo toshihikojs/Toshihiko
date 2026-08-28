@@ -82,38 +82,74 @@ jobs:
       - name: Normalize package coverage paths
         run: node scripts/normalize-lcov-paths.cjs
 
-      - name: Build coverage site
-        run: node scripts/build-coverage-site.cjs
-
-      - name: Archive package coverage
-        uses: actions/upload-artifact@v4
+      - name: Upload to Coveralls / toshihiko
+        uses: coverallsapp/github-action@8d6379e14d29928660c4ba802d8e85393440b329 # v2.3.8
         with:
-          name: package-coverage
-          path: common/temp/coverage-site
-          retention-days: 14
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          file: packages/toshihiko/coverage/lcov.info
+          format: lcov
+          flag-name: toshihiko
+          parallel: true
 
-      - name: Upload coverage site for GitHub Pages
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/v2'
-        uses: actions/upload-pages-artifact@v4
+      - name: Upload to Coveralls / base-adapter
+        uses: coverallsapp/github-action@8d6379e14d29928660c4ba802d8e85393440b329 # v2.3.8
         with:
-          path: common/temp/coverage-site
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          file: packages/base-adapter/coverage/lcov.info
+          format: lcov
+          flag-name: base-adapter
+          parallel: true
 
-  deploy-coverage:
-    name: Publish coverage report
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/v2'
-    needs: coverage
-    runs-on: ubuntu-latest
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      - name: Upload to Coveralls / mysql-adapter
+        uses: coverallsapp/github-action@8d6379e14d29928660c4ba802d8e85393440b329 # v2.3.8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          file: packages/mysql-adapter/coverage/lcov.info
+          format: lcov
+          flag-name: mysql-adapter
+          parallel: true
 
-    steps:
-      - name: Deploy coverage site to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Upload to Coveralls / base-cache
+        uses: coverallsapp/github-action@8d6379e14d29928660c4ba802d8e85393440b329 # v2.3.8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          file: packages/base-cache/coverage/lcov.info
+          format: lcov
+          flag-name: base-cache
+          parallel: true
+
+      - name: Upload to Coveralls / redis-cache
+        uses: coverallsapp/github-action@8d6379e14d29928660c4ba802d8e85393440b329 # v2.3.8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          file: packages/redis/coverage/lcov.info
+          format: lcov
+          flag-name: redis-cache
+          parallel: true
+
+      - name: Upload to Coveralls / memcached-cache
+        uses: coverallsapp/github-action@8d6379e14d29928660c4ba802d8e85393440b329 # v2.3.8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          file: packages/memcached/coverage/lcov.info
+          format: lcov
+          flag-name: memcached-cache
+          parallel: true
+
+      - name: Upload to Coveralls / sql-utils
+        uses: coverallsapp/github-action@8d6379e14d29928660c4ba802d8e85393440b329 # v2.3.8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          file: packages/sql-utils/coverage/lcov.info
+          format: lcov
+          flag-name: sql-utils
+          parallel: true
+
+      - name: Finalize Coveralls build
+        uses: coverallsapp/github-action@8d6379e14d29928660c4ba802d8e85393440b329 # v2.3.8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          parallel-finished: true
 
   mysql-integration:
     name: MySQL and cache integration / ${{ matrix.mysql-image }}

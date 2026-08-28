@@ -18,8 +18,7 @@
   "lines": 100,
   "reporter": [
     "text",
-    "lcov",
-    "json-summary"
+    "lcov"
   ],
   "reports-dir": "coverage",
   "src": [

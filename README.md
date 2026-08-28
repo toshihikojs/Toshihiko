@@ -4,6 +4,7 @@
   <p>Yet another simple ORM for Node.js.</p>
   <p>
     <a href="https://github.com/toshihikojs/Toshihiko/actions/workflows/ci.yml"><img src="https://github.com/toshihikojs/Toshihiko/actions/workflows/ci.yml/badge.svg?branch=v2" alt="CI"></a>
+    <a href="https://coveralls.io/github/toshihikojs/Toshihiko?branch=v2"><img src="https://coveralls.io/repos/github/toshihikojs/Toshihiko/badge.svg?branch=v2" alt="Repository coverage"></a>
     <a href="https://nodejs.org/"><img src="https://img.shields.io/badge/Node.js-22%20%7C%2024-339933?logo=node.js&amp;logoColor=white" alt="Node.js 22 and 24"></a>
     <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License"></a>
   </p>
@@ -87,15 +88,15 @@ await persistedUser?.delete();
 
 Toshihiko is developed as a monorepo, but each package keeps an independent public API and release boundary.
 
-| Package | Coverage | Directory | Purpose |
+| Package | Repository coverage | Directory | Purpose |
 |---|---|---|---|
-| [`toshihiko`](packages/toshihiko) | [![toshihiko coverage](https://toshihikojs.github.io/Toshihiko/coverage/toshihiko/badge.svg)](https://toshihikojs.github.io/Toshihiko/coverage/toshihiko/) | `packages/toshihiko` | ORM core, Model, Query, Yukari, and built-in field types |
-| [`@toshihiko/base-adapter`](packages/base-adapter) | [![base adapter coverage](https://toshihikojs.github.io/Toshihiko/coverage/base-adapter/badge.svg)](https://toshihikojs.github.io/Toshihiko/coverage/base-adapter/) | `packages/base-adapter` | Typed, Promise-only foundation for adapter authors; installed transitively by concrete adapters |
-| [`@toshihiko/mysql-adapter`](packages/mysql-adapter) | [![MySQL adapter coverage](https://toshihikojs.github.io/Toshihiko/coverage/mysql-adapter/badge.svg)](https://toshihikojs.github.io/Toshihiko/coverage/mysql-adapter/) | `packages/mysql-adapter` | MySQL adapter built on the `mysql2` Promise API |
-| [`@toshihiko/base-cache`](packages/base-cache) | [![base cache coverage](https://toshihikojs.github.io/Toshihiko/coverage/base-cache/badge.svg)](https://toshihikojs.github.io/Toshihiko/coverage/base-cache/) | `packages/base-cache` | Typed, Promise-only foundation for cache implementations |
-| [`@toshihiko/redis-cache`](packages/redis) | [![Redis cache coverage](https://toshihikojs.github.io/Toshihiko/coverage/redis-cache/badge.svg)](https://toshihikojs.github.io/Toshihiko/coverage/redis-cache/) | `packages/redis` | Redis cache preserving the v1 key and result behavior |
-| [`@toshihiko/memcached-cache`](packages/memcached) | [![Memcached cache coverage](https://toshihikojs.github.io/Toshihiko/coverage/memcached-cache/badge.svg)](https://toshihikojs.github.io/Toshihiko/coverage/memcached-cache/) | `packages/memcached` | Memcached cache preserving v1 batching and custom keys |
-| [`@toshihiko/sql-utils`](packages/sql-utils) | [![SQL utils coverage](https://toshihikojs.github.io/Toshihiko/coverage/sql-utils/badge.svg)](https://toshihikojs.github.io/Toshihiko/coverage/sql-utils/) | `packages/sql-utils` | SQL identifier mapping and escaping utilities |
+| [`toshihiko`](packages/toshihiko) | [![Repository coverage](https://coveralls.io/repos/github/toshihikojs/Toshihiko/badge.svg?branch=v2)](https://coveralls.io/github/toshihikojs/Toshihiko?branch=v2) | `packages/toshihiko` | ORM core, Model, Query, Yukari, and built-in field types |
+| [`@toshihiko/base-adapter`](packages/base-adapter) | [![Repository coverage](https://coveralls.io/repos/github/toshihikojs/Toshihiko/badge.svg?branch=v2)](https://coveralls.io/github/toshihikojs/Toshihiko?branch=v2) | `packages/base-adapter` | Typed, Promise-only foundation for adapter authors; installed transitively by concrete adapters |
+| [`@toshihiko/mysql-adapter`](packages/mysql-adapter) | [![Repository coverage](https://coveralls.io/repos/github/toshihikojs/Toshihiko/badge.svg?branch=v2)](https://coveralls.io/github/toshihikojs/Toshihiko?branch=v2) | `packages/mysql-adapter` | MySQL adapter built on the `mysql2` Promise API |
+| [`@toshihiko/base-cache`](packages/base-cache) | [![Repository coverage](https://coveralls.io/repos/github/toshihikojs/Toshihiko/badge.svg?branch=v2)](https://coveralls.io/github/toshihikojs/Toshihiko?branch=v2) | `packages/base-cache` | Typed, Promise-only foundation for cache implementations |
+| [`@toshihiko/redis-cache`](packages/redis) | [![Repository coverage](https://coveralls.io/repos/github/toshihikojs/Toshihiko/badge.svg?branch=v2)](https://coveralls.io/github/toshihikojs/Toshihiko?branch=v2) | `packages/redis` | Redis cache preserving the v1 key and result behavior |
+| [`@toshihiko/memcached-cache`](packages/memcached) | [![Repository coverage](https://coveralls.io/repos/github/toshihikojs/Toshihiko/badge.svg?branch=v2)](https://coveralls.io/github/toshihikojs/Toshihiko?branch=v2) | `packages/memcached` | Memcached cache preserving v1 batching and custom keys |
+| [`@toshihiko/sql-utils`](packages/sql-utils) | [![Repository coverage](https://coveralls.io/repos/github/toshihikojs/Toshihiko/badge.svg?branch=v2)](https://coveralls.io/github/toshihikojs/Toshihiko?branch=v2) | `packages/sql-utils` | SQL identifier mapping and escaping utilities |
 
 The dependency direction is intentionally small:
 
