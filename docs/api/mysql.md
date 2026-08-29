@@ -64,7 +64,7 @@ interface MySQLAdapterOptions extends Omit<
 | `password` | `string` | `''` | MySQL password |
 | `pool` | `MySQLPool` | — | Injects an existing Pool; omitting it creates one from the other options |
 | `showSql` | `false \| true \| ((sql: string) => void)` | `false` | SQL logging switch or logger function |
-| `cache` | `CacheSource` | — | Toshihiko-level Cache inherited by Models |
+| `cache` | `Cache \| CacheOptions` | — | An existing Cache or [module configuration](cache#configuration) with `module`, `path`, `name`, and its constructor arguments; inherited by Models |
 | `package` | `string` | — | Compatibility field; runtime driver remains `mysql2` |
 | Other options | `mysql2.PoolOptions` | Set by `mysql2` | Passed to `mysql2.createPool()` |
 

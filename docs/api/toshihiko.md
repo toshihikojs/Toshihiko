@@ -43,7 +43,7 @@ With the official MySQL Adapter, `options` is `MySQLAdapterOptions`. These are t
 | `password` | `string` | `''` | MySQL password |
 | `pool` | `MySQLPool` | — | Reuses an existing `mysql2/promise` Pool; omitting it creates a Pool |
 | `showSql` | `false \| true \| ((sql: string) => void)` | `false` | `true` logs with `console.log`; a function receives formatted SQL |
-| `cache` | `CacheSource` | — | Database-level Cache inherited by Models |
+| `cache` | `Cache \| CacheOptions` | — | An existing Cache or [module configuration](cache#configuration) with `module`, `path`, `name`, and its constructor arguments; inherited by Models |
 | Other fields | [`mysql2.PoolOptions`](https://sidorares.github.io/node-mysql2/docs/examples/connections/create-pool) | Set by `mysql2` | Includes `connectionLimit`, `charset`, `ssl`, and timeout settings |
 
 See [MySQL Adapter API](mysql#options) for the complete MySQL configuration. Other Adapters define their own `options` objects.

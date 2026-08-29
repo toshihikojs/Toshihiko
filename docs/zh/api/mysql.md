@@ -46,7 +46,7 @@ const database = new Toshihiko('mysql', {
 | `password` | `string` | `''` | MySQL 密码 |
 | `pool` | `MySQLPool` | — | 注入现有 Pool；省略时按其余配置创建 Pool |
 | `showSql` | `false \| true \| ((sql: string) => void)` | `false` | SQL 日志开关或日志函数 |
-| `cache` | `CacheSource` | — | Toshihiko 级 Cache，Model 默认继承 |
+| `cache` | `Cache \| CacheOptions` | — | 现有 Cache 实例，或包含 `module`、`path`、`name` 及其构造参数的[模块配置](cache#配置)；Model 默认继承 |
 | `package` | `string` | — | 兼容字段；运行时驱动始终是 `mysql2` |
 | 其他配置 | `mysql2.PoolOptions` | 由 `mysql2` 决定 | 原样传给 `mysql2.createPool()` |
 

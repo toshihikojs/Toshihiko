@@ -50,7 +50,7 @@ const users = await User.where({ id: { $gte: 1 } }).find(true);
 | `password` | `string` | `''` | MySQL password |
 | `pool` | `MySQLPool` | — | Reuses an existing Promise Pool instead of creating one |
 | `showSql` | `false \| true \| ((sql: string) => void)` | `false` | Enables console logging or calls a custom SQL logger |
-| `cache` | `CacheSource` | — | Database-level Cache inherited by Models |
+| `cache` | `Cache \| CacheOptions` | — | Existing Cache instance or module configuration inherited by Models |
 | `package` | `string` | — | Compatibility field; the runtime driver remains `mysql2` |
 
 Driver fields such as `connectionLimit`, `charset`, `ssl`, and `connectTimeout` are also accepted. See the [`mysql2` PoolOptions documentation](https://sidorares.github.io/node-mysql2/docs/examples/connections/create-pool).

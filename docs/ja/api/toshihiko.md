@@ -43,7 +43,7 @@ const database = new Toshihiko('mysql', {
 | `password` | `string` | `''` | MySQL password |
 | `pool` | `MySQLPool` | — | 既存の `mysql2/promise` Pool を再利用。省略時は新規作成 |
 | `showSql` | `false \| true \| ((sql: string) => void)` | `false` | `true` は `console.log`、関数には format 済み SQL を渡す |
-| `cache` | `CacheSource` | — | Model が継承する database-level Cache |
+| `cache` | `Cache \| CacheOptions` | — | 既存 Cache、または `module`、`path`、`name` と constructor 引数を含む[モジュール設定](cache#設定)。Model が継承する |
 | その他 | [`mysql2.PoolOptions`](https://sidorares.github.io/node-mysql2/docs/examples/connections/create-pool) | `mysql2` に従う | `connectionLimit`、`charset`、`ssl`、timeout など |
 
 全 MySQL 設定は [MySQL Adapter API](mysql#アプリケーション設定)を参照してください。他の Adapter は独自の `options` object を定義します。

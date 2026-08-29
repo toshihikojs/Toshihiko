@@ -43,7 +43,7 @@ const database = new Toshihiko('mysql', {
 | `password` | `string` | `''` | MySQL 密码 |
 | `pool` | `MySQLPool` | — | 复用现有的 `mysql2/promise` Pool；省略时创建新 Pool |
 | `showSql` | `false \| true \| ((sql: string) => void)` | `false` | `true` 使用 `console.log`；函数会收到格式化后的 SQL |
-| `cache` | `CacheSource` | — | 数据库级 Cache；所有 Model 默认继承 |
+| `cache` | `Cache \| CacheOptions` | — | 现有 Cache 实例，或包含 `module`、`path`、`name` 及其构造参数的[模块配置](cache#配置)；所有 Model 默认继承 |
 | 其他字段 | [`mysql2.PoolOptions`](https://sidorares.github.io/node-mysql2/zh-CN/docs/examples/connections/create-pool) | 由 `mysql2` 决定 | 例如 `connectionLimit`、`charset`、`ssl` 和超时设置 |
 
 完整的 MySQL 专用配置见 [MySQL Adapter API](mysql#应用配置)。其他 Adapter 决定各自的 `options` 结构。

@@ -46,7 +46,7 @@ const database = new Toshihiko('mysql', {
 | `password` | `string` | `''` | MySQL password |
 | `pool` | `MySQLPool` | — | 既存 Pool を注入。省略時は他の設定から作成 |
 | `showSql` | `false \| true \| ((sql: string) => void)` | `false` | SQL log switch または logger function |
-| `cache` | `CacheSource` | — | Model が継承する Toshihiko-level Cache |
+| `cache` | `Cache \| CacheOptions` | — | 既存 Cache、または `module`、`path`、`name` と constructor 引数を含む[モジュール設定](cache#設定)。Model が継承する |
 | `package` | `string` | — | 互換フィールド。実行時 driver は常に `mysql2` |
 | その他 | `mysql2.PoolOptions` | `mysql2` に従う | `mysql2.createPool()` に渡す driver options |
 
