@@ -10,6 +10,7 @@ import {
 import {
   Toshihiko,
   Type,
+  type Cache,
   type AdapterExecuteResult,
   type FieldType,
 } from 'toshihiko';
@@ -25,7 +26,15 @@ const BinaryType = {
   },
 } satisfies FieldType<{ readonly dec: number }, string>;
 
+const cache: Cache = {
+  async deleteData() {},
+  async deleteKeys() {},
+  async getData() { return []; },
+  async setData() {},
+};
+
 const options: MySQLAdapterOptions = {
+  cache,
   database: 'typed',
   host: '127.0.0.1',
   username: 'root',

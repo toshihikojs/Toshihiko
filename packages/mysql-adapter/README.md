@@ -36,6 +36,25 @@ const users = await User.where({ id: { $gte: 1 } }).find(true);
 
 `find`, `count`, writes, raw execution, and transaction methods all return native Promises.
 
+## Configuration
+
+`MySQLAdapterOptions` extends `mysql2` `PoolOptions`. The Adapter handles these Toshihiko-specific fields and passes the remaining driver options to `mysql2.createPool()`.
+
+| Field | Type | Default | Description |
+|---|---|---:|---|
+| `database` | `string` | `'toshihiko'` | Database name and Cache namespace |
+| `host` | `string` | `'localhost'` | MySQL host name or IP address |
+| `port` | `number` | `3306` | MySQL port |
+| `user` | `string` | `''` | MySQL user name |
+| `username` | `string` | — | Compatibility spelling for `user`; wins when both are present |
+| `password` | `string` | `''` | MySQL password |
+| `pool` | `MySQLPool` | — | Reuses an existing Promise Pool instead of creating one |
+| `showSql` | `false \| true \| ((sql: string) => void)` | `false` | Enables console logging or calls a custom SQL logger |
+| `cache` | `CacheSource` | — | Database-level Cache inherited by Models |
+| `package` | `string` | — | Compatibility field; the runtime driver remains `mysql2` |
+
+Driver fields such as `connectionLimit`, `charset`, `ssl`, and `connectTimeout` are also accepted. See the [`mysql2` PoolOptions documentation](https://sidorares.github.io/node-mysql2/docs/examples/connections/create-pool).
+
 The Adapter constructor and a prebuilt Adapter instance can also be passed directly when an application needs explicit dependency injection:
 
 ```typescript

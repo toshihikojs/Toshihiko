@@ -1,74 +1,89 @@
 # `Toshihiko`
 
-`Toshihiko` configures one database backend and creates Models bound to it. Import it from the core package.
+`Toshihiko` is one configured database entry point. An application normally creates one instance and uses it to define Models.
+
+## Create an instance
+
+In TypeScript, pass the Adapter class directly when possible. This lets the constructor check the Adapter's actual configuration type.
 
 ```typescript
 import { Toshihiko } from 'toshihiko';
+import { MySQLAdapter } from '@toshihiko/mysql-adapter';
+
+const database = new Toshihiko(MySQLAdapter, {
+  database: 'app',
+  host: '127.0.0.1',
+  port: 3306,
+  username: 'root',
+  password: 'secret',
+});
 ```
 
-## Constructor
+The shorter dialect-name form is also available. `'mysql'` loads `@toshihiko/mysql-adapter`.
 
 ```typescript
-class Toshihiko<
-  AdapterInstance extends AdapterLike = Adapter,
-  Options extends object = ToshihikoOptions,
-> extends EventEmitter2 {
-  constructor(
-    adapter: AdapterSource<Options, AdapterInstance>,
-    ...options: {} extends Options
-      ? readonly [options?: Options]
-      : readonly [options: Options]
-  );
-}
+const database = new Toshihiko('mysql', {
+  database: 'app',
+  host: '127.0.0.1',
+  username: 'root',
+});
 ```
 
-### Parameters
+### MySQL options
 
-| Name | Type | Description |
+With the official MySQL Adapter, `options` is `MySQLAdapterOptions`. These are the commonly used fields.
+
+| Field | Type | Default | Description |
+|---|---|---:|---|
+| `database` | `string` | `'toshihiko'` | Database name and Cache database namespace |
+| `host` | `string` | `'localhost'` | MySQL host name or IP address |
+| `port` | `number` | `3306` | MySQL port |
+| `user` | `string` | `''` | MySQL user name |
+| `username` | `string` | — | Compatibility spelling for `user`; wins when both are present |
+| `password` | `string` | `''` | MySQL password |
+| `pool` | `MySQLPool` | — | Reuses an existing `mysql2/promise` Pool; omitting it creates a Pool |
+| `showSql` | `false \| true \| ((sql: string) => void)` | `false` | `true` logs with `console.log`; a function receives formatted SQL |
+| `cache` | `CacheSource` | — | Database-level Cache inherited by Models |
+| Other fields | [`mysql2.PoolOptions`](https://sidorares.github.io/node-mysql2/docs/examples/connections/create-pool) | Set by `mysql2` | Includes `connectionLimit`, `charset`, `ssl`, and timeout settings |
+
+See [MySQL Adapter API](mysql#options) for the complete MySQL configuration. Other Adapters define their own `options` objects.
+
+### Constructor arguments
+
+| Argument | Accepted value | Description |
 |---|---|---|
-| `adapter` | `AdapterSource<Options, AdapterInstance>` | Dialect name, Adapter constructor, or Adapter instance |
-| `options` | `Options` | Passed to the Adapter and retained as `database.options` |
+| `adapter` | Dialect name, Adapter class, or Adapter instance | Selects the database implementation; an Adapter class supplies configuration types |
+| `options` | Configuration object for the selected Adapter | Passed to the Adapter and retained as `database.options` |
 
-The `options` parameter becomes required when the selected Adapter declares required options.
+Do not pass `options` when supplying an already constructed Adapter instance.
 
 ```typescript
-const byName = new Toshihiko('mysql', mysqlOptions);
-const byConstructor = new Toshihiko(MySQLAdapter, mysqlOptions);
-const byInstance = new Toshihiko(new MySQLAdapter(mysqlOptions));
+const adapter = new MySQLAdapter({ database: 'app' });
+const database = new Toshihiko(adapter);
 ```
-
-A plain name such as `'mysql'` loads `@toshihiko/mysql-adapter`. A name beginning with `.`, `/`, or `@` is loaded as written.
 
 ## Properties
 
-| Property | Type | Description |
+| Property | Application type | Value |
 |---|---|---|
-| `cache` | `Cache \| null \| undefined` | Database-level Cache configured in Adapter options |
-| `database` | `string` | Current database namespace |
-| `dialect` | `string \| null` | Dialect name or Adapter constructor name |
-| `options` | `Options` | Constructor options |
-| `pool` | `AdapterInstance extends { readonly mysql: infer Pool } ? Pool : undefined` | Compatibility facade for Adapters exposing a `mysql` property |
+| `database` | `string` | Current database name reported by the Adapter |
+| `dialect` | `string \| null` | Dialect name, or usually the Adapter class name for an injected Adapter |
+| `options` | Configuration object for the selected Adapter | Original constructor options |
+| `cache` | `Cache \| null \| undefined` | Current database-level Cache |
+| `pool` | `MySQLPool` for MySQL; otherwise `undefined` | MySQL pool compatibility entry point |
 
 ## `define()`
 
 ```typescript
-define<
-  const Name extends string,
-  const Schema extends SchemaDefinition,
-  const Methods extends object = object,
->(
-  collectionName: Name,
-  schema: Schema,
-  options?: ModelDefinitionOptions<
-    Name,
-    Schema,
-    AdapterInstance,
-    Methods
-  >,
-): Model<Name, Schema, AdapterInstance> & Methods
+database.define(name, schema, options?)
 ```
 
-Creates a [Model](model) bound to this Toshihiko instance. Its return type retains the literal table name, schema field names, field value types, nullability, primary keys, and custom methods.
+| Argument | Type | Description |
+|---|---|---|
+| `name` | `string` | Table name; a string literal is retained in the Model type |
+| `schema` | `readonly FieldDefinition[]` | Field names, Field Types, columns, keys, defaults, and validators |
+| `options.cache` | `CacheSource \| false \| null` | Replaces or disables the inherited Cache |
+| `options.methods` | Method object | Methods copied to the Model with their parameter and return types intact |
 
 ```typescript
 const User = database.define('users', [
@@ -86,44 +101,26 @@ const User = database.define('users', [
 const users = await User.findByName('Yukari');
 ```
 
-### Parameters
-
-| Name | Type | Description |
-|---|---|---|
-| `name` | `string` literal | Table or collection name |
-| `schema` | `SchemaDefinition` | Ordinary array literal of field definitions |
-| `options.cache` | `CacheSource \| false \| null` | Override, disable, or clear the inherited Cache |
-| `options.methods` | method object | Methods copied onto the returned Model |
-
-Use method shorthand inside `methods`. TypeScript then supplies a contextual `this` containing the Model and every method in the same object. Arrow functions do not receive this contextual `this`.
-
-### Returns
-
-```typescript
-Model<Name, Schema, AdapterInstance> & Methods
-```
-
-The schema is checked against the Adapter's declared Model, Query, Field, connection, and value boundaries during compilation.
+The returned Model derives field names, values, nullability, primary keys, and JSON values from `schema`. Use method shorthand or a normal `function` in `methods` so TypeScript can infer `this` as the complete Model.
 
 ## `execute()`
 
-```typescript
-execute(
-  ...args: AdapterExecuteArguments<AdapterInstance>
-): Promise<AdapterExecuteResult<AdapterInstance>>
-```
-
-Forwards the arguments to the Adapter. Both arguments and result are inferred from the concrete Adapter. With the MySQL Adapter, see [raw execution](mysql#execute).
-
-An Adapter without an `execute()` contract makes this method unavailable at the TypeScript call site.
-
-## `database`
+Raw execution arguments and results come from the Adapter. The official MySQL Adapter provides these forms:
 
 ```typescript
-database.database: string
+database.execute(
+  sql: string,
+  values?: MySQLValues,
+): Promise<MySQLQueryResult>
+
+database.execute(
+  connection: MySQLConnection | null,
+  sql: string,
+  values?: MySQLValues,
+): Promise<MySQLQueryResult>
 ```
 
-Reads `adapter.getDBName()` every time. Toshihiko and Cache implementations use this value as the database namespace.
+`MySQLValues` is a readonly array or a readonly object keyed by parameter name. See [Raw SQL](../raw-sql).
 
 ## `Toshihiko.createCache()`
 
@@ -131,13 +128,20 @@ Reads `adapter.getDBName()` every time. Toshihiko and Cache implementations use 
 Toshihiko.createCache(source: unknown): Cache | null
 ```
 
-Returns an existing Cache unchanged, creates one from a module-style configuration, or returns `null` when the value does not describe a Cache. See [Cache configuration](cache#cache-configuration).
+An existing Cache is returned unchanged. Module-style configuration creates a Cache, and an unrecognized value returns `null`. Applications normally construct a Cache directly; module-style configuration remains for compatibility. See [Cache API](cache).
 
-## Related types
+## Generics for Adapter authors
 
-| Type | Purpose |
-|---|---|
-| `ToshihikoOptions` | Default `object` options type |
-| `AdapterSource<Options, Instance>` | `string \| Instance \| AdapterConstructor<Options, Instance>` |
-| `AdapterConstructor<Options, Instance>` | `new (parent: Toshihiko<Instance, Options>, options: Options) => Instance` |
-| `ModelDefinitionOptions<Name, Schema, Instance, Methods>` | `cache` and contextually typed `methods` |
+Application code does not write these generics. They let a custom Adapter carry its options, connection, and execution-result types into Model and Query.
+
+```typescript
+class Toshihiko<
+  AdapterInstance extends AdapterLike = Adapter,
+  Options extends object = ToshihikoOptions,
+> extends EventEmitter2
+
+type AdapterSource<Options extends object, Instance extends AdapterLike> =
+  | string
+  | Instance
+  | AdapterConstructor<Options, Instance>;
+```

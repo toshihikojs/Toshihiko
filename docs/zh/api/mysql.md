@@ -16,6 +16,7 @@ interface MySQLAdapterOptions extends Omit<
   'database' | 'password' | 'user'
 > {
   readonly [key: string]: unknown;
+  readonly cache?: CacheSource;
   readonly database?: string;
   readonly password?: string;
   readonly package?: string;
@@ -35,14 +36,21 @@ const database = new Toshihiko('mysql', {
 });
 ```
 
-| 配置 | 类型 |
-|---|---|
-| `database` | `string \| undefined` |
-| `user`、`username` | `string \| undefined` |
-| `password` | `string \| undefined` |
-| `pool` | `MySQLPool \| undefined` |
-| `showSql` | `false \| true \| ((sql: string) => void) \| undefined` |
-| `package` | `string \| undefined`；兼容配置，运行时驱动仍为 `mysql2` |
+| 配置 | 类型 | 默认值 | 说明 |
+|---|---|---:|---|
+| `database` | `string` | `'toshihiko'` | 数据库名和 Cache 命名空间 |
+| `host` | `string` | `'localhost'` | MySQL 主机名或 IP |
+| `port` | `number` | `3306` | MySQL 端口 |
+| `user` | `string` | `''` | MySQL 用户名 |
+| `username` | `string` | — | `user` 的兼容写法；同时提供时优先使用 |
+| `password` | `string` | `''` | MySQL 密码 |
+| `pool` | `MySQLPool` | — | 注入现有 Pool；省略时按其余配置创建 Pool |
+| `showSql` | `false \| true \| ((sql: string) => void)` | `false` | SQL 日志开关或日志函数 |
+| `cache` | `CacheSource` | — | Toshihiko 级 Cache，Model 默认继承 |
+| `package` | `string` | — | 兼容字段；运行时驱动始终是 `mysql2` |
+| 其他配置 | `mysql2.PoolOptions` | 由 `mysql2` 决定 | 原样传给 `mysql2.createPool()` |
+
+`MySQLAdapterOptions` 继承 `mysql2` 的 `PoolOptions`，所以还可以设置 `connectionLimit`、`charset`、`ssl`、`connectTimeout` 等驱动配置。
 
 业务代码通过 `database.execute()`、Model、Query 与事务方法工作，不需要取得 `MySQLAdapter` 实例。
 

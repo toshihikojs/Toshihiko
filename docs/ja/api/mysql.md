@@ -16,6 +16,7 @@ interface MySQLAdapterOptions extends Omit<
   'database' | 'password' | 'user'
 > {
   readonly [key: string]: unknown;
+  readonly cache?: CacheSource;
   readonly database?: string;
   readonly password?: string;
   readonly package?: string;
@@ -35,14 +36,21 @@ const database = new Toshihiko('mysql', {
 });
 ```
 
-| 設定 | 型 |
-|---|---|
-| `database` | `string \| undefined` |
-| `user`、`username` | `string \| undefined` |
-| `password` | `string \| undefined` |
-| `pool` | `MySQLPool \| undefined` |
-| `showSql` | `false \| true \| ((sql: string) => void) \| undefined` |
-| `package` | `string \| undefined`。実行時 driver は常に `mysql2` |
+| 設定 | 型 | 初期値 | 説明 |
+|---|---|---:|---|
+| `database` | `string` | `'toshihiko'` | データベース名と Cache namespace |
+| `host` | `string` | `'localhost'` | MySQL host name または IP address |
+| `port` | `number` | `3306` | MySQL port |
+| `user` | `string` | `''` | MySQL user name |
+| `username` | `string` | — | `user` の互換表記。両方指定した場合はこちらを優先 |
+| `password` | `string` | `''` | MySQL password |
+| `pool` | `MySQLPool` | — | 既存 Pool を注入。省略時は他の設定から作成 |
+| `showSql` | `false \| true \| ((sql: string) => void)` | `false` | SQL log switch または logger function |
+| `cache` | `CacheSource` | — | Model が継承する Toshihiko-level Cache |
+| `package` | `string` | — | 互換フィールド。実行時 driver は常に `mysql2` |
+| その他 | `mysql2.PoolOptions` | `mysql2` に従う | `mysql2.createPool()` に渡す driver options |
+
+`MySQLAdapterOptions` は `mysql2` の `PoolOptions` を継承するため、`connectionLimit`、`charset`、`ssl`、`connectTimeout` なども設定できます。
 
 アプリケーションは `database.execute()`、Model、Query、transaction API を使い、`MySQLAdapter` インスタンスを取得しません。
 

@@ -1,7 +1,7 @@
 import type {
   AdapterQuery,
 } from '@toshihiko/base-adapter';
-import type { Cache } from 'toshihiko';
+import type { Cache, CacheSource } from 'toshihiko';
 import type {
   Pool,
   PoolConnection,
@@ -21,6 +21,7 @@ export interface MySQLAdapterOptions extends Omit<
   'database' | 'password' | 'user'
 > {
   readonly [key: string]: unknown;
+  readonly cache?: CacheSource;
   readonly database?: string;
   readonly password?: string;
   readonly package?: string;

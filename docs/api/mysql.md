@@ -43,6 +43,7 @@ interface MySQLAdapterOptions extends Omit<
   'database' | 'password' | 'user'
 > {
   readonly [key: string]: unknown;
+  readonly cache?: CacheSource;
   readonly database?: string;
   readonly password?: string;
   readonly package?: string;
@@ -53,15 +54,21 @@ interface MySQLAdapterOptions extends Omit<
 }
 ```
 
-| Option | Type | Description |
-|---|---|---|
-| `database` | `string` | Database name and Cache namespace |
-| `user` | `string` | MySQL username |
-| `username` | `string` | Compatibility alias used when `user` is absent |
-| `password` | `string` | MySQL password |
-| `pool` | `Pool` | Existing `mysql2/promise` pool; skips pool creation |
-| `showSql` | `false \| true \| ((sql: string) => void)` | Disabled, logs with `console.log`, or invokes a custom logger |
-| `package` | `string` | Compatibility option; runtime driver remains `mysql2` |
+| Option | Type | Default | Description |
+|---|---|---:|---|
+| `database` | `string` | `'toshihiko'` | Database name and Cache namespace |
+| `host` | `string` | `'localhost'` | MySQL host name or IP address |
+| `port` | `number` | `3306` | MySQL port |
+| `user` | `string` | `''` | MySQL user name |
+| `username` | `string` | — | Compatibility spelling for `user`; wins when both are present |
+| `password` | `string` | `''` | MySQL password |
+| `pool` | `MySQLPool` | — | Injects an existing Pool; omitting it creates one from the other options |
+| `showSql` | `false \| true \| ((sql: string) => void)` | `false` | SQL logging switch or logger function |
+| `cache` | `CacheSource` | — | Toshihiko-level Cache inherited by Models |
+| `package` | `string` | — | Compatibility field; runtime driver remains `mysql2` |
+| Other options | `mysql2.PoolOptions` | Set by `mysql2` | Passed to `mysql2.createPool()` |
+
+Because `MySQLAdapterOptions` extends `mysql2` `PoolOptions`, it also accepts driver settings such as `connectionLimit`, `charset`, `ssl`, and `connectTimeout`.
 
 ### Properties
 
