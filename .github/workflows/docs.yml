@@ -46,6 +46,15 @@ jobs:
       - name: Install dependencies
         run: rush install
 
+      # npm 6 only records the optional Rollup binary for the platform where
+      # the shrinkwrap was generated. Install the matching Linux binary for
+      # the Pages runner without changing the repository lockfile.
+      - name: Install Rollup binary for Linux
+        working-directory: common/temp
+        run: |
+          ROLLUP_VERSION="$(node -p "require('./node_modules/rollup/package.json').version")"
+          npm install --no-save --package-lock=false "@rollup/rollup-linux-x64-gnu@${ROLLUP_VERSION}"
+
       - name: Build documentation
         run: rush build --to @toshihiko/docs --verbose
 
