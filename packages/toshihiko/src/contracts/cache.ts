@@ -73,7 +73,7 @@ export function createCache(source: CacheSource): Cache | null {
   return cacheModule.create(...names.map((name) => options[name]));
 }
 
-function isCache(value: unknown): value is Cache {
+export function isCache<Value>(value: Value): value is Value & Cache {
   if (value === null || (typeof value !== 'object' && typeof value !== 'function')) {
     return false;
   }
