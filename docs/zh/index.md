@@ -3,8 +3,7 @@ layout: home
 
 hero:
   name: Toshihiko
-  text: Node.js ORM
-  tagline: 从 Schema 推导查询与数据行类型。
+  text: 另一个简单的 Node.js ORM。
   image:
     src: /logo.png
     alt: Toshihiko

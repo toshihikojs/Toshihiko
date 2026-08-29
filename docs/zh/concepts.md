@@ -19,7 +19,7 @@ Toshihiko 用四个公开概念描述一次数据库操作。它们是生命周�
 
 这层关系正是 ORM 把一条记录叫作 **Yukari instance** 的原因。代码里，它确实是 JavaScript 的一个对象实例；人设里，Toshihiko 自身也是 Yukari 的一个分身，也就是她在另一具身体上的“实例”。所以 `Yukari` 不是随手给“数据行”换的名字：Toshihiko 中的每个 record instance 叫 Yukari，呼应 Toshihiko 本身就是 Yukari 的分身。
 
-**Toshihiko 是项目和软件包的名字。** 它是一个带缓存层的 Node.js ORM。ORM 在数据库记录和 JavaScript 对象之间做映射。Toshihiko 负责这些记录周围的 CRUD，不负责创建或修改表结构，也不定义表关系。
+**Toshihiko 是项目和软件包的名字。** 它是一个带缓存层的简单 Node.js ORM。ORM 在数据库记录和 JavaScript 对象之间做映射。Toshihiko 负责这些记录周围的 CRUD，不负责创建或修改表结构，也不定义表关系。
 
 **`Toshihiko` 也是软件包导出的类。** `new Toshihiko(...)` 创建一个配置好的数据库入口。这个实例暴露当前数据库名、创建 Model、执行数据库后端提供的原始操作，并可向 Model 提供 Cache。
 

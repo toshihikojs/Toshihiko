@@ -28,7 +28,7 @@ Toshihiko is himself a manifested instance, or avatar, of Yukari. `Yukari` is
 therefore not a generic synonym for “row”; it is part of the character
 reference built into the API.
 
-**Toshihiko is the library and project.** It is a Node.js ORM with a
+**Toshihiko is the library and project.** It is a simple Node.js ORM with a
 cache layer. An ORM maps database records to JavaScript objects. Toshihiko
 handles CRUD around those records; it does not create or alter tables or
 define relationships between them.

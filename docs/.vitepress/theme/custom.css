@@ -149,10 +149,6 @@ body {
 
 /* Home */
 
-.VPHomeHero {
-  padding-top: 80px !important;
-}
-
 .VPHomeHero .name {
   max-width: none;
   color: var(--vp-c-brand-1);
@@ -348,13 +344,13 @@ body {
   .VPSidebar {
     padding-right: 20px !important;
   }
+
+  .VPHomeHero .image-container {
+    transform: translateX(-32px);
+  }
 }
 
 @media (max-width: 959px) {
-  .VPHomeHero {
-    padding-top: 56px !important;
-  }
-
   .VPHomeHero .image-src {
     max-width: 250px;
     max-height: 250px;

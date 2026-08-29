@@ -3,8 +3,7 @@ layout: home
 
 hero:
   name: Toshihiko
-  text: Node.js ORM
-  tagline: Schema から Model、Query、行の型を推論します。
+  text: Node.js 向けの、もうひとつのシンプルな ORM。
   image:
     src: /logo.png
     alt: Toshihiko
