@@ -220,7 +220,7 @@ function theme(prefix: string, text: LocaleText): DefaultTheme.Config {
 export default defineConfig({
   base: '/Toshihiko/',
   cleanUrls: true,
-  description: 'Yet another simple ORM for Node.js.',
+  description: 'A Node.js ORM with schema-derived TypeScript types.',
   head: [['link', { href: '/Toshihiko/logo.png', rel: 'icon', type: 'image/png' }]],
   lastUpdated: true,
   locales: {

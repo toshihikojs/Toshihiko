@@ -3,7 +3,8 @@ layout: home
 
 hero:
   name: Toshihiko
-  text: Yet another simple ORM for Node.js.
+  text: Node.js ORM
+  tagline: Schema-derived types for models, queries, and rows.
   image:
     src: /logo.png
     alt: Toshihiko

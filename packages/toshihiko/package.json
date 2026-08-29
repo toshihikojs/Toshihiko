@@ -1,7 +1,7 @@
 {
   "name": "toshihiko",
   "version": "2.0.0-alpha.0",
-  "description": "Yet another simple ORM for Node.js.",
+  "description": "A Node.js ORM with schema-derived TypeScript types.",
   "license": "MIT",
   "repository": {
     "type": "git",

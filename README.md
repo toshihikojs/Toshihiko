@@ -1,7 +1,7 @@
 <div align="center">
   <img src="assets/toshihiko-logo.png" alt="Toshihiko" width="220">
   <h1>Toshihiko</h1>
-  <p>Yet another simple ORM for Node.js.</p>
+  <p>A Node.js ORM with schema-derived TypeScript types.</p>
   <p>
     <a href="https://github.com/toshihikojs/Toshihiko/actions/workflows/ci.yml"><img src="https://github.com/toshihikojs/Toshihiko/actions/workflows/ci.yml/badge.svg?branch=v2" alt="CI"></a>
     <a href="https://app.codecov.io/github/toshihikojs/Toshihiko/tree/v2"><img src="https://codecov.io/github/toshihikojs/Toshihiko/branch/v2/graph/badge.svg" alt="Coverage"></a>
@@ -10,7 +10,7 @@
   </p>
 </div>
 
-Yet another simple ORM for Node.js.
+A Node.js ORM with schema-derived TypeScript types.
 
 > **Project status:** Toshihiko v2 is under active development. The current packages use prerelease versions and require Node.js 22 or newer.
 
