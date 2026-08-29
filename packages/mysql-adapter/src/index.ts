@@ -311,7 +311,7 @@ export class MySQLAdapter extends Adapter<
         single: false,
       }) as readonly AdapterRow[];
     } catch (error) {
-      options.fields = originalFields;
+      options.fields = originalFields!;
       throw error;
     }
 
@@ -395,8 +395,7 @@ export class MySQLAdapter extends Adapter<
         Array.isArray(relatedRows) ? relatedRows : relatedRows ? [relatedRows] : [],
       );
     } finally {
-      if (originalFields === undefined) delete options.fields;
-      else options.fields = originalFields;
+      options.fields = originalFields!;
     }
   }
 
@@ -417,7 +416,7 @@ export class MySQLAdapter extends Adapter<
     if (!options.single) {
       return options;
     }
-    const limit = [...(options.limit ?? [])];
+    const limit = [...options.limit!];
     if (limit.length === 0) {
       limit.push(0, 1);
     } else if (limit.length === 1) {
