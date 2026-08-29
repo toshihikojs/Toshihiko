@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { Toshihiko, Type, type FieldType } from 'toshihiko';
+import { Toshihiko, Type, type DataRow, type FieldType } from 'toshihiko';
 import { MySQLSqlBuilder } from '../../dist';
 
 const BinaryType = Object.freeze({
@@ -113,7 +113,7 @@ test('v1 object and array where trees retain ordering and logic', () => {
 test('v1 empty and invalid where inputs retain their guards', () => {
   assert.equal(builder.makeWhere(Model, {}), '()');
   assert.equal(
-    builder.makeWhere(Model, 1 as unknown as Readonly<Record<string, unknown>>),
+    builder.makeWhere(Model, 1 as unknown as DataRow),
     '()',
   );
   assert.equal(
@@ -124,7 +124,7 @@ test('v1 empty and invalid where inputs retain their guards', () => {
   assert.throws(
     () => builder.makeArrayWhere(
       Model,
-      {} as unknown as readonly Readonly<Record<string, unknown>>[],
+      {} as unknown as readonly DataRow[],
       'AND',
     ),
     /Non-array condition/,

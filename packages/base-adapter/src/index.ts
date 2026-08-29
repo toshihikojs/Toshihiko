@@ -4,28 +4,39 @@ import type {
   AdapterData,
   AdapterFindOptions,
   AdapterFindResult,
+  AdapterOperationResult,
   AdapterQuery,
   AdapterRow,
+  AdapterExecuteSpec,
+  DefaultAdapterExecuteSpec,
+  DataRow,
+  DataValue,
 } from 'toshihiko';
 import { extend } from './util';
 
 export type { AdapterData } from 'toshihiko';
 
-export type DefaultAdapterOptions = Readonly<Record<string, unknown>>;
+export type DefaultAdapterOptions = Readonly<Record<string, DataValue>>;
 
 export class Adapter<
   Options extends object = DefaultAdapterOptions,
-  Model = unknown,
-  Connection = unknown,
-  Field = unknown,
-  Value = unknown,
+  Model = object,
+  Connection = object,
+  Field = object,
+  Value = DataValue,
   Query extends AdapterQuery<Model, Connection> = AdapterQuery<Model, Connection>,
+  ExecuteSpec extends AdapterExecuteSpec<
+    readonly DataValue[],
+    readonly DataValue[],
+    AdapterOperationResult
+  > = DefaultAdapterExecuteSpec,
 > extends EventEmitter2 implements AdapterContract<
   Model,
   Connection,
   Field,
   Value,
-  Query
+  Query,
+  ExecuteSpec
 > {
   declare readonly parent: object | undefined;
   declare options: Options;
@@ -76,14 +87,14 @@ export class Adapter<
 
   async updateByQuery(
     query: Query,
-  ): Promise<unknown> {
+  ): Promise<AdapterOperationResult> {
     void query;
     return this.notImplemented('updateByQuery');
   }
 
   async deleteByQuery(
     query: Query,
-  ): Promise<unknown> {
+  ): Promise<AdapterOperationResult> {
     void query;
     return this.notImplemented('deleteByQuery');
   }
@@ -102,9 +113,9 @@ export class Adapter<
   async update(
     model: Model,
     connection: Connection | null,
-    primaryKey: Readonly<Record<string, unknown>>,
+    primaryKey: DataRow,
     data: readonly AdapterData<Field, Value>[],
-  ): Promise<unknown> {
+  ): Promise<AdapterOperationResult> {
     void model;
     void connection;
     void primaryKey;
@@ -113,8 +124,8 @@ export class Adapter<
   }
 
   async execute(
-    ...arguments_: readonly unknown[]
-  ): Promise<unknown> {
+    ...arguments_: ExecuteSpec['arguments']
+  ): Promise<ExecuteSpec['result']> {
     void arguments_;
     return this.notImplemented('execute');
   }

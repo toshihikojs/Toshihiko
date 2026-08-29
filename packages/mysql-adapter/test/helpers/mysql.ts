@@ -2,6 +2,8 @@ import type { AdapterData } from '@toshihiko/base-adapter';
 import { format } from 'mysql2';
 import {
   Toshihiko,
+  type DataRow,
+  type DataValue,
   type ModelOptions,
   type Model,
   type SchemaDefinition,
@@ -86,8 +88,8 @@ export function asConnection(connection: object): MySQLConnection {
 
 export function dataFor(
   model: MySQLModel,
-  values: Readonly<Record<string, unknown>>,
-): readonly AdapterData<MySQLField, unknown>[] {
+  values: DataRow,
+): readonly AdapterData<MySQLField, DataValue>[] {
   return Object.entries(values).map(([name, value]) => {
     const field = model.fieldNamesMap[name];
     if (field === undefined) {

@@ -16,7 +16,7 @@ import type {
   AdapterUpdateByQueryCallArguments,
   AdapterUpdateByQueryType,
 } from './contracts/adapter';
-import type { FieldName } from './contracts/common';
+import type { DataRow, FieldName } from './contracts/common';
 import type {
   JsonRowFromSchema,
   RowFromSchema,
@@ -90,9 +90,9 @@ type PrimaryKeyName<Schema extends SchemaDefinition> = Extract<
 
 export type FindByIdInput<Schema extends SchemaDefinition> =
   [PrimaryKeyName<Schema>] extends [never]
-    ? Readonly<Record<string, unknown>>
+    ? DataRow
     : RowFromSchema<Schema>[PrimaryKeyName<Schema>]
-      | Readonly<Record<string, unknown>>;
+      | DataRow;
 
 export interface QueryAdapterData<
   Name extends string,
@@ -101,7 +101,9 @@ export interface QueryAdapterData<
 > extends AdapterQuery<
   Model<Name, Schema, AdapterInstance>,
   AdapterConnection<AdapterInstance>,
-  Cache | null
+  Cache | null,
+  Partial<RowFromSchema<Schema>>,
+  QueryWhere<RowFromSchema<Schema>>
 > {
   readonly updateData: Partial<RowFromSchema<Schema>>;
   readonly where: QueryWhere<RowFromSchema<Schema>>;
@@ -395,7 +397,7 @@ export class Query<
     const yukari = new Yukari<Name, Schema, AdapterInstance>(
       this.#model,
       'query',
-      row as Readonly<Record<string, unknown>>,
+      row,
       true,
     );
     return yukari as QueriedYukari<Name, Schema, AdapterInstance>;

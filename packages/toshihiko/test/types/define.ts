@@ -3,11 +3,14 @@ import {
   Type,
   type Adapter,
   type AdapterModel,
+  type AdapterOperationResult,
   type AdapterData,
   type AdapterFindOptions,
   type AdapterFindResult,
   type AdapterQuery,
   type AdapterRow,
+  type DataRow,
+  type DataValue,
   type FieldDefinition,
   type FieldType,
   type InferModelPrimaryKey,
@@ -35,8 +38,14 @@ const toshihiko = new Toshihiko('mysql', {
   database: 'toshihiko',
 });
 
-const legacyExecuteResult: Promise<unknown> = toshihiko.execute('SELECT 1');
+const legacyExecuteResult: Promise<AdapterOperationResult> = toshihiko.execute('SELECT 1');
 void legacyExecuteResult;
+
+// @ts-expect-error Cache factories accept a Cache or CacheOptions, not an arbitrary value.
+Toshihiko.createCache(1);
+
+// @ts-expect-error Integer storage values are numbers or numeric strings.
+Type.Integer.parse(true);
 
 const User = toshihiko.define('user', [
   {
@@ -126,8 +135,8 @@ const Validated = toshihiko.define('validated', [
   },
 ]);
 
-const legacyUpdateResult: Promise<unknown> = Validated.update({ score: 1 });
-const legacyTransaction: Promise<unknown> = Validated.beginTransaction();
+const legacyUpdateResult: Promise<AdapterOperationResult> = Validated.update({ score: 1 });
+const legacyTransaction: Promise<object> = Validated.beginTransaction();
 legacyTransaction.then(async (connection) => {
   await Validated.commit(connection);
   await Validated.rollback(connection);
@@ -224,8 +233,8 @@ class TestAdapter implements Adapter {
   }
 
   async insert(
-    model: unknown,
-    connection: unknown,
+    model: object,
+    connection: object | null,
     data: readonly AdapterData[],
   ): Promise<AdapterRow | null> {
     void model;
@@ -235,9 +244,9 @@ class TestAdapter implements Adapter {
   }
 
   async update(
-    model: unknown,
-    connection: unknown,
-    primaryKey: Readonly<Record<string, unknown>>,
+    model: object,
+    connection: object | null,
+    primaryKey: DataRow,
     data: readonly AdapterData[],
   ): Promise<void> {
     void model;
@@ -294,8 +303,8 @@ interface TypedModel {
 class TypedConnectionAdapter implements Adapter<
   TypedModel,
   TypedConnection,
-  unknown,
-  unknown,
+  object,
+  DataValue,
   AdapterQuery<TypedModel, TypedConnection>
 > {
   constructor(
@@ -324,7 +333,7 @@ class TypedConnectionAdapter implements Adapter<
   async update(
     model: TypedModel,
     connection: TypedConnection | null,
-    primaryKey: Readonly<Record<string, unknown>>,
+    primaryKey: DataRow,
     data: readonly AdapterData[],
   ): Promise<void> {
     void model;
@@ -408,7 +417,7 @@ class UnsupportedModelAdapter implements Adapter<UnsupportedModel> {
 
   async insert(
     model: UnsupportedModel,
-    connection: unknown,
+    connection: object | null,
     data: readonly AdapterData[],
   ): Promise<AdapterRow> {
     void model;
@@ -419,8 +428,8 @@ class UnsupportedModelAdapter implements Adapter<UnsupportedModel> {
 
   async update(
     model: UnsupportedModel,
-    connection: unknown,
-    primaryKey: Readonly<Record<string, unknown>>,
+    connection: object | null,
+    primaryKey: DataRow,
     data: readonly AdapterData[],
   ): Promise<void> {
     void model;
@@ -452,10 +461,10 @@ interface UnsupportedQuery extends AdapterQuery {
 }
 
 class UnsupportedQueryAdapter implements Adapter<
-  unknown,
-  unknown,
-  unknown,
-  unknown,
+  object,
+  object,
+  object,
+  DataValue,
   UnsupportedQuery
 > {
   async find(query: UnsupportedQuery): Promise<AdapterFindResult> {
@@ -491,15 +500,15 @@ interface UnsupportedField {
   readonly requiredByAdapter: true;
 }
 
-class UnsupportedFieldAdapter implements Adapter<unknown, unknown, UnsupportedField> {
+class UnsupportedFieldAdapter implements Adapter<object, object, UnsupportedField> {
   async find(query: AdapterQuery): Promise<AdapterFindResult> {
     void query;
     return [];
   }
 
   async insert(
-    model: unknown,
-    connection: unknown,
+    model: object,
+    connection: object | null,
     data: readonly AdapterData<UnsupportedField>[],
   ): Promise<AdapterRow> {
     void model;
@@ -509,9 +518,9 @@ class UnsupportedFieldAdapter implements Adapter<unknown, unknown, UnsupportedFi
   }
 
   async update(
-    model: unknown,
-    connection: unknown,
-    primaryKey: Readonly<Record<string, unknown>>,
+    model: object,
+    connection: object | null,
+    primaryKey: DataRow,
     data: readonly AdapterData<UnsupportedField>[],
   ): Promise<void> {
     void model;
@@ -545,8 +554,8 @@ class UnsupportedUpdateAdapter {
   }
 
   async insert(
-    model: unknown,
-    connection: unknown,
+    model: object,
+    connection: object | null,
     data: readonly AdapterData[],
   ): Promise<AdapterRow> {
     void model;
@@ -558,7 +567,7 @@ class UnsupportedUpdateAdapter {
   async update(
     model: { readonly requiredByUpdate: true },
     connection: { readonly updateTransaction: number },
-    primaryKey: Readonly<Record<string, unknown>>,
+    primaryKey: DataRow,
     data: readonly AdapterData<UnsupportedField>[],
   ): Promise<void> {
     void model;
@@ -596,8 +605,8 @@ class UnsupportedDeleteAdapter {
   }
 
   async insert(
-    model: unknown,
-    connection: unknown,
+    model: object,
+    connection: object | null,
     data: readonly AdapterData[],
   ): Promise<AdapterRow> {
     void model;
@@ -607,9 +616,9 @@ class UnsupportedDeleteAdapter {
   }
 
   async update(
-    model: unknown,
-    connection: unknown,
-    primaryKey: Readonly<Record<string, unknown>>,
+    model: object,
+    connection: object | null,
+    primaryKey: DataRow,
     data: readonly AdapterData[],
   ): Promise<void> {
     void model;
@@ -652,8 +661,8 @@ class UnsupportedCountAdapter {
   }
 
   async insert(
-    model: unknown,
-    connection: unknown,
+    model: object,
+    connection: object | null,
     data: readonly AdapterData[],
   ): Promise<AdapterRow> {
     void model;
@@ -663,9 +672,9 @@ class UnsupportedCountAdapter {
   }
 
   async update(
-    model: unknown,
-    connection: unknown,
-    primaryKey: Readonly<Record<string, unknown>>,
+    model: object,
+    connection: object | null,
+    primaryKey: DataRow,
     data: readonly AdapterData[],
   ): Promise<void> {
     void model;
@@ -687,15 +696,15 @@ const unsupportedCount = new Toshihiko(new UnsupportedCountAdapter());
 // @ts-expect-error Core Queries must satisfy the count contract declared by the Adapter.
 unsupportedCount.define('unsupported-count', [{ name: 'id' }]);
 
-class StringValueAdapter implements Adapter<unknown, unknown, unknown, string> {
+class StringValueAdapter implements Adapter<object, object, object, string> {
   async find(): Promise<AdapterFindResult> {
     return [];
   }
 
   async insert(
-    model: unknown,
-    connection: unknown,
-    data: readonly AdapterData<unknown, string>[],
+    model: object,
+    connection: object | null,
+    data: readonly AdapterData<object, string>[],
   ): Promise<AdapterRow> {
     void model;
     void connection;
@@ -704,10 +713,10 @@ class StringValueAdapter implements Adapter<unknown, unknown, unknown, string> {
   }
 
   async update(
-    model: unknown,
-    connection: unknown,
-    primaryKey: Readonly<Record<string, unknown>>,
-    data: readonly AdapterData<unknown, string>[],
+    model: object,
+    connection: object | null,
+    primaryKey: DataRow,
+    data: readonly AdapterData<object, string>[],
   ): Promise<void> {
     void model;
     void connection;

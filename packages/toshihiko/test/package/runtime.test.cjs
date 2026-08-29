@@ -239,6 +239,7 @@ test('built-in field types retain v1 restore coercion for JavaScript callers', (
   assert.equal(Type.Integer.restore('0x10'), 16);
   assert.equal(Type.Float.restore('2.5'), 2.5);
   assert.equal(Type.Boolean.name, '_Boolean');
+  assert.equal(Type.Boolean.defaultValue, 0);
   assert.equal(Type.$equal(1, 1), true);
   assert.equal(Type.$equal({}, {}), false);
   assert.equal(Escaper.escape("a'b"), "a\\'b");

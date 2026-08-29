@@ -1,3 +1,5 @@
+import type { DataValue } from './common';
+
 export type CacheKey =
   | object
   | string
@@ -37,11 +39,11 @@ export interface Cache {
 }
 
 export interface CacheModule {
-  create(...arguments_: readonly unknown[]): Cache;
+  create(...arguments_: DataValue[]): Cache;
 }
 
 export interface CacheOptions {
-  readonly [key: string]: unknown;
+  readonly [key: string]: DataValue;
   readonly module?: CacheModule;
   readonly name?: string;
   readonly path?: string;
@@ -52,10 +54,10 @@ export type CacheSource = Cache | CacheOptions;
 const stripComments = /((\/\/.*$)|(\/\*[\s\S]*?\*\/))/mg;
 const argumentNames = /([^\s,]+)/g;
 
-export function createCache(source: unknown): Cache | null {
+export function createCache(source: CacheSource): Cache | null {
   if (isCache(source)) return source;
 
-  const options = source as CacheOptions;
+  const options = source;
   let cacheModule: CacheModule;
   if (options.module) {
     cacheModule = options.module;
@@ -71,7 +73,7 @@ export function createCache(source: unknown): Cache | null {
   return cacheModule.create(...names.map((name) => options[name]));
 }
 
-export function isCache(value: unknown): value is Cache {
+function isCache(value: unknown): value is Cache {
   if (value === null || (typeof value !== 'object' && typeof value !== 'function')) {
     return false;
   }
@@ -82,7 +84,7 @@ export function isCache(value: unknown): value is Cache {
     && typeof candidate.setData === 'function';
 }
 
-function getParameterNames(func: (...arguments_: readonly unknown[]) => unknown): string[] {
+function getParameterNames(func: (...arguments_: DataValue[]) => Cache): string[] {
   const source = func.toString().replace(stripComments, '');
   const result = source
     .slice(source.indexOf('(') + 1, source.indexOf(')'))

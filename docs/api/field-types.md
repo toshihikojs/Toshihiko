@@ -49,7 +49,7 @@ Returning `undefined` or an empty string succeeds. A non-empty string becomes th
 
 ```typescript
 class Field<Definition extends FieldDefinitionShape = FieldDefinitionShape> {
-  readonly options: Readonly<Record<string, unknown>>;
+  readonly options: Readonly<Definition>;
   readonly name: Definition['name'];
   readonly column: string;
   readonly type: FieldTypeFromDefinition<Definition>;
@@ -61,7 +61,9 @@ class Field<Definition extends FieldDefinitionShape = FieldDefinitionShape> {
   readonly defaultValue: FieldDefinitionValue<Definition> | undefined;
   readonly needQuotes: boolean;
 
-  parse(value: unknown): FieldDefinitionValue<Definition>;
+  parse(
+    value: FieldDefinitionStorageValue<Definition>,
+  ): FieldDefinitionValue<Definition>;
   restore(value: FieldDefinitionValue<Definition>): FieldDefinitionStorageValue<Definition>;
   readonly equal: (
     left: FieldDefinitionValue<Definition>,
@@ -77,16 +79,22 @@ class Field<Definition extends FieldDefinitionShape = FieldDefinitionShape> {
 
 ```typescript
 import { Type } from 'toshihiko';
+
+type StringStorageValue = string | number | bigint | boolean | null | undefined;
+type BooleanStorageValue = string | number | boolean | null | undefined;
+type NumberStorageValue = string | number;
+type JsonStorageValue = string | JsonValue;
+type DatetimeStorageValue = moment.MomentInput;
 ```
 
 | Type | `parse()` input | Application value | `restore()` output | JSON value |
 |---|---|---|---|---|
-| `Type.String` | `unknown` | `string` | `string` | `string` |
-| `Type.Boolean` | `unknown` | `boolean` | `number` | `boolean` |
-| `Type.Integer` | `unknown` | `number` | `number` | `number` |
-| `Type.Float` | `unknown` | `number` | `number` | `number` |
-| `Type.Json` | `unknown` | `JsonValue` | `string` | `JsonValue` |
-| `Type.Datetime` | `unknown` | `Date` | `string` | `string` |
+| `Type.String` | `StringStorageValue` | `string` | `string` | `string` |
+| `Type.Boolean` | `BooleanStorageValue` | `boolean` | `number` | `boolean` |
+| `Type.Integer` | `NumberStorageValue` | `number` | `number` | `number` |
+| `Type.Float` | `NumberStorageValue` | `number` | `number` | `number` |
+| `Type.Json` | `JsonStorageValue` | `JsonValue` | `string` | `JsonValue` |
+| `Type.Datetime` | `DatetimeStorageValue` | `Date` | `string` | `string` |
 
 `Type.String`, `Boolean`, `Integer`, `Float`, and `Json` provide defaults. `Datetime` does not.
 

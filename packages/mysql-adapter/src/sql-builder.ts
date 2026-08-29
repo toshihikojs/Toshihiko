@@ -1,5 +1,6 @@
 import { sqlNameToColumn } from '@toshihiko/sql-utils';
 import { format as mysqlFormat } from 'mysql2';
+import type { DataRow, DataValue } from 'toshihiko';
 import type {
   MySQLField,
   MySQLModel,
@@ -34,7 +35,7 @@ export class MySQLSqlBuilder {
   compileFieldWhere(
     model: MySQLModel,
     key: string,
-    condition: unknown,
+    condition: DataValue,
     logic: string = 'AND',
   ): MySQLStatement {
     const normalizedLogic = normalizeLogic(logic);
@@ -51,7 +52,7 @@ export class MySQLSqlBuilder {
     const fragments: MySQLStatement[] = [];
     let recognized = true;
 
-    for (const [rawOperator, operand] of Object.entries(condition)) {
+    for (const [rawOperator, operand] of Object.entries(condition as DataRow)) {
       const operator = rawOperator.toLowerCase();
       if (operator === '$and' || operator === '$or') {
         const nestedLogic = operator === '$and' ? 'AND' : 'OR';
@@ -84,7 +85,7 @@ export class MySQLSqlBuilder {
   makeFieldWhere(
     model: MySQLModel,
     key: string,
-    condition: unknown,
+    condition: DataValue,
     logic: string = 'AND',
   ): string {
     return formatStatement(this.compileFieldWhere(model, key, condition, logic));
@@ -92,7 +93,7 @@ export class MySQLSqlBuilder {
 
   compileArrayWhere(
     model: MySQLModel,
-    condition: readonly Readonly<Record<string, unknown>>[],
+    condition: readonly DataRow[],
     logic: string = 'AND',
   ): MySQLStatement {
     if (!Array.isArray(condition)) {
@@ -109,7 +110,7 @@ export class MySQLSqlBuilder {
 
   makeArrayWhere(
     model: MySQLModel,
-    condition: readonly Readonly<Record<string, unknown>>[],
+    condition: readonly DataRow[],
     logic: string = 'AND',
   ): string {
     return formatStatement(this.compileArrayWhere(model, condition, logic));
@@ -117,7 +118,7 @@ export class MySQLSqlBuilder {
 
   compileWhere(
     model: MySQLModel,
-    condition: Readonly<Record<string, unknown>> | readonly Readonly<Record<string, unknown>>[],
+    condition: DataRow | readonly DataRow[],
     logic: string = 'AND',
   ): MySQLStatement {
     const normalizedLogic = normalizeLogic(logic);
@@ -131,13 +132,13 @@ export class MySQLSqlBuilder {
         if (Array.isArray(value)) {
           fragments.push(this.compileArrayWhere(
             model,
-            value as readonly Readonly<Record<string, unknown>>[],
+            value as readonly DataRow[],
             nestedLogic,
           ));
         } else {
           fragments.push(this.compileWhere(
             model,
-            value as Readonly<Record<string, unknown>>,
+            value as DataRow,
             nestedLogic,
           ));
         }
@@ -152,7 +153,7 @@ export class MySQLSqlBuilder {
 
   makeWhere(
     model: MySQLModel,
-    condition: Readonly<Record<string, unknown>> | readonly Readonly<Record<string, unknown>>[],
+    condition: DataRow | readonly DataRow[],
     logic: string = 'AND',
   ): string {
     return formatStatement(this.compileWhere(model, condition, logic));
@@ -187,14 +188,14 @@ export class MySQLSqlBuilder {
 
   makeSet(
     model: MySQLModel,
-    update: Readonly<Record<string, unknown>>,
+    update: DataRow,
   ): string {
     return formatStatement(this.compileSet(model, update));
   }
 
   compileSet(
     model: MySQLModel,
-    update: Readonly<Record<string, unknown>>,
+    update: DataRow,
   ): MySQLStatement {
     const assignments: MySQLStatement[] = [];
     for (const [key, value] of Object.entries(update)) {
@@ -212,7 +213,7 @@ export class MySQLSqlBuilder {
     return joinStatements(assignments, ', ');
   }
 
-  compileValue(field: MySQLField, value: unknown): MySQLStatement {
+  compileValue(field: MySQLField, value: DataValue): MySQLStatement {
     if (value === null) {
       return statement('NULL');
     }
@@ -330,19 +331,19 @@ export class MySQLSqlBuilder {
   private compileOperator(
     field: MySQLField,
     operator: FieldOperator,
-    operand: unknown,
+    operand: DataValue,
   ): MySQLStatement {
     const symbol = fieldOperators[operator];
     const column = quoteIdentifier(field.column);
 
     if (symbol === 'IN') {
-      const values = (operand as readonly unknown[]).map((value) => this.compileRestoredValue(field, value));
+      const values = (operand as readonly DataValue[]).map((value) => this.compileRestoredValue(field, value));
       const compiled = joinStatements(values, ', ');
       return { sql: `${column} IN (${compiled.sql})`, values: compiled.values };
     }
 
     if (symbol === 'BETWEEN') {
-      const between = operand as readonly unknown[];
+      const between = operand as readonly DataValue[];
       const compiled = joinStatements([
         this.compileRestoredValue(field, between[0]),
         this.compileRestoredValue(field, between[1]),
@@ -373,7 +374,7 @@ export class MySQLSqlBuilder {
   private compileComparison(
     field: MySQLField,
     symbol: string,
-    value: unknown,
+    value: DataValue,
   ): MySQLStatement {
     const column = quoteIdentifier(field.column);
     if ((symbol === '=' || symbol === '!=') && value === null) {
@@ -386,7 +387,7 @@ export class MySQLSqlBuilder {
     };
   }
 
-  private compileEquality(field: MySQLField, value: unknown): MySQLStatement {
+  private compileEquality(field: MySQLField, value: DataValue): MySQLStatement {
     const compiled = this.compileRestoredValue(field, value);
     return {
       sql: `${quoteIdentifier(field.column)} = ${compiled.sql}`,
@@ -397,7 +398,7 @@ export class MySQLSqlBuilder {
   private compileSetValue(
     model: MySQLModel,
     field: MySQLField,
-    value: unknown,
+    value: DataValue,
   ): MySQLStatement {
     if (value === null) {
       if (field.allowNull) return statement('NULL');
@@ -410,13 +411,13 @@ export class MySQLSqlBuilder {
     return this.compileRestoredValue(field, value);
   }
 
-  private restore(field: MySQLField, value: unknown): unknown {
+  private restore(field: MySQLField, value: DataValue): MySQLStatement['values'][number] {
     return field.restore(value);
   }
 
   private compileRestoredValue(
     field: MySQLField,
-    value: unknown,
+    value: DataValue,
   ): MySQLStatement {
     const restored = this.restore(field, value);
     if (field.type?.needQuotes === false && typeof restored === 'string') {
@@ -427,7 +428,7 @@ export class MySQLSqlBuilder {
 
   private compileWhereClause(
     model: MySQLModel,
-    where?: Readonly<Record<string, unknown>>,
+    where?: DataRow,
   ): MySQLStatement {
     if (where === undefined || Object.keys(where).length === 0) {
       return statement('');
@@ -521,24 +522,24 @@ function normalizeLimit(value: number | string | undefined): number {
   return normalized;
 }
 
-function splitLogicalValues(value: unknown): {
-  readonly and: readonly unknown[];
-  readonly or: readonly unknown[];
+function splitLogicalValues(value: DataValue): {
+  readonly and: readonly DataValue[];
+  readonly or: readonly DataValue[];
 } {
   if (isRecord(value) && ('$and' in value || '$or' in value)) {
     return {
-      and: toArray(value.$and),
-      or: toArray(value.$or),
+      and: toArray(value.$and as DataValue),
+      or: toArray(value.$or as DataValue),
     };
   }
   return { and: toArray(value), or: [] };
 }
 
-function toArray(value: unknown): readonly unknown[] {
+function toArray(value: DataValue): readonly DataValue[] {
   if (value === undefined) {
     return [];
   }
-  return Array.isArray(value) ? value : [value];
+  return Array.isArray(value) ? value as readonly DataValue[] : [value];
 }
 
 function isFieldOperator(value: string): value is FieldOperator {

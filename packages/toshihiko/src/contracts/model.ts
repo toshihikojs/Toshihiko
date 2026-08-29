@@ -1,5 +1,6 @@
 import { EventEmitter2 } from 'eventemitter2';
 import type { FieldName } from './common';
+import type { DataRow, DataValue } from './common';
 import type {
   Adapter,
   AdapterBeginTransactionArguments,
@@ -49,7 +50,7 @@ import {
 
 export interface ModelOptions {
   readonly cache?: CacheSource | false | null;
-  readonly [key: string]: unknown;
+  readonly [key: string]: DataValue;
 }
 
 type ValidatedModelMethods<Methods extends object> = {
@@ -396,7 +397,7 @@ export class Model<
 
   convertColumnToName(column: string): FieldName<RowFromSchema<Schema>> | undefined;
   convertColumnToName(columns: readonly string[]): readonly (FieldName<RowFromSchema<Schema>> | undefined)[];
-  convertColumnToName(object: Readonly<Record<string, unknown>>): Readonly<Record<string, unknown>>;
+  convertColumnToName(object: DataRow): DataRow;
   convertColumnToName(object: unknown): unknown {
     if (typeof object === 'string') return this.columnToName[object];
     if (Array.isArray(object)) return object.map((column) => this.columnToName[column]);
@@ -437,7 +438,7 @@ function isReadonlyArray(value: unknown): value is readonly unknown[] {
 export type InferModelRow<ModelType> = ModelType extends Model<
   string,
   infer Schema,
-  AdapterLike
+  infer _AdapterInstance extends AdapterLike
 >
   ? RowFromSchema<Schema>
   : never;
@@ -445,7 +446,7 @@ export type InferModelRow<ModelType> = ModelType extends Model<
 export type InferModelPrimaryKey<ModelType> = ModelType extends Model<
   string,
   infer Schema,
-  AdapterLike
+  infer _AdapterInstance extends AdapterLike
 >
   ? PrimaryKeyNames<Schema>
   : never;

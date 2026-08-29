@@ -5,9 +5,24 @@
 ## アプリケーション設定
 
 ```typescript
+type MySQLValue =
+  | string
+  | number
+  | bigint
+  | boolean
+  | Date
+  | null
+  | undefined
+  | Blob
+  | Buffer
+  | Uint8Array
+  | Raw
+  | ({} | null | undefined)[]
+  | { [key: string]: MySQLValue };
+
 type MySQLValues =
-  | readonly unknown[]
-  | Readonly<Record<string, unknown>>;
+  | readonly MySQLValue[]
+  | Readonly<Record<string, MySQLValue>>;
 
 type MySQLShowSql = false | true | ((sql: string) => void);
 
@@ -15,7 +30,6 @@ interface MySQLAdapterOptions extends Omit<
   PoolOptions,
   'database' | 'password' | 'user'
 > {
-  readonly [key: string]: unknown;
   readonly cache?: CacheSource;
   readonly database?: string;
   readonly password?: string;
@@ -105,8 +119,13 @@ class MySQLAdapter extends Adapter<
   MySQLModel,
   MySQLConnection,
   MySQLField,
-  unknown,
-  MySQLQuery
+  DataValue,
+  MySQLQuery,
+  AdapterExecuteSpec<
+    MySQLExecuteArguments,
+    MySQLQueryExecuteArguments,
+    MySQLQueryResult
+  >
 > {
   readonly database: string;
   readonly mysql: MySQLPool;
@@ -120,10 +139,10 @@ class MySQLAdapter extends Adapter<
   updateByQuery(query: MySQLQuery): Promise<MySQLMutationResult>;
   deleteByQuery(query: MySQLQuery): Promise<MySQLMutationResult>;
   insert(model: MySQLModel, connection: MySQLConnection | null,
-    data: readonly AdapterData<MySQLField, unknown>[]): Promise<AdapterRow>;
+    data: readonly AdapterData<MySQLField, DataValue>[]): Promise<AdapterRow>;
   update(model: MySQLModel, connection: MySQLConnection | null,
-    primaryKey: Readonly<Record<string, unknown>>,
-    data: readonly AdapterData<MySQLField, unknown>[]):
+    primaryKey: DataRow,
+    data: readonly AdapterData<MySQLField, DataValue>[]):
     Promise<MySQLMutationResult>;
   beginTransaction(): Promise<MySQLConnection>;
   commit(connection: MySQLConnection): Promise<void>;
@@ -140,14 +159,14 @@ Parameterized method の公開 signature は次のとおりです。
 ```typescript
 interface MySQLStatement {
   readonly sql: string;
-  readonly values: readonly unknown[];
+  readonly values: readonly MySQLValue[];
 }
 
-compileFieldWhere(model: MySQLModel, key: string, condition: unknown, logic?: string): MySQLStatement
-compileArrayWhere(model: MySQLModel, condition: readonly Readonly<Record<string, unknown>>[], logic?: string): MySQLStatement
-compileWhere(model: MySQLModel, condition: Readonly<Record<string, unknown>> | readonly Readonly<Record<string, unknown>>[], logic?: string): MySQLStatement
-compileSet(model: MySQLModel, update: Readonly<Record<string, unknown>>): MySQLStatement
-compileValue(field: MySQLField, value: unknown): MySQLStatement
+compileFieldWhere(model: MySQLModel, key: string, condition: DataValue, logic?: string): MySQLStatement
+compileArrayWhere(model: MySQLModel, condition: readonly DataRow[], logic?: string): MySQLStatement
+compileWhere(model: MySQLModel, condition: DataRow | readonly DataRow[], logic?: string): MySQLStatement
+compileSet(model: MySQLModel, update: DataRow): MySQLStatement
+compileValue(field: MySQLField, value: DataValue): MySQLStatement
 compileFind(model: MySQLModel, options?: MySQLQueryOptions): MySQLStatement
 compileUpdate(model: MySQLModel, options?: MySQLQueryOptions): MySQLStatement
 compileDelete(model: MySQLModel, options?: MySQLQueryOptions): MySQLStatement
@@ -156,4 +175,4 @@ compileSql(type: string, model: MySQLModel, options?: MySQLQueryOptions): MySQLS
 
 実行には `compile*()` を優先してください。`make*()` は format 済み文字列を返し、主に互換と inspection に使います。
 
-パッケージは `MySQLAdapterOptions`、`MySQLConnection`、`MySQLPool`、`MySQLQueryResult`、`MySQLMutationResult`、`MySQLValues`、`MySQLExecuteArguments`、`MySQLStatement` と、Adapter 境界の `MySQLModel`、`MySQLQuery`、`MySQLField` を export します。
+パッケージは `MySQLAdapterOptions`、`MySQLConnection`、`MySQLPool`、`MySQLQueryResult`、`MySQLMutationResult`、`MySQLValue`、`MySQLValues`、`MySQLExecuteArguments`、`MySQLStatement` と、Adapter 境界の `MySQLModel`、`MySQLQuery`、`MySQLField` を export します。

@@ -36,12 +36,22 @@ interface Cache {
 ## 設定
 
 ```typescript
+type DataValue =
+  | object
+  | string
+  | number
+  | bigint
+  | boolean
+  | symbol
+  | null
+  | undefined;
+
 interface CacheModule {
-  create(...args: readonly unknown[]): Cache;
+  create(...args: DataValue[]): Cache;
 }
 
 interface CacheOptions {
-  readonly [key: string]: unknown;
+  readonly [key: string]: DataValue;
   readonly module?: CacheModule;
   readonly name?: string;
   readonly path?: string;

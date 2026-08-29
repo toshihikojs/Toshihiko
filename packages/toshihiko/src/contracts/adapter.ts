@@ -1,16 +1,25 @@
 import type { Toshihiko, ToshihikoOptions } from '../toshihiko';
+import type { DataRow, DataValue } from './common';
 
 export declare const adapterExecuteSpec: unique symbol;
 
+export type AdapterOperationResult = DataValue | void;
+
 export interface AdapterExecuteSpec<
-  Arguments extends readonly unknown[],
-  QueryArguments extends readonly unknown[],
-  Result,
+  Arguments extends readonly DataValue[],
+  QueryArguments extends readonly DataValue[],
+  Result extends AdapterOperationResult,
 > {
   readonly arguments: Arguments;
   readonly queryArguments: QueryArguments;
   readonly result: Result;
 }
+
+export type DefaultAdapterExecuteSpec = AdapterExecuteSpec<
+  DataValue[],
+  DataValue[],
+  AdapterOperationResult
+>;
 
 export interface AdapterFindOptions {
   readonly noCache: boolean;
@@ -18,9 +27,11 @@ export interface AdapterFindOptions {
 }
 
 export interface AdapterQuery<
-  Model = unknown,
-  Connection = unknown,
-  Cache = unknown,
+  Model = object,
+  Connection = object,
+  Cache = object | null,
+  UpdateData extends object = DataRow,
+  Where extends object = DataRow,
 > {
   readonly cache: Cache;
   readonly connection: Connection | null;
@@ -29,13 +40,13 @@ export interface AdapterQuery<
   readonly limit: readonly number[];
   readonly model: Model;
   readonly order: readonly Readonly<Record<string, number>>[];
-  readonly updateData: Readonly<Record<string, unknown>>;
-  readonly where: Readonly<Record<string, unknown>>;
+  readonly updateData: UpdateData;
+  readonly where: Where;
 }
 
-export type AdapterRow = Readonly<Record<string, unknown>>;
+export type AdapterRow = DataRow;
 
-export interface AdapterData<Field = unknown, Value = unknown> {
+export interface AdapterData<Field = object, Value = DataValue> {
   readonly field: Field;
   readonly value: Value;
 }
@@ -46,12 +57,18 @@ export type AdapterFindResult =
   | null;
 
 export interface Adapter<
-  Model = unknown,
-  Connection = unknown,
-  Field = unknown,
-  Value = unknown,
+  Model = object,
+  Connection = object,
+  Field = object,
+  Value = DataValue,
   Query extends AdapterQuery<Model, Connection> = AdapterQuery<Model, Connection>,
+  ExecuteSpec extends AdapterExecuteSpec<
+    readonly DataValue[],
+    readonly DataValue[],
+    AdapterOperationResult
+  > = DefaultAdapterExecuteSpec,
 > {
+  readonly [adapterExecuteSpec]?: ExecuteSpec;
   readonly find: (
     query: Query,
     options?: AdapterFindOptions,
@@ -61,7 +78,7 @@ export interface Adapter<
   ) => Promise<number>;
   readonly updateByQuery?: (
     query: Query,
-  ) => Promise<unknown>;
+  ) => Promise<AdapterOperationResult>;
   readonly insert: (
     model: Model,
     connection: Connection | null,
@@ -70,18 +87,18 @@ export interface Adapter<
   readonly update: (
     model: Model,
     connection: Connection | null,
-    primaryKey: Readonly<Record<string, unknown>>,
+    primaryKey: DataRow,
     data: readonly AdapterData<Field, Value>[],
-  ) => Promise<unknown>;
+  ) => Promise<AdapterOperationResult>;
   readonly deleteByQuery: (
     query: Query,
-  ) => Promise<unknown>;
+  ) => Promise<AdapterOperationResult>;
   readonly execute?: (
-    ...arguments_: readonly unknown[]
-  ) => Promise<unknown>;
+    ...arguments_: ExecuteSpec['arguments']
+  ) => Promise<ExecuteSpec['result']>;
   readonly beginTransaction?: () => Promise<Connection>;
-  readonly commit?: (connection: Connection) => Promise<unknown>;
-  readonly rollback?: (connection: Connection) => Promise<unknown>;
+  readonly commit?: (connection: Connection) => Promise<AdapterOperationResult>;
+  readonly rollback?: (connection: Connection) => Promise<AdapterOperationResult>;
   getDBName(): string;
 }
 
@@ -93,9 +110,6 @@ export interface AdapterLike {
   readonly count: (
     query: never,
   ) => Promise<number>;
-  readonly updateByQuery?: (
-    query: never,
-  ) => Promise<unknown>;
   readonly insert: (
     model: never,
     connection: never,
@@ -104,16 +118,12 @@ export interface AdapterLike {
   readonly update: (
     model: never,
     connection: never,
-    primaryKey: Readonly<Record<string, unknown>>,
+    primaryKey: DataRow,
     data: readonly never[],
-  ) => Promise<unknown>;
+  ) => Promise<AdapterOperationResult>;
   readonly deleteByQuery: (
     query: never,
-  ) => Promise<unknown>;
-  execute?(...arguments_: readonly unknown[]): Promise<unknown>;
-  beginTransaction?(): Promise<unknown>;
-  commit?(connection: unknown): Promise<unknown>;
-  rollback?(connection: unknown): Promise<unknown>;
+  ) => Promise<AdapterOperationResult>;
   getDBName(): string;
 }
 
@@ -165,13 +175,13 @@ type AdapterMethodValue<
 
 type AdapterDeclaredExecuteSpec<Instance> =
   typeof adapterExecuteSpec extends keyof Instance
-    ? Instance[typeof adapterExecuteSpec]
+    ? Exclude<Instance[typeof adapterExecuteSpec], undefined>
     : undefined;
 
 export type AdapterUpdateByQueryType<Instance extends AdapterLike> =
   AdapterMethodValue<Instance, 'updateByQuery'> extends (
     query: infer Query,
-  ) => unknown ? Query : never;
+  ) => DataValue ? Query : never;
 
 export type AdapterUpdateByQueryResult<Instance extends AdapterLike> =
   AdapterMethodValue<Instance, 'updateByQuery'> extends (

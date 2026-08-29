@@ -1,4 +1,5 @@
 import { Type } from '../field-types';
+import type { DataValue } from './common';
 
 const cloneDeep = require('lodash/cloneDeep') as <Value>(value: Value) => Value;
 const otrans = require('otrans') as {
@@ -35,16 +36,16 @@ export type FieldType<
 } & FieldTypeJsonMethod<Value, JsonValue>;
 
 export interface FieldTypeLike {
-  readonly [fieldTypeValue]?: unknown;
-  readonly [fieldTypeStorageValue]?: unknown;
-  readonly [fieldTypeJsonValue]?: unknown;
+  readonly [fieldTypeValue]?: DataValue;
+  readonly [fieldTypeStorageValue]?: DataValue;
+  readonly [fieldTypeJsonValue]?: DataValue;
   readonly name?: string;
   readonly needQuotes?: boolean;
-  readonly defaultValue?: unknown;
-  parse(value: never): unknown;
-  restore(value: never): unknown;
+  readonly defaultValue?: DataValue;
+  parse(value: never): DataValue;
+  restore(value: never): DataValue;
   equal?(left: never, right: never): boolean;
-  toJSON?(value: never): unknown;
+  toJSON?(value: never): DataValue;
 }
 
 export type FieldTypeValue<Type extends FieldTypeLike> =
@@ -73,7 +74,7 @@ export interface FieldDefinitionShape {
   readonly allowNull?: boolean;
   readonly primaryKey?: boolean;
   readonly autoIncrement?: boolean;
-  readonly defaultValue?: unknown;
+  readonly defaultValue?: DataValue;
 }
 
 export interface FieldDefinition<
@@ -152,7 +153,7 @@ type HasValidEqual<Type extends FieldTypeLike, Value> =
     : true;
 
 type HasValidToJSON<Type extends FieldTypeLike, Value> =
-  Type extends { toJSON(value: infer Input): unknown }
+  Type extends { toJSON(value: infer Input): DataValue }
     ? SameType<Input, Value>
     : true;
 
@@ -188,7 +189,7 @@ export type PrimaryKeyNames<Schema extends SchemaDefinition> = Extract<
 export class Field<
   Definition extends FieldDefinitionShape = FieldDefinitionShape,
 > {
-  declare readonly options: Readonly<Record<string, unknown>>;
+  declare readonly options: Readonly<Definition>;
   declare readonly name: Definition['name'];
   declare readonly column: string;
   declare readonly type: FieldTypeFromDefinition<Definition>;
@@ -249,7 +250,9 @@ export class Field<
     return Boolean(this.type.needQuotes);
   }
 
-  parse(value: unknown): FieldDefinitionValue<Definition> {
+  parse(
+    value: FieldDefinitionStorageValue<Definition>,
+  ): FieldDefinitionValue<Definition> {
     return this.type.parse(value as never) as FieldDefinitionValue<Definition>;
   }
 

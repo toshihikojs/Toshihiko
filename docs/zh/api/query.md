@@ -165,7 +165,7 @@ type QueryOrder<Row extends object> =
 
 type FindByIdInput<Schema extends SchemaDefinition> =
   RowFromSchema<Schema>[PrimaryKeyNames<Schema>]
-  | Readonly<Record<string, unknown>>;
+  | DataRow;
 ```
 
 单主键可以直接传该字段的值；联合主键使用对象。没有主键或联合主键 Model 收到原始值时会抛错。

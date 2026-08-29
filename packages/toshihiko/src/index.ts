@@ -2,11 +2,23 @@ import { escape, escapeLike } from '@toshihiko/sql-utils';
 import type {
   Adapter as AdapterContract,
   AdapterConstructor,
+  AdapterExecuteSpec,
+  AdapterOperationResult,
   AdapterQuery,
+  DefaultAdapterExecuteSpec,
 } from './contracts/adapter';
+import type { DataValue } from './contracts/common';
 import { loadAdapter } from './toshihiko';
 
-export { Type, type JsonValue } from './field-types';
+export {
+  Type,
+  type BooleanStorageValue,
+  type DatetimeStorageValue,
+  type JsonStorageValue,
+  type JsonValue,
+  type NumberStorageValue,
+  type StringStorageValue,
+} from './field-types';
 export { Toshihiko, type ToshihikoOptions } from './toshihiko';
 
 export const Escaper = { escape, escapeLike };
@@ -21,12 +33,17 @@ export const Adapter = {
 };
 
 export type Adapter<
-  Model = unknown,
-  Connection = unknown,
-  Field = unknown,
-  Value = unknown,
+  Model = object,
+  Connection = object,
+  Field = object,
+  Value = DataValue,
   Query extends AdapterQuery<Model, Connection> = AdapterQuery<Model, Connection>,
-> = AdapterContract<Model, Connection, Field, Value, Query>;
+  ExecuteSpec extends AdapterExecuteSpec<
+    readonly DataValue[],
+    readonly DataValue[],
+    AdapterOperationResult
+  > = DefaultAdapterExecuteSpec,
+> = AdapterContract<Model, Connection, Field, Value, Query, ExecuteSpec>;
 
 export type {
   Cache,
@@ -55,6 +72,7 @@ export type {
   AdapterData,
   AdapterDeleteQueryType,
   AdapterDeleteByQueryResult,
+  DefaultAdapterExecuteSpec,
   AdapterExecuteArguments,
   AdapterExecuteResult,
   AdapterExecuteSpec,
@@ -62,6 +80,7 @@ export type {
   AdapterFindResult,
   AdapterLike,
   AdapterModel,
+  AdapterOperationResult,
   AdapterQuery,
   AdapterQueryExecuteArguments,
   AdapterRollbackArguments,
@@ -77,7 +96,12 @@ export type {
   AdapterUpdateValue,
   AdapterRollbackResult,
 } from './contracts/adapter';
-export type { FieldName, RowShape } from './contracts/common';
+export type {
+  DataRow,
+  DataValue,
+  FieldName,
+  RowShape,
+} from './contracts/common';
 export type {
   Field,
   FieldDefinition,

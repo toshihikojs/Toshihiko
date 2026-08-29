@@ -118,6 +118,24 @@ export class Toshihiko<
     : undefined;
 
   constructor(
+    adapter: string,
+    ...[options]: {} extends Options
+      ? readonly [options?: Options]
+      : readonly [options: Options]
+  );
+  constructor(
+    adapter: AdapterInstance | AdapterConstructor<Options, AdapterInstance>,
+    ...[options]: {} extends Options
+      ? readonly [options?: Options]
+      : readonly [options: Options]
+  );
+  constructor(
+    adapter: AdapterSource<Options, AdapterInstance>,
+    ...[options]: {} extends Options
+      ? readonly [options?: Options]
+      : readonly [options: Options]
+  );
+  constructor(
     adapter: AdapterSource<Options, AdapterInstance>,
     ...[options]: {} extends Options
       ? readonly [options?: Options]
@@ -150,7 +168,7 @@ export class Toshihiko<
     }
   }
 
-  static createCache(source: unknown): Cache | null {
+  static createCache(source: CacheSource): Cache | null {
     return createCache(source);
   }
 

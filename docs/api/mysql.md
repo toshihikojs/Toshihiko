@@ -35,14 +35,30 @@ const database = new Toshihiko(MySQLAdapter, {
 `MySQLAdapterOptions` extends `mysql2` `PoolOptions`, except that Toshihiko redeclares the following properties.
 
 ```typescript
-type MySQLValues = readonly unknown[] | Readonly<Record<string, unknown>>;
+type MySQLValue =
+  | string
+  | number
+  | bigint
+  | boolean
+  | Date
+  | null
+  | undefined
+  | Blob
+  | Buffer
+  | Uint8Array
+  | Raw
+  | ({} | null | undefined)[]
+  | { [key: string]: MySQLValue };
+
+type MySQLValues =
+  | readonly MySQLValue[]
+  | Readonly<Record<string, MySQLValue>>;
 type MySQLShowSql = false | true | ((sql: string) => void);
 
 interface MySQLAdapterOptions extends Omit<
   PoolOptions,
   'database' | 'password' | 'user'
 > {
-  readonly [key: string]: unknown;
   readonly cache?: CacheSource;
   readonly database?: string;
   readonly password?: string;
@@ -160,14 +176,14 @@ The builder exposes `make*()` string helpers and `compile*()` methods returning 
 ```typescript
 interface MySQLStatement {
   readonly sql: string;
-  readonly values: readonly unknown[];
+  readonly values: readonly MySQLValue[];
 }
 
-compileFieldWhere(model: MySQLModel, key: string, condition: unknown, logic?: string): MySQLStatement
-compileArrayWhere(model: MySQLModel, condition: readonly Readonly<Record<string, unknown>>[], logic?: string): MySQLStatement
-compileWhere(model: MySQLModel, condition: Readonly<Record<string, unknown>> | readonly Readonly<Record<string, unknown>>[], logic?: string): MySQLStatement
-compileSet(model: MySQLModel, update: Readonly<Record<string, unknown>>): MySQLStatement
-compileValue(field: MySQLField, value: unknown): MySQLStatement
+compileFieldWhere(model: MySQLModel, key: string, condition: DataValue, logic?: string): MySQLStatement
+compileArrayWhere(model: MySQLModel, condition: readonly DataRow[], logic?: string): MySQLStatement
+compileWhere(model: MySQLModel, condition: DataRow | readonly DataRow[], logic?: string): MySQLStatement
+compileSet(model: MySQLModel, update: DataRow): MySQLStatement
+compileValue(field: MySQLField, value: DataValue): MySQLStatement
 compileFind(model: MySQLModel, options?: MySQLQueryOptions): MySQLStatement
 compileUpdate(model: MySQLModel, options?: MySQLQueryOptions): MySQLStatement
 compileDelete(model: MySQLModel, options?: MySQLQueryOptions): MySQLStatement

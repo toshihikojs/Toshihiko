@@ -10,11 +10,17 @@ export type JsonValue =
   | readonly JsonValue[]
   | { readonly [key: string]: JsonValue };
 
+export type StringStorageValue = string | number | bigint | boolean | null | undefined;
+export type BooleanStorageValue = string | number | boolean | null | undefined;
+export type NumberStorageValue = string | number;
+export type JsonStorageValue = string | JsonValue;
+export type DatetimeStorageValue = moment.MomentInput;
+
 const StringType = {
   name: 'String',
   needQuotes: true,
   defaultValue: '',
-  parse(value: unknown): string {
+  parse(value: StringStorageValue): string {
     return value === null || value === undefined ? '' : String(value);
   },
   restore(value: string): string {
@@ -28,60 +34,60 @@ const StringType = {
       return false;
     }
   },
-} satisfies FieldType<string, unknown>;
+} satisfies FieldType<string, StringStorageValue>;
 
 const BooleanType = {
   name: '_Boolean',
   needQuotes: false,
-  defaultValue: 0 as unknown as boolean,
-  parse(value: unknown): boolean {
+  defaultValue: 0 as never as boolean,
+  parse(value: BooleanStorageValue): boolean {
     return Boolean(value);
   },
   restore(value: boolean): number {
-    return ((value as unknown as number) ^ 0) & 1;
+    return (Number(value) ^ 0) & 1;
   },
   equal(left: boolean, right: boolean): boolean {
     return Boolean(left) === Boolean(right);
   },
-} satisfies FieldType<boolean, unknown>;
+} satisfies FieldType<boolean, BooleanStorageValue, boolean>;
 
 const IntegerType = {
   name: 'Integer',
   needQuotes: false,
   defaultValue: 0,
-  parse(value: unknown): number {
+  parse(value: NumberStorageValue): number {
     return parseInt(value as string);
   },
   restore(value: number): number {
-    return parseInt(value as unknown as string);
+    return parseInt(String(value));
   },
   equal(left: number, right: number): boolean {
     if (left === right) return true;
-    return parseInt(left as unknown as string) === parseInt(right as unknown as string);
+    return parseInt(String(left)) === parseInt(String(right));
   },
-} satisfies FieldType<number, unknown>;
+} satisfies FieldType<number, NumberStorageValue>;
 
 const FloatType = {
   name: 'Float',
   needQuotes: false,
   defaultValue: 0,
-  parse(value: unknown): number {
+  parse(value: NumberStorageValue): number {
     return parseFloat(value as string);
   },
   restore(value: number): number {
-    return parseFloat(value as unknown as string);
+    return parseFloat(String(value));
   },
   equal(left: number, right: number): boolean {
     if (left === right) return true;
-    return parseFloat(left as unknown as string) === parseFloat(right as unknown as string);
+    return parseFloat(String(left)) === parseFloat(String(right));
   },
-} satisfies FieldType<number, unknown>;
+} satisfies FieldType<number, NumberStorageValue>;
 
 const JsonType = {
   name: 'Json',
   needQuotes: true,
   defaultValue: {} as JsonValue,
-  parse(value: unknown): JsonValue {
+  parse(value: JsonStorageValue): JsonValue {
     try {
       return fbbkJson.parse(value) as JsonValue;
     } catch {
@@ -104,12 +110,12 @@ const JsonType = {
       return false;
     }
   },
-} satisfies FieldType<JsonValue, unknown, JsonValue>;
+} satisfies FieldType<JsonValue, JsonStorageValue, JsonValue>;
 
 const DatetimeType = {
   name: 'Datetime',
   needQuotes: true,
-  parse(value: unknown): Date {
+  parse(value: DatetimeStorageValue): Date {
     return moment(value as moment.MomentInput).toDate();
   },
   restore(value: Date): string {
@@ -119,13 +125,13 @@ const DatetimeType = {
     return moment(left).format('x') === moment(right).format('x');
   },
   toJSON(value: Date): string {
-    if ((value as Date | null) === null) return null as unknown as string;
+    if ((value as Date | null) === null) return null as never as string;
     const datetime = value instanceof Date
       ? value
       : moment(value as moment.MomentInput).toDate();
     return moment(datetime).format('YYYY-MM-DDTHH:mm:ss.SSSZ');
   },
-} satisfies FieldType<Date, unknown, string>;
+} satisfies FieldType<Date, DatetimeStorageValue, string>;
 
 export const Type = {
   Boolean: BooleanType,
@@ -134,7 +140,7 @@ export const Type = {
   Integer: IntegerType,
   Json: JsonType,
   String: StringType,
-  $equal(left: unknown, right: unknown): boolean {
+  $equal<Value>(left: Value, right: Value): boolean {
     return left === right;
   },
 };

@@ -125,7 +125,9 @@ database.execute(
 ## `Toshihiko.createCache()`
 
 ```typescript
-Toshihiko.createCache(source: unknown): Cache | null
+Toshihiko.createCache(source: CacheSource): Cache | null
+
+type CacheSource = Cache | CacheOptions
 ```
 
 An existing Cache is returned unchanged. Module-style configuration creates a Cache, and an unrecognized value returns `null`. Applications normally construct a Cache directly; module-style configuration remains for compatibility. See [Cache API](cache).

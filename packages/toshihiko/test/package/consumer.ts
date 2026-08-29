@@ -8,6 +8,7 @@ import {
   type AdapterQuery,
   type AdapterRow,
   type Cache,
+  type DataRow,
 } from '../..';
 
 const toshihiko = new Toshihiko('mysql');
@@ -100,8 +101,8 @@ class ConsumerAdapter implements Adapter {
   }
 
   async insert(
-    model: unknown,
-    connection: unknown,
+    model: object,
+    connection: object | null,
     data: readonly AdapterData[],
   ): Promise<AdapterRow | null> {
     void model;
@@ -111,9 +112,9 @@ class ConsumerAdapter implements Adapter {
   }
 
   async update(
-    model: unknown,
-    connection: unknown,
-    primaryKey: Readonly<Record<string, unknown>>,
+    model: object,
+    connection: object | null,
+    primaryKey: DataRow,
     data: readonly AdapterData[],
   ): Promise<void> {
     void model;

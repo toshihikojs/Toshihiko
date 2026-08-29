@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { Adapter } from '@toshihiko/base-adapter';
-import { Toshihiko, Type, type FieldType } from 'toshihiko';
+import { Toshihiko, Type, type DataRow, type FieldType } from 'toshihiko';
 import {
   MySQLAdapter,
   type MySQLModel,
@@ -474,7 +474,7 @@ test('v1 update rejects broken state and stale records', async () => {
   const data = dataFor(Item, { name: 'Bob' });
 
   await assert.rejects(
-    adapter.update(Item, null, null as unknown as Readonly<Record<string, unknown>>, data),
+    adapter.update(Item, null, null as unknown as DataRow, data),
     /Invalid parameters/,
   );
   await assert.rejects(adapter.update(Item, null, {}, data), /Broken yukari object/);

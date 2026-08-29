@@ -5,12 +5,30 @@ An Adapter translates Toshihiko Model, Query, Field, and row operations into a d
 ## Core contract
 
 ```typescript
+type DataValue =
+  | object
+  | string
+  | number
+  | bigint
+  | boolean
+  | symbol
+  | null
+  | undefined;
+
+type DataRow = Readonly<Record<string, DataValue>>;
+type AdapterOperationResult = DataValue | void;
+
 interface Adapter<
-  Model = unknown,
-  Connection = unknown,
-  Field = unknown,
-  Value = unknown,
+  Model = object,
+  Connection = object,
+  Field = object,
+  Value = DataValue,
   Query extends AdapterQuery<Model, Connection> = AdapterQuery<Model, Connection>,
+  ExecuteSpec extends AdapterExecuteSpec<
+    readonly DataValue[],
+    readonly DataValue[],
+    AdapterOperationResult
+  > = DefaultAdapterExecuteSpec,
 > {
   find(query: Query, options?: AdapterFindOptions): Promise<AdapterFindResult>;
   count(query: Query): Promise<number>;
@@ -22,21 +40,23 @@ interface Adapter<
   update(
     model: Model,
     connection: Connection | null,
-    primaryKey: Readonly<Record<string, unknown>>,
+    primaryKey: DataRow,
     data: readonly AdapterData<Field, Value>[],
-  ): Promise<unknown>;
-  deleteByQuery(query: Query): Promise<unknown>;
+  ): Promise<AdapterOperationResult>;
+  deleteByQuery(query: Query): Promise<AdapterOperationResult>;
   getDBName(): string;
 
-  updateByQuery?(query: Query): Promise<unknown>;
-  execute?(...args: readonly unknown[]): Promise<unknown>;
+  updateByQuery?(query: Query): Promise<AdapterOperationResult>;
+  execute?(...args: ExecuteSpec['arguments']): Promise<ExecuteSpec['result']>;
   beginTransaction?(): Promise<Connection>;
-  commit?(connection: Connection): Promise<unknown>;
-  rollback?(connection: Connection): Promise<unknown>;
+  commit?(connection: Connection): Promise<AdapterOperationResult>;
+  rollback?(connection: Connection): Promise<AdapterOperationResult>;
 }
 ```
 
 Optional methods become callable from the corresponding core facade only when the concrete Adapter declares them.
+
+`object` includes arrays, class instances, and functions. `DataValue` therefore covers the JavaScript values that runtime adapters may store, configure, or return. `AdapterOperationResult` is only the fallback contract when no concrete driver result is known. An Adapter should narrow mutation and raw execution results to its driver types.
 
 ## Shared data contracts
 
@@ -52,7 +72,7 @@ interface AdapterFindOptions {
 ### Rows and write data
 
 ```typescript
-type AdapterRow = Readonly<Record<string, unknown>>;
+type AdapterRow = DataRow;
 
 interface AdapterData<Field, Value> {
   readonly field: Field;
@@ -63,6 +83,8 @@ type AdapterFindResult = AdapterRow | readonly AdapterRow[] | null;
 ```
 
 An Adapter should return storage-column names in raw rows. Core hydration asks each Field to parse those values.
+
+`AdapterQuery` also accepts `UpdateData` and `Where` type parameters. Core supplies `Partial<RowFromSchema<Schema>>` and `QueryWhere<RowFromSchema<Schema>>`, so a concrete Adapter receives schema-derived update and condition shapes instead of an untyped property bag.
 
 ## Base `Adapter` class
 
@@ -77,7 +99,8 @@ class ExampleAdapter extends Adapter<
   Connection,
   Field,
   Value,
-  Query
+  Query,
+  ExecuteSpec
 > {}
 ```
 
@@ -86,17 +109,23 @@ The base class itself is declared as:
 ```typescript
 class Adapter<
   Options extends object = DefaultAdapterOptions,
-  Model = unknown,
-  Connection = unknown,
-  Field = unknown,
-  Value = unknown,
+  Model = object,
+  Connection = object,
+  Field = object,
+  Value = DataValue,
   Query extends AdapterQuery<Model, Connection> = AdapterQuery<Model, Connection>,
+  ExecuteSpec extends AdapterExecuteSpec<
+    readonly DataValue[],
+    readonly DataValue[],
+    AdapterOperationResult
+  > = DefaultAdapterExecuteSpec,
 > extends EventEmitter2 implements AdapterContract<
   Model,
   Connection,
   Field,
   Value,
-  Query
+  Query,
+  ExecuteSpec
 >
 ```
 

@@ -44,8 +44,8 @@ export type Merge<Defaults extends object, Options extends object> = {
 
 /** Preserve the original Adapter merge order, including its recursive quirks. */
 export function extend<
-  Defaults extends object = UnknownRecord,
-  Options extends object = UnknownRecord,
+  Defaults extends object = object,
+  Options extends object = object,
 >(
   defaultOptions?: Defaults,
   options?: Options,

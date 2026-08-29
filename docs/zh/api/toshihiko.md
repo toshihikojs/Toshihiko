@@ -125,7 +125,9 @@ database.execute(
 ## `Toshihiko.createCache()`
 
 ```typescript
-Toshihiko.createCache(source: unknown): Cache | null
+Toshihiko.createCache(source: CacheSource): Cache | null
+
+type CacheSource = Cache | CacheOptions
 ```
 
 已有 Cache 会原样返回；模块式配置会创建 Cache；无法识别的输入返回 `null`。业务代码通常直接构造 Cache，模块式配置主要用于兼容。详见 [Cache API](cache)。

@@ -61,14 +61,24 @@ Objects represent composite keys. `null` and `undefined` may be interpreted as a
 
 ```typescript
 interface CacheOptions {
-  readonly [key: string]: unknown;
+  readonly [key: string]: DataValue;
   readonly module?: CacheModule;
   readonly name?: string;
   readonly path?: string;
 }
 
+type DataValue =
+  | object
+  | string
+  | number
+  | bigint
+  | boolean
+  | symbol
+  | null
+  | undefined;
+
 interface CacheModule {
-  create(...args: readonly unknown[]): Cache;
+  create(...args: DataValue[]): Cache;
 }
 
 type CacheSource = Cache | CacheOptions;

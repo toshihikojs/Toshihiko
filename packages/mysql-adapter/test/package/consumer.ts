@@ -6,6 +6,7 @@ import {
   type MySQLMutationResult,
   type MySQLQueryResult,
   type MySQLStatement,
+  type MySQLValues,
 } from '../..';
 import {
   Toshihiko,
@@ -85,7 +86,9 @@ const queryUpdated: Promise<MySQLMutationResult> = User.where({ id: 1 }).update(
 const queryDeleted: Promise<MySQLMutationResult> = User.where({ id: 1 }).delete();
 const rootExecuted: Promise<MySQLQueryResult> = toshihiko.execute('SELECT ?', [1]);
 const queryExecuted: Promise<MySQLQueryResult> = User.execute('SELECT ?', [1]);
-const directExecuteResult: MySQLQueryResult = null as unknown as AdapterExecuteResult<MySQLAdapter>;
+declare const inferredExecuteResult: AdapterExecuteResult<MySQLAdapter>;
+const directExecuteResult: MySQLQueryResult = inferredExecuteResult;
+const mysqlValues: MySQLValues = [1, 'Alice', null];
 const inserted = adapter.insert(User, null, [
   { field: User.fieldNamesMap.id, value: 1 },
   { field: User.fieldNamesMap.name, value: 'Alice' },
@@ -106,11 +109,16 @@ void queryDeleted;
 void rootExecuted;
 void queryExecuted;
 void directExecuteResult;
+void mysqlValues;
 void inserted;
 void updated;
 
 // @ts-expect-error Port remains numeric.
 new MySQLAdapter({ port: '3306' });
+
+// @ts-expect-error MySQL bind values do not accept functions.
+const invalidMySQLValues: MySQLValues = [() => undefined];
+void invalidMySQLValues;
 
 // @ts-expect-error MySQL queries only accept MySQL transaction connections.
 User.conn({ transaction: 1 });

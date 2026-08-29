@@ -149,7 +149,7 @@ The connection type comes from the selected Adapter. See [Transactions](../trans
 ```typescript
 convertColumnToName(column: string): FieldName | undefined
 convertColumnToName(columns: readonly string[]): readonly (FieldName | undefined)[]
-convertColumnToName(row: Readonly<Record<string, unknown>>): Readonly<Record<string, unknown>>
+convertColumnToName(row: DataRow): DataRow
 ```
 
 Unknown columns are omitted from object input and become `undefined` for string or array input.

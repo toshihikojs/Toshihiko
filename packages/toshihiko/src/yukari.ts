@@ -1,4 +1,4 @@
-import type { FieldName } from './contracts/common';
+import type { DataRow, DataValue, FieldName } from './contracts/common';
 import type {
   Adapter,
   AdapterConnection,
@@ -46,14 +46,14 @@ export type YukariFieldData<Definition extends SchemaDefinition[number]> =
 interface RuntimeField {
   readonly column: string;
   readonly name: string;
-  equal(left: unknown, right: unknown): boolean;
-  parse(value: unknown): unknown;
-  toJSON(value: unknown): unknown;
+  equal(left: DataValue, right: DataValue): boolean;
+  parse(value: DataValue): DataValue;
+  toJSON(value: DataValue): DataValue;
 }
 
 interface RuntimeOriginalEntry {
   readonly fieldIdx: number;
-  data: unknown;
+  data: DataValue;
 }
 
 type RuntimeOriginalData = Record<string, RuntimeOriginalEntry | undefined>;
@@ -87,7 +87,7 @@ export class Yukari<
   constructor(
     model: Model<Name, Schema, AdapterInstance>,
     source: 'delete' | 'new' | 'query',
-    row: BuildInput<Schema> | Readonly<Record<string, unknown>> = {},
+    row: BuildInput<Schema> | DataRow = {},
     rowInOriginalName = false,
   ) {
     this.#adapter = getAdapterInstance(model.parent);
@@ -320,15 +320,17 @@ export class Yukari<
       if (!useOriginalData && (name.startsWith('$') || typeof value === 'function')) continue;
       const fieldIdx = useOriginalData ? originalData[name]!.fieldIdx : this.#fieldIndex(name);
       const field = this.#schema[fieldIdx] as unknown as RuntimeField | undefined;
-      result[name] = field === undefined ? value : field.toJSON(value);
+      result[name] = field === undefined
+        ? value
+        : field.toJSON(value as DataValue);
     }
 
     return result as Partial<JsonRowFromSchema<Schema>>;
   }
 
-  #originalLocator(): Readonly<Record<string, unknown>> {
+  #originalLocator(): DataRow {
     const originalData = this.#originalData as unknown as RuntimeOriginalData;
-    const primaryKey: Record<string, unknown> = {};
+    const primaryKey: Record<string, DataValue> = {};
     if (this.#model.primaryKeys.length > 0) {
       for (const field of this.#model.primaryKeys) {
         const original = originalData[field.name];

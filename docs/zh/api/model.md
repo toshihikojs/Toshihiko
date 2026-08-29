@@ -164,8 +164,8 @@ convertColumnToName(
   columns: readonly string[],
 ): readonly (FieldName<RowFromSchema<Schema>> | undefined)[]
 convertColumnToName(
-  row: Readonly<Record<string, unknown>>,
-): Readonly<Record<string, unknown>>
+  row: DataRow,
+): DataRow
 
 getPrimaryKeysName(): string | readonly string[]
 getPrimaryKeysColumn(): string | readonly string[]

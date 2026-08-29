@@ -8,6 +8,8 @@ import {
 import type {
   adapterExecuteSpec,
   AdapterExecuteSpec,
+  DataRow,
+  DataValue,
 } from 'toshihiko';
 import { createPool } from 'mysql2/promise';
 import type {
@@ -29,6 +31,7 @@ import type {
   MySQLQueryExecuteArguments,
   MySQLQueryOptions,
   MySQLStatement,
+  MySQLValue,
   MySQLValues,
 } from './contracts';
 import { MySQLSqlBuilder } from './sql-builder';
@@ -44,7 +47,7 @@ interface MySQLReadbackQuery {
 }
 
 interface MySQLReadbackModel extends MySQLModel {
-  where(condition: Readonly<Record<string, unknown>>): MySQLReadbackQuery;
+  where(condition: DataRow): MySQLReadbackQuery;
 }
 
 export class MySQLAdapter extends Adapter<
@@ -52,8 +55,13 @@ export class MySQLAdapter extends Adapter<
   MySQLModel,
   PoolConnection,
   MySQLField,
-  unknown,
-  MySQLQuery
+  DataValue,
+  MySQLQuery,
+  AdapterExecuteSpec<
+    MySQLExecuteArguments,
+    MySQLQueryExecuteArguments,
+    QueryResult
+  >
 > {
   declare readonly [adapterExecuteSpec]: AdapterExecuteSpec<
     MySQLExecuteArguments,
@@ -152,9 +160,9 @@ export class MySQLAdapter extends Adapter<
   override async insert(
     model: MySQLModel,
     connection: PoolConnection | null,
-    data: readonly AdapterData<MySQLField, unknown>[],
+    data: readonly AdapterData<MySQLField, DataValue>[],
   ): Promise<AdapterRow> {
-    const primaryValues: Record<string, unknown> = {};
+    const primaryValues: Record<string, DataValue> = {};
     const assignments: MySQLStatement[] = data.map((entry) => {
       if (entry.field.primaryKey || model.primaryKeys.length === 0) {
         primaryValues[entry.field.name] = entry.value;
@@ -188,8 +196,8 @@ export class MySQLAdapter extends Adapter<
   override async update(
     model: MySQLModel,
     connection: PoolConnection | null,
-    primaryKey: Readonly<Record<string, unknown>>,
-    data: readonly AdapterData<MySQLField, unknown>[],
+    primaryKey: DataRow,
+    data: readonly AdapterData<MySQLField, DataValue>[],
   ): Promise<ResultSetHeader> {
     if (!primaryKey || !data) {
       throw new Error('Invalid parameters.');
@@ -201,7 +209,7 @@ export class MySQLAdapter extends Adapter<
       throw new Error('Broken update data information.');
     }
 
-    const updateData: Record<string, unknown> = {};
+    const updateData: Record<string, DataValue> = {};
     for (const entry of data) {
       updateData[entry.field.name] = entry.value;
     }
@@ -368,7 +376,7 @@ export class MySQLAdapter extends Adapter<
       .filter((field) => !originalFields.includes(field.name))
       .map((field) => field.column);
     const liteResult = result.filter(Boolean).map((row) => {
-      const mutable = row as Record<string, unknown>;
+      const mutable = row as Record<string, DataValue>;
       for (const column of deletedColumns) delete mutable[column];
       return row!;
     });
@@ -430,7 +438,7 @@ export class MySQLAdapter extends Adapter<
   makeFieldWhere(
     model: MySQLModel,
     key: string,
-    condition: unknown,
+    condition: DataValue,
     logic?: string,
   ): string {
     return this.builder.makeFieldWhere(model, key, condition, logic);
@@ -438,7 +446,7 @@ export class MySQLAdapter extends Adapter<
 
   makeArrayWhere(
     model: MySQLModel,
-    condition: readonly Readonly<Record<string, unknown>>[],
+    condition: readonly DataRow[],
     logic?: string,
   ): string {
     return this.builder.makeArrayWhere(model, condition, logic);
@@ -446,7 +454,7 @@ export class MySQLAdapter extends Adapter<
 
   makeWhere(
     model: MySQLModel,
-    condition: Readonly<Record<string, unknown>> | readonly Readonly<Record<string, unknown>>[],
+    condition: DataRow | readonly DataRow[],
     logic?: string,
   ): string {
     return this.builder.makeWhere(model, condition, logic);
@@ -470,7 +478,7 @@ export class MySQLAdapter extends Adapter<
     return this.builder.makeIndex(model, index);
   }
 
-  makeSet(model: MySQLModel, update: Readonly<Record<string, unknown>>): string {
+  makeSet(model: MySQLModel, update: DataRow): string {
     return this.builder.makeSet(model, update);
   }
 
@@ -598,16 +606,16 @@ function normalizeDriverValues(
 }
 
 function normalizeExecuteValues(
-  values: readonly unknown[],
+  values: readonly MySQLValue[],
 ): ExecuteValues {
   return [...values] as ExecuteValues;
 }
 
 function resolveInsertedRowWhere(
   model: MySQLModel,
-  primaryValues: Readonly<Record<string, unknown>>,
+  primaryValues: DataRow,
   insertId: number,
-): Readonly<Record<string, unknown>> {
+): DataRow {
   const primaryKeys = model.primaryKeys;
   const autoIncrement = model.autoIncrementField ?? model.ai;
   if (insertId) {
@@ -679,6 +687,7 @@ export type {
   MySQLQueryResult,
   MySQLShowSql,
   MySQLStatement,
+  MySQLValue,
   MySQLValues,
 } from './contracts';
 

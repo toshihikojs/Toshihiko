@@ -1,18 +1,21 @@
 import type {
   AdapterQuery,
 } from '@toshihiko/base-adapter';
-import type { Cache, CacheSource } from 'toshihiko';
+import type { Cache, CacheSource, DataRow, DataValue } from 'toshihiko';
 import type {
   Pool,
   PoolConnection,
   PoolOptions,
+  QueryValues,
   QueryResult,
   ResultSetHeader,
 } from 'mysql2/promise';
 
+export type MySQLValue = QueryValues;
+
 export type MySQLValues =
-  | readonly unknown[]
-  | Readonly<Record<string, unknown>>;
+  | readonly MySQLValue[]
+  | Readonly<Record<string, MySQLValue>>;
 
 export type MySQLShowSql = false | true | ((sql: string) => void);
 
@@ -20,7 +23,6 @@ export interface MySQLAdapterOptions extends Omit<
   PoolOptions,
   'database' | 'password' | 'user'
 > {
-  readonly [key: string]: unknown;
   readonly cache?: CacheSource;
   readonly database?: string;
   readonly password?: string;
@@ -40,7 +42,7 @@ export interface MySQLField {
   readonly type?: {
     readonly needQuotes?: boolean;
   };
-  restore(value: unknown): unknown;
+  restore(value: DataValue): MySQLValue;
 }
 
 export interface MySQLModel {
@@ -53,8 +55,8 @@ export interface MySQLModel {
   readonly primaryKeys: readonly MySQLField[];
   readonly schema: readonly MySQLField[];
   convertColumnToName(
-    value: Readonly<Record<string, unknown>>,
-  ): Readonly<Record<string, unknown>>;
+    value: DataRow,
+  ): DataRow;
 }
 
 export interface MySQLQuery extends AdapterQuery<
@@ -72,13 +74,13 @@ export interface MySQLQueryOptions {
   noCache?: boolean;
   order?: Record<string, number>[];
   single?: boolean;
-  update?: Record<string, unknown>;
-  where?: Record<string, unknown>;
+  update?: DataRow;
+  where?: DataRow;
 }
 
 export interface MySQLStatement {
   readonly sql: string;
-  readonly values: readonly unknown[];
+  readonly values: readonly MySQLValue[];
 }
 
 export type MySQLExecuteArguments =
