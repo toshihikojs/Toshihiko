@@ -1562,6 +1562,8 @@ test('Yukari keeps internal row metadata out of the application-facing surface',
   const adapter = new MemoryAdapter({
     database: 'yukari',
     insertRow: {
+      $internal: 'ignored',
+      $origData: { id: 9 },
       ignored() {},
       id: 9,
     },
@@ -1573,11 +1575,19 @@ test('Yukari keeps internal row metadata out of the application-facing surface',
   ]);
 
   const built = User.build({ id: 1, nullable: null, ignored: true });
+  built.$temporary = 'ignored';
   await built.validateOne('nullable', null);
   await assert.rejects(built.validateOne('missing', 1), /No such field missing/);
   await built.insert();
   assert.equal(built.id, 9);
+  assert.equal(built.$internal, undefined);
+  assert.equal(built.$origData, undefined);
   assert.equal(built.ignored, undefined);
+  assert.deepEqual(adapter.insertCalls.at(-1).data, [
+    { name: 'id', value: 1 },
+    { name: 'nullable', value: null },
+  ]);
+  delete built.$temporary;
   assert.deepEqual(Object.keys(built).sort(), ['id', 'nullable']);
 
   const queried = new Yukari(User, 'query', { id: 1, nullable: 'value' });

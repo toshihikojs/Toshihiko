@@ -229,7 +229,7 @@ export class Yukari<
     if (row !== null && row !== undefined) {
       for (const key of Object.keys(row)) {
         const value = (row as Readonly<Record<string, unknown>>)[key];
-        if ((key.startsWith('$') && key !== '$origData') || typeof value === 'function') {
+        if (key.startsWith('$') || typeof value === 'function') {
           continue;
         }
         Reflect.set(this, key, cloneValue(value));
