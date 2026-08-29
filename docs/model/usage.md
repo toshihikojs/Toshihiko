@@ -37,7 +37,7 @@ const byId = await User.findById(1);
 const count = await User.where({ name: 'Alice' }).count();
 ```
 
-`find()` returns an array by default. `{ single: true }` retains the 1.x single-row form:
+`find()` returns an array by default. Pass `{ single: true }` for one row:
 
 ```typescript
 const first = await User.where({ name: 'Alice' }).find({ single: true });

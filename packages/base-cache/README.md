@@ -16,7 +16,7 @@ Node.js 22 or newer is required.
 
 ## Implementing a Cache
 
-Extend `Cache` and implement the four Toshihiko cache operations. The base class supplies the event emitter behavior used by the v1 Redis and Memcached implementations, but does not impose key generation, batching, or option handling.
+Extend `Cache` and implement the four Toshihiko cache operations. The base class supplies the event emitter behavior used by the Redis and Memcached implementations, but does not impose key generation, batching, or option handling.
 
 ```typescript
 import {

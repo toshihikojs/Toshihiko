@@ -121,7 +121,7 @@ if (found) {
 }
 ```
 
-An inserted Yukari remains a new row, matching the 1.x lifecycle. Query the row before updating or deleting it.
+An inserted Yukari remains a new row. Query the row before updating or deleting it.
 
 ## Return plain objects
 

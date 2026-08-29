@@ -1,6 +1,13 @@
 # Yukari instances
 
-A Yukari is a row object tied to a Model. It contains mapped field properties and remembers whether it was built locally, loaded by a query, or deleted.
+A Yukari is a row object tied to a Model. The name is intentional: in the
+character setting behind the project name, Toshihiko is a *bunshin*, or
+manifested instance, of Yakumo Yukari. A record is likewise represented as a
+concrete object instance in Toshihiko, so the API calls it `Yukari`.
+
+Each Yukari contains mapped field properties and remembers whether it was
+built locally, loaded by a query, or deleted. See [Core concepts](concepts.md#where-the-names-come-from)
+for the full naming background.
 
 ## Build a new Yukari
 
@@ -21,7 +28,7 @@ await user.insert();
 
 `insert()` validates every present field, restores values through their field types, writes through the Adapter, and copies returned database values onto the same object.
 
-The 1.x lifecycle is retained: insertion does not turn a new Yukari into a queried Yukari. Query the persisted row before calling `update()` or `delete()`.
+Insertion does not turn a new Yukari into a queried Yukari. Query the persisted row before calling `update()` or `delete()`.
 
 ## Update
 

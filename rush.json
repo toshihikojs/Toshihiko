@@ -3,7 +3,7 @@
   "rushVersion": "5.172.1",
   "npmVersion": "6.14.15",
   "nodeSupportedVersionRange": ">=22.0.0 <25.0.0",
-  "projectFolderMinDepth": 2,
+  "projectFolderMinDepth": 1,
   "projectFolderMaxDepth": 2,
   "repository": {
     "url": "https://github.com/toshihikojs/Toshihiko",
@@ -11,6 +11,10 @@
     "defaultRemote": "origin"
   },
   "projects": [
+    {
+      "packageName": "@toshihiko/docs",
+      "projectFolder": "docs"
+    },
     {
       "packageName": "toshihiko",
       "projectFolder": "packages/toshihiko",

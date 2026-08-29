@@ -16,7 +16,7 @@ Node.js 22 or newer is required.
 
 ## Implementing an Adapter
 
-Pass only the Adapter's public options type to the base class. Concrete method signatures remain the single source of truth for database-specific queries, connections, and results. Every inherited operation returns a native Promise. Operations that are not overridden reject with the original not-implemented error message.
+Pass only the Adapter's public options type to the base class. Concrete method signatures remain the single source of truth for database-specific queries, connections, and results. Every inherited operation returns a native Promise. Operations that are not overridden reject with a not-implemented error.
 
 ```typescript
 import {
@@ -48,7 +48,7 @@ class MyAdapter extends Adapter<MyAdapterOptions> {
 }
 ```
 
-The adapter constructor can then be passed directly to Toshihiko. Toshihiko invokes it with the v1 `(toshihiko, options)` constructor contract. The base class stores the parent and copies the options before the subclass methods run.
+The adapter constructor can then be passed directly to Toshihiko. Toshihiko invokes it with `(toshihiko, options)`. The base class stores the parent and copies the options before the subclass methods run.
 
 ```typescript
 import { Toshihiko } from 'toshihiko';
@@ -60,7 +60,7 @@ For tests and adapter-local utilities, the standalone `new MyAdapter(options)` f
 
 ## Merging Options
 
-`extend` preserves the v1 recursive merge order without mutating either input. Arrays, dates, and other values are cloned.
+`extend` recursively merges options without mutating either input. Arrays, dates, and other values are cloned.
 
 ```typescript
 import { extend } from '@toshihiko/base-adapter';

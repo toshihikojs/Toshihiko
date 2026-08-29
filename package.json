@@ -9,6 +9,7 @@
   "scripts": {
     "build": "rush build",
     "check": "rush check",
+    "docs:build": "rush build --to @toshihiko/docs",
     "test": "rush test",
     "typecheck": "rush typecheck"
   }

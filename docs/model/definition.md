@@ -32,7 +32,7 @@ const User = database.define('users', [
 | `defaultValue` | Value copied into new Yukari objects when the field is omitted. |
 | `validators` | One validator or an array of validators, run in declaration order. |
 
-Snake case option names from 1.x remain accepted at runtime for JavaScript callers, but TypeScript code should use the names above.
+JavaScript callers may use the snake case aliases at runtime, but TypeScript code should use the names above.
 
 ## Primary keys
 
@@ -126,7 +126,7 @@ methods. Use method shorthand as above, or a normal `function`. Do not use an
 arrow function when the method needs `this`, because arrow functions do not
 receive the Model as their dynamic `this` value.
 
-JavaScript callers can still extend a Model after `define()`, as in 1.x:
+JavaScript callers can also extend a Model after `define()`:
 
 ```javascript
 User.findByName = function findByName(name) {

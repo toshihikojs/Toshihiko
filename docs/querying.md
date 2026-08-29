@@ -1,6 +1,6 @@
 # Querying
 
-Query methods are chainable and retain the 1.x call shape. TypeScript checks logical field names and values against the Model schema.
+Query methods are chainable. TypeScript checks logical field names and values against the Model schema.
 
 ## Conditions
 

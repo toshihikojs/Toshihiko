@@ -3,6 +3,7 @@ dist/
 .test-dist/
 coverage/
 .nyc_output/
+docs/.vitepress/cache/
 *.tsbuildinfo
 *.log
 .DS_Store

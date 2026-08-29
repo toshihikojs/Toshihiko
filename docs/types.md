@@ -61,7 +61,7 @@ The custom value type flows into `build()`, Query conditions, Yukari properties,
 | Member | Purpose |
 |---|---|
 | `name` | Human-readable type name. |
-| `needQuotes` | Indicates whether legacy SQL builders quote restored values. |
+| `needQuotes` | Indicates whether SQL builders quote restored values. |
 | `defaultValue` | Default copied into a new Yukari when the field has no field-level default. |
 | `equal(left, right)` | Compares current and original values during updates. Strict equality is the fallback. |
 | `toJSON(value)` | Converts the application value to its JSON representation. |

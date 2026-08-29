@@ -14,7 +14,7 @@ npm install toshihiko @toshihiko/mysql-adapter
 
 ## Usage
 
-Install the package and use the original `mysql` dialect name. The `define` API remains unchanged.
+Install the package and use the `mysql` dialect name:
 
 ```typescript
 import { Toshihiko, Type } from 'toshihiko';
@@ -62,11 +62,11 @@ const toshihiko = new Toshihiko('mysql', {
 const UncachedAudit = toshihiko.define('audit', auditSchema, { cache: false });
 ```
 
-MySQL reads cached rows and fills misses with the same behavior as Toshihiko v1. Updates and deletes invalidate matching primary-key entries before changing the database. Pass `{ noCache: true }` to `find` to bypass cache reads for one query.
+MySQL reads cached rows and fills misses without changing their input order. Updates and deletes invalidate matching primary-key entries before changing the database. Pass `{ noCache: true }` to `find` to bypass cache reads for one query.
 
 ## Raw SQL
 
-`execute` retains the v1 argument order, with an optional connection before the SQL string at the Adapter layer. All forms are Promise-only.
+`execute` accepts an optional connection before the SQL string at the Adapter layer. All forms are Promise-only.
 
 ```typescript
 await toshihiko.adapter.execute(
@@ -100,9 +100,9 @@ const adapter = new MySQLAdapter({
 
 The Adapter also emits a `sql` event for every statement and a `log` event when the pool creates a connection. Passwords and injected pool objects are not retained in the public `options` property.
 
-## Compatibility
+## SQL helpers
 
-The SQL builder retains the v1 method names and query operators, including `makeWhere`, `makeFind`, `$eq`, `$neq`, `$in`, `$between`, `$and`, and `$or`. Raw update expressions such as `{{score + 1}}` are also supported for migration, but they must contain trusted application-owned SQL rather than user input.
+The SQL builder provides `makeWhere`, `makeFind`, `$eq`, `$neq`, `$in`, `$between`, `$and`, and `$or`. Raw update expressions such as `{{score + 1}}` are also supported, but they must contain trusted application-owned SQL rather than user input.
 
 Real MySQL 5.7 and MySQL 8.4 integration tests run in GitHub Actions. The local test suite uses a Promise Pool contract double and does not require Docker.
 
