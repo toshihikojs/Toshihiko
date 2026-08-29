@@ -13,7 +13,7 @@
       "name": "test:coverage",
       "summary": "Generate an LCOV report for every package.",
       "enableParallelism": true,
-      "ignoreMissingScript": false
+      "ignoreMissingScript": true
     },
     {
       "commandKind": "bulk",
