@@ -9,13 +9,23 @@ import { Toshihiko } from 'toshihiko';
 ## 构造函数
 
 ```typescript
-new Toshihiko(adapter, options?)
+class Toshihiko<
+  AdapterInstance extends AdapterLike = Adapter,
+  Options extends object = ToshihikoOptions,
+> extends EventEmitter2 {
+  constructor(
+    adapter: AdapterSource<Options, AdapterInstance>,
+    ...options: {} extends Options
+      ? readonly [options?: Options]
+      : readonly [options: Options]
+  );
+}
 ```
 
 | 参数 | 类型 | 说明 |
 |---|---|---|
-| `adapter` | 方言名、Adapter 构造函数或实例 | 选择数据库实现 |
-| `options` | 由所选实现推断 | 数据库配置，并保存在 `database.options` |
+| `adapter` | `AdapterSource<Options, AdapterInstance>` | 方言名、Adapter 构造函数或实例 |
+| `options` | `Options` | 数据库配置，并保存在 `database.options`；当 `Options` 有必填项时不可省略 |
 
 ```typescript
 const database = new Toshihiko('mysql', {
@@ -34,15 +44,28 @@ const database = new Toshihiko('mysql', {
 | `cache` | `Cache \| null \| undefined` | 数据库级 Cache |
 | `database` | `string` | 当前数据库命名空间 |
 | `dialect` | `string \| null` | 方言名或构造函数名 |
-| `options` | 所选配置类型 | 构造配置 |
-| `pool` | 后端专用连接池或 `undefined` | MySQL 兼容入口 |
+| `options` | `Options` | 构造配置 |
+| `pool` | `AdapterInstance extends { readonly mysql: infer Pool } ? Pool : undefined` | MySQL 兼容入口 |
 
 Adapter 实例不是应用 API 的一部分。
 
 ## `define()`
 
 ```typescript
-database.define(name, schema, options?)
+define<
+  const Name extends string,
+  const Schema extends SchemaDefinition,
+  const Methods extends object = object,
+>(
+  collectionName: Name,
+  schema: Schema,
+  options?: ModelDefinitionOptions<
+    Name,
+    Schema,
+    AdapterInstance,
+    Methods
+  >,
+): Model<Name, Schema, AdapterInstance> & Methods
 ```
 
 创建 [Model](model)，并保留表名、字段名、字段值、可空性、主键和自定义方法的类型。
@@ -67,7 +90,9 @@ await User.findByName('Yukari');
 ## `execute()`
 
 ```typescript
-database.execute(...args): Promise<Result>
+execute(
+  ...args: AdapterExecuteArguments<AdapterInstance>
+): Promise<AdapterExecuteResult<AdapterInstance>>
 ```
 
 执行所选数据库后端的原始操作。参数和返回类型由后端确定。MySQL 用法见[原始 SQL](../raw-sql)。
@@ -75,7 +100,26 @@ database.execute(...args): Promise<Result>
 ## `Toshihiko.createCache()`
 
 ```typescript
+static createCache(source: unknown): Cache | null
+```
+
+```typescript
 Toshihiko.createCache(source: unknown): Cache | null
 ```
 
 已有 Cache 会原样返回；模块式配置会创建 Cache；无效输入返回 `null`。详见 [Cache API](cache)。
+
+## 相关类型
+
+```typescript
+interface AdapterConstructor<Options extends object, Instance extends AdapterLike> {
+  new (parent: Toshihiko<Instance, Options>, options: Options): Instance;
+}
+
+type AdapterSource<Options extends object, Instance extends AdapterLike> =
+  | string
+  | Instance
+  | AdapterConstructor<Options, Instance>;
+```
+
+`AdapterExecuteArguments` 与 `AdapterExecuteResult` 从具体 Adapter 提取原始执行参数和结果；`ModelDefinitionOptions` 描述 `cache` 与带上下文 `this` 的 `methods`。

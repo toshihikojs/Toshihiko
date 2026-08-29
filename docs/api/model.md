@@ -8,20 +8,28 @@ const User = database.define('users', schema);
 
 `Model` is primarily a TypeScript type export. Applications normally obtain the runtime object from `define()`.
 
+```typescript
+class Model<
+  Name extends string,
+  Schema extends SchemaDefinition,
+  AdapterInstance extends AdapterLike = Adapter,
+> extends EventEmitter2
+```
+
 ## Metadata
 
 | Property | Type | Description |
 |---|---|---|
-| `name` | table-name literal | Name passed to `define()` |
-| `parent`, `toshihiko` | `Toshihiko` | Owning instance; `toshihiko` is a getter alias |
-| `originalSchema` | original schema tuple | Definitions passed to `define()` |
-| `schema` | compiled `Field[]` | Compiled fields |
-| `primaryKeys` | `readonly Field[]` | Fields marked `primaryKey: true` |
-| `autoIncrementField`, `ai` | `Field \| null` | Auto-increment field; `ai` is a compatibility alias |
-| `nameToColumn` | schema-derived map | Logical field name to storage column |
-| `columnToName` | record | Storage column to logical field name |
-| `fieldNamesMap` | schema-derived map | Logical field name to compiled Field |
-| `fieldColumnsMap` | record | Storage column to compiled Field |
+| `name` | `Name` | Name passed to `define()` |
+| `parent`, `toshihiko` | `Toshihiko<AdapterInstance>` | Owning instance; `toshihiko` is a getter alias |
+| `originalSchema` | `Schema` | Definitions passed to `define()` |
+| `schema` | `CompiledSchema<Schema>` | Compiled fields |
+| `primaryKeys` | `readonly Field<Schema[number]>[]` | Fields marked `primaryKey: true` |
+| `autoIncrementField`, `ai` | `Field<Schema[number]> \| null` | Auto-increment field; `ai` is a compatibility alias |
+| `nameToColumn` | `NameToColumnMap<Schema>` | Logical field name to storage column |
+| `columnToName` | `Readonly<Record<string, FieldName<RowFromSchema<Schema>>>>` | Storage column to logical field name |
+| `fieldNamesMap` | `FieldNamesMap<Schema>` | Logical field name to compiled Field |
+| `fieldColumnsMap` | `Readonly<Record<string, Field<Schema[number]>>>` | Storage column to compiled Field |
 | `cache` | `Cache \| null` | Effective Model Cache |
 | `options` | `ModelOptions` | Options passed to `define()` |
 
@@ -30,7 +38,12 @@ A Model without primary keys emits a `log` warning during construction.
 ## `build()`
 
 ```typescript
-Model.build(fields): BuiltYukari
+build<const Input extends BuildInput<Schema>>(
+  fields: Input & Record<
+    Exclude<keyof Input, keyof RowFromSchema<Schema>>,
+    never
+  >,
+): BuiltYukari<Name, Schema, Input, AdapterInstance>
 ```
 
 Creates a new [Yukari](yukari) without writing it. Input keys are restricted to schema fields.
@@ -46,19 +59,19 @@ Fields supplied by the caller and fields with defaults are known on the returned
 
 ## Query entry points
 
-Each method creates a fresh [Query](query).
+Each method creates a fresh `Query<Name, Schema, AdapterInstance>`.
 
-| Signature | Effect |
-|---|---|
-| `where(condition)` | Sets the typed query condition |
-| `field(fields)` | Selects a comma-separated string or field-name array |
-| `fields(fields)` | Primary spelling of `field()` |
-| `limit(count)` | Limits the result count |
-| `limit(offset, count)` | Sets offset and count |
-| `index(name)` | Sets an Adapter-defined index hint |
-| `order(order)` | Sets ordering |
-| `orderBy(order)` | Alias of `order()` |
-| `conn(connection)` | Binds an Adapter connection or `null` |
+```typescript
+where(condition: QueryWhere<RowFromSchema<Schema>>): Query<Name, Schema, AdapterInstance>
+field(fields: string | readonly FieldName<RowFromSchema<Schema>>[]): Query<Name, Schema, AdapterInstance>
+fields(fields: string | readonly FieldName<RowFromSchema<Schema>>[]): Query<Name, Schema, AdapterInstance>
+limit(limit: number | string | readonly (number | string)[]): Query<Name, Schema, AdapterInstance>
+limit(offset: number | string, count: number | string): Query<Name, Schema, AdapterInstance>
+index(indexName: string): Query<Name, Schema, AdapterInstance>
+order(order: QueryOrder<RowFromSchema<Schema>>): Query<Name, Schema, AdapterInstance>
+orderBy(order: QueryOrder<RowFromSchema<Schema>>): Query<Name, Schema, AdapterInstance>
+conn(connection: AdapterConnection<AdapterInstance> | null): Query<Name, Schema, AdapterInstance>
+```
 
 ```typescript
 const query = User
@@ -75,9 +88,9 @@ These methods create a fresh Query and execute it immediately.
 | Signature | Return type |
 |---|---|
 | `count()` | `Promise<number>` |
-| `update(data)` | Adapter-specific bulk update result |
-| `delete()` | Adapter-specific bulk delete result |
-| `execute(...args)` | Adapter-specific execution result |
+| `update(data: Partial<RowFromSchema<Schema>>)` | `Promise<AdapterUpdateByQueryResult<AdapterInstance>>` |
+| `delete()` | `Promise<AdapterDeleteByQueryResult<AdapterInstance>>` |
+| `execute(...args: AdapterQueryExecuteArguments<AdapterInstance>)` | `Promise<AdapterExecuteResult<AdapterInstance>>` |
 
 `Model.update()` and `Model.delete()` have no condition. Use `where()` first unless the whole table is intentionally targeted.
 
@@ -95,9 +108,9 @@ await User.find({ noCache: true }, true);
 ## `findOne()`
 
 ```typescript
-Model.findOne(): Promise<QueriedYukari | null>
-Model.findOne(false): Promise<QueriedYukari | null>
-Model.findOne(true): Promise<QueryJsonRow | null>
+findOne(): Promise<QueriedYukari<Name, Schema, AdapterInstance> | null>
+findOne(toJSON: false): Promise<QueriedYukari<Name, Schema, AdapterInstance> | null>
+findOne(toJSON: true): Promise<QueryJsonRow<Schema> | null>
 ```
 
 Creates a fresh Query and asks the Adapter for one row.
@@ -105,9 +118,9 @@ Creates a fresh Query and asks the Adapter for one row.
 ## `findById()`
 
 ```typescript
-Model.findById(id): Promise<QueriedYukari | null>
-Model.findById(id, false): Promise<QueriedYukari | null>
-Model.findById(id, true): Promise<QueryJsonRow | null>
+findById(id: FindByIdInput<Schema>): Promise<QueriedYukari<Name, Schema, AdapterInstance> | null>
+findById(id: FindByIdInput<Schema>, toJSON: false): Promise<QueriedYukari<Name, Schema, AdapterInstance> | null>
+findById(id: FindByIdInput<Schema>, toJSON: true): Promise<QueryJsonRow<Schema> | null>
 ```
 
 With one primary key, `id` may be that field's value. Composite keys use an object containing the key fields.
@@ -122,9 +135,9 @@ await Membership.findById({ userId: 42, groupId: 7 });
 The following methods exist only when the Adapter declares the corresponding transaction methods.
 
 ```typescript
-Model.beginTransaction(): Promise<Connection>
-Model.commit(connection): Promise<AdapterCommitResult>
-Model.rollback(connection): Promise<AdapterRollbackResult>
+beginTransaction(): Promise<AdapterTransactionConnection<AdapterInstance>>
+commit(connection: AdapterTransactionConnection<AdapterInstance>): Promise<AdapterCommitResult<AdapterInstance>>
+rollback(connection: AdapterTransactionConnection<AdapterInstance>): Promise<AdapterRollbackResult<AdapterInstance>>
 ```
 
 The connection type comes from the selected Adapter. See [Transactions](../transactions).

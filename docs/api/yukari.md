@@ -4,10 +4,22 @@ A Yukari is a row-level object. Schema fields become enumerable properties on th
 
 ## Row forms
 
-| Type | Origin | Field presence |
-|---|---|---|
-| `BuiltYukari` | `Model.build(input)` | Input and defaulted fields are known; others are optional |
-| `QueriedYukari` | `find()`, `findOne()`, or `findById()` | Selected schema fields are optional in the static type |
+```typescript
+type BuiltYukari<
+  Name extends string,
+  Schema extends SchemaDefinition,
+  Input extends BuildInput<Schema>,
+  AdapterInstance extends AdapterLike = Adapter,
+> = Yukari<Name, Schema, AdapterInstance>
+  & Omit<BuiltRowFromSchema<Schema, Input>, keyof Yukari<Name, Schema, AdapterInstance>>;
+
+type QueriedYukari<
+  Name extends string,
+  Schema extends SchemaDefinition,
+  AdapterInstance extends AdapterLike = Adapter,
+> = Yukari<Name, Schema, AdapterInstance>
+  & Omit<Partial<RowFromSchema<Schema>>, keyof Yukari<Name, Schema, AdapterInstance>>;
+```
 
 ## Lifecycle
 
@@ -21,7 +33,10 @@ before calling `update()` or `delete()`.
 ## `validateOne()`
 
 ```typescript
-row.validateOne(name, value): Promise<void>
+validateOne<Field extends FieldName<RowFromSchema<Schema>>>(
+  name: Field,
+  value: RowFromSchema<Schema>[Field],
+): Promise<void>
 ```
 
 Runs the validators for one schema field. The field name and value are schema-typed.
@@ -41,7 +56,7 @@ skipped.
 ## `insert()`
 
 ```typescript
-row.insert(connection?: AdapterConnection | null): Promise<this>
+insert(connection?: AdapterConnection<AdapterInstance> | null): Promise<this>
 ```
 
 Validates the row, writes its mapped fields, and copies database-generated
@@ -52,7 +67,7 @@ Calling it on a queried row rejects.
 ## `update()`
 
 ```typescript
-row.update(connection?: AdapterConnection | null): Promise<this>
+update(connection?: AdapterConnection<AdapterInstance> | null): Promise<this>
 ```
 
 Compares current values with the private original snapshot, validates the row,
@@ -65,7 +80,7 @@ snapshot is updated.
 ## `delete()`
 
 ```typescript
-row.delete(connection?: AdapterConnection | null): Promise<true>
+delete(connection?: AdapterConnection<AdapterInstance> | null): Promise<true>
 ```
 
 Builds a one-row Query from original primary-key values. When no primary key
@@ -76,7 +91,7 @@ Calling it on a built row rejects. A falsy database result also rejects.
 ## `save()`
 
 ```typescript
-row.save(connection?: AdapterConnection | null): Promise<this>
+save(connection?: AdapterConnection<AdapterInstance> | null): Promise<this>
 ```
 
 Calls `insert()` for a built Yukari and `update()` for a queried Yukari.

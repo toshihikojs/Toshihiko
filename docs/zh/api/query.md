@@ -2,10 +2,18 @@
 
 Query 描述一次数据库操作。构建方法会修改当前 Query，并返回同一个实例。需要两组独立状态时，应分别从 Model 开始调用链。
 
+```typescript
+class Query<
+  Name extends string,
+  Schema extends SchemaDefinition,
+  AdapterInstance extends AdapterLike = Adapter,
+>
+```
+
 ## `where()`
 
 ```typescript
-query.where(condition: QueryWhere<Row>): this
+where(condition: QueryWhere<RowFromSchema<Schema>>): this
 ```
 
 替换当前条件，不会与上一次调用合并。
@@ -19,19 +27,55 @@ User.where({
 });
 ```
 
-支持 `$eq`、`$neq`、`$gt`、`$gte`、`$lt`、`$lte`、`$between`、`$in`、`$like`、`$and` 与 `$or`，并保留 `===`、`!==`、`>`、`>=`、`<`、`<=` 兼容写法。非对象条件会同步抛错。
+条件的完整类型为：
+
+```typescript
+interface QueryFieldOperators<Value> {
+  readonly $and?: Value | readonly Value[];
+  readonly $between?: readonly [Value, Value];
+  readonly $eq?: Value;
+  readonly $gt?: Value;
+  readonly $gte?: Value;
+  readonly $in?: readonly Value[];
+  readonly $like?: Value;
+  readonly $lt?: Value;
+  readonly $lte?: Value;
+  readonly $neq?: Value;
+  readonly $or?: Value | readonly Value[];
+  readonly '<'?: Value;
+  readonly '<='?: Value;
+  readonly '==='?: Value;
+  readonly '>'?: Value;
+  readonly '>='?: Value;
+  readonly '!=='?: Value;
+}
+
+type QueryFieldCondition<Value> = Value | QueryFieldOperators<Value>;
+
+type QueryWhere<Row extends object> = {
+  readonly [Name in keyof Row]?: QueryFieldCondition<Row[Name]>;
+} & {
+  readonly $and?: QueryWhere<Row> | readonly QueryWhere<Row>[];
+  readonly $or?: QueryWhere<Row> | readonly QueryWhere<Row>[];
+};
+```
+
+因此，`id: { $gte: '10' }` 会在 `id` 为 `number` 时直接产生类型错误。非对象条件会同步抛错。
 
 ## 字段、排序、限制与连接
 
 ```typescript
-query.fields(fields): this
-query.field(fields): this
-query.order(order): this
-query.orderBy(order): this
-query.limit(count): this
-query.limit(offset, count): this
-query.index(name): this
-query.conn(connection): this
+fields(fields: string | readonly FieldName<RowFromSchema<Schema>>[]): this
+field(fields: string | readonly FieldName<RowFromSchema<Schema>>[]): this
+
+order(order: QueryOrder<RowFromSchema<Schema>>): this
+orderBy(order: QueryOrder<RowFromSchema<Schema>>): this
+
+limit(limit: number | string | readonly (number | string)[]): this
+limit(offset: number | string, count: number | string): this
+
+index(indexName: string): this
+conn(connection: AdapterConnection<AdapterInstance> | null): this
 ```
 
 `field()` 与 `orderBy()` 是兼容别名。数组形式的字段和对象形式的排序能够获得字段名检查。`conn()` 绑定由 `beginTransaction()` 返回的连接。
@@ -39,10 +83,34 @@ query.conn(connection): this
 ## `find()`
 
 ```typescript
-find(): Promise<readonly QueriedYukari[]>
-find({ single: true }): Promise<QueriedYukari | null>
-find(true): Promise<readonly QueryJsonRow[]>
-find({ single: true }, true): Promise<QueryJsonRow | null>
+find(): Promise<readonly QueriedYukari<Name, Schema, AdapterInstance>[]>
+find(options: QueryFindManyOptions): Promise<readonly QueriedYukari<Name, Schema, AdapterInstance>[]>
+find(options: QueryFindOneOptions): Promise<QueriedYukari<Name, Schema, AdapterInstance> | null>
+find(toJSON: false, options?: QueryFindManyOptions): Promise<readonly QueriedYukari<Name, Schema, AdapterInstance>[]>
+find(toJSON: false, options: QueryFindOneOptions): Promise<QueriedYukari<Name, Schema, AdapterInstance> | null>
+find(toJSON: true, options?: QueryFindManyOptions): Promise<readonly QueryJsonRow<Schema>[]>
+find(toJSON: true, options: QueryFindOneOptions): Promise<QueryJsonRow<Schema> | null>
+find(options: QueryFindManyOptions, toJSON: true): Promise<readonly QueryJsonRow<Schema>[]>
+find(options: QueryFindOneOptions, toJSON: false): Promise<QueriedYukari<Name, Schema, AdapterInstance> | null>
+find(options: QueryFindOneOptions, toJSON: true): Promise<QueryJsonRow<Schema> | null>
+```
+
+```typescript
+interface QueryFindOptions {
+  readonly noCache?: boolean;
+  readonly single?: boolean;
+}
+
+interface QueryFindManyOptions extends QueryFindOptions {
+  readonly single?: false;
+}
+
+interface QueryFindOneOptions extends QueryFindOptions {
+  readonly single: true;
+}
+
+type QueryJsonRow<Schema extends SchemaDefinition> =
+  Partial<JsonRowFromSchema<Schema>>;
 ```
 
 | 选项 | 默认值 | 作用 |
@@ -56,8 +124,13 @@ find({ single: true }, true): Promise<QueryJsonRow | null>
 ## `findOne()` 与 `findById()`
 
 ```typescript
-findOne(toJSON?): Promise<Row | null>
-findById(id, toJSON?): Promise<Row | null>
+findOne(): Promise<QueriedYukari<Name, Schema, AdapterInstance> | null>
+findOne(toJSON: false): Promise<QueriedYukari<Name, Schema, AdapterInstance> | null>
+findOne(toJSON: true): Promise<QueryJsonRow<Schema> | null>
+
+findById(id: FindByIdInput<Schema>): Promise<QueriedYukari<Name, Schema, AdapterInstance> | null>
+findById(id: FindByIdInput<Schema>, toJSON: false): Promise<QueriedYukari<Name, Schema, AdapterInstance> | null>
+findById(id: FindByIdInput<Schema>, toJSON: true): Promise<QueryJsonRow<Schema> | null>
 ```
 
 联合主键使用对象。无主键或联合主键 Model 收到原始值时会抛错。缓存读取失败会回退到数据库。
@@ -65,14 +138,34 @@ findById(id, toJSON?): Promise<Row | null>
 ## 计数与写入
 
 ```typescript
-query.count(): Promise<number>
-query.update(data: Partial<Row>): Promise<Result>
-query.delete(): Promise<Result>
-query.execute(...args): Promise<Result>
+count(): Promise<number>
+update(
+  data: Partial<RowFromSchema<Schema>>,
+): Promise<AdapterUpdateByQueryResult<AdapterInstance>>
+delete(): Promise<AdapterDeleteByQueryResult<AdapterInstance>>
+execute(
+  ...args: AdapterQueryExecuteArguments<AdapterInstance>
+): Promise<AdapterExecuteResult<AdapterInstance>>
 ```
 
 `update()` 与 `delete()` 使用当前条件、排序和限制。`execute()` 使用 `conn()` 绑定的连接。具体结果类型由数据库后端推断。
 
 ## 相关类型
 
-`QueryWhere<Row>`、`QueryFieldOperators<Value>`、`QueryOrder<Row>`、`QueryFindOptions`、`QueryJsonRow<Schema>` 与 `FindByIdInput<Schema>` 描述公开查询接口。
+```typescript
+type QueryOrderDirection = number | 'asc' | 'ASC' | 'desc' | 'DESC';
+
+type QueryOrder<Row extends object> =
+  | string
+  | Readonly<Partial<Record<FieldName<Row>, QueryOrderDirection>>>
+  | readonly (
+      | string
+      | Readonly<Partial<Record<FieldName<Row>, QueryOrderDirection>>>
+    )[];
+
+type FindByIdInput<Schema extends SchemaDefinition> =
+  RowFromSchema<Schema>[PrimaryKeyNames<Schema>]
+  | Readonly<Record<string, unknown>>;
+```
+
+单主键可以直接传该字段的值；联合主键使用对象。没有主键或联合主键 Model 收到原始值时会抛错。

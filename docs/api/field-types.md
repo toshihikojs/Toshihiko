@@ -5,15 +5,20 @@ A schema entry describes one logical property. `Model` compiles each entry into 
 ## Field definition
 
 ```typescript
-interface FieldDefinition {
-  name: string;
+interface FieldDefinition<
+  Name extends string = string,
+  FieldTypeDefinition extends FieldTypeLike = FieldTypeLike,
+> {
+  readonly name: Name;
   column?: string;
-  type?: FieldType;
-  validators?: FieldValidator | readonly FieldValidator[];
+  type?: FieldTypeDefinition;
+  validators?:
+    | FieldValidator<FieldTypeValue<FieldTypeDefinition>>
+    | readonly FieldValidator<FieldTypeValue<FieldTypeDefinition>>[];
   allowNull?: boolean;
   primaryKey?: boolean;
   autoIncrement?: boolean;
-  defaultValue?: FieldValue;
+  defaultValue?: FieldTypeValue<FieldTypeDefinition>;
 }
 ```
 
@@ -42,25 +47,28 @@ Returning `undefined` or an empty string succeeds. A non-empty string becomes th
 
 ## Compiled `Field`
 
-### Properties
-
-| Property | Description |
-|---|---|
-| `name`, `column` | Logical and storage names |
-| `type` | Selected Field Type |
-| `allowNull`, `primaryKey`, `autoIncrement` | Normalized booleans |
-| `validators` | Normalized validator array |
-| `defaultValue` | Field-level or Type-level default |
-| `needQuotes` | Copied from the Field Type |
-| `options` | Remaining definition options |
-
-### Methods
-
 ```typescript
-field.parse(storageValue): FieldValue
-field.restore(value): StorageValue
-field.equal(left, right): boolean
-field.toJSON(value): JsonValue
+class Field<Definition extends FieldDefinitionShape = FieldDefinitionShape> {
+  readonly options: Readonly<Record<string, unknown>>;
+  readonly name: Definition['name'];
+  readonly column: string;
+  readonly type: FieldTypeFromDefinition<Definition>;
+  readonly validators: readonly FieldValidator<FieldDefinitionNonNullValue<Definition>>[];
+  readonly allowNull: boolean;
+  readonly primaryKey: boolean;
+  readonly autoIncrement: boolean;
+  readonly default: FieldDefinitionValue<Definition> | undefined;
+  readonly defaultValue: FieldDefinitionValue<Definition> | undefined;
+  readonly needQuotes: boolean;
+
+  parse(value: unknown): FieldDefinitionValue<Definition>;
+  restore(value: FieldDefinitionValue<Definition>): FieldDefinitionStorageValue<Definition>;
+  readonly equal: (
+    left: FieldDefinitionValue<Definition>,
+    right: FieldDefinitionValue<Definition>,
+  ) => boolean;
+  toJSON(value: FieldDefinitionValue<Definition>): FieldDefinitionJsonValue<Definition>;
+}
 ```
 
 `equal()` and `toJSON()` use the Field Type implementation when present. Otherwise they use strict equality and return the value unchanged.
@@ -71,14 +79,14 @@ field.toJSON(value): JsonValue
 import { Type } from 'toshihiko';
 ```
 
-| Type | Application value | Storage conversion | JSON conversion |
-|---|---|---|---|
-| `Type.String` | `string` | `String(value)` | string unchanged |
-| `Type.Boolean` | `boolean` | `0` or `1` | boolean unchanged |
-| `Type.Integer` | `number` | `parseInt(value)` | number unchanged |
-| `Type.Float` | `number` | `parseFloat(value)` | number unchanged |
-| `Type.Json` | `JsonValue` | `JSON.stringify(value)` | JSON value unchanged |
-| `Type.Datetime` | `Date` | `YYYY-MM-DD HH:mm:ss` | ISO-style string with offset |
+| Type | `parse()` input | Application value | `restore()` output | JSON value |
+|---|---|---|---|---|
+| `Type.String` | `unknown` | `string` | `string` | `string` |
+| `Type.Boolean` | `unknown` | `boolean` | `number` | `boolean` |
+| `Type.Integer` | `unknown` | `number` | `number` | `number` |
+| `Type.Float` | `unknown` | `number` | `number` | `number` |
+| `Type.Json` | `unknown` | `JsonValue` | `string` | `JsonValue` |
+| `Type.Datetime` | `unknown` | `Date` | `string` | `string` |
 
 `Type.String`, `Boolean`, `Integer`, `Float`, and `Json` provide defaults. `Datetime` does not.
 

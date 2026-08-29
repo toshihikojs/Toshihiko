@@ -5,7 +5,13 @@
 ## コア契約
 
 ```typescript
-interface Adapter<Model, Connection, Field, Value, Query> {
+interface Adapter<
+  Model = unknown,
+  Connection = unknown,
+  Field = unknown,
+  Value = unknown,
+  Query extends AdapterQuery<Model, Connection> = AdapterQuery<Model, Connection>,
+> {
   find(query: Query, options?: AdapterFindOptions): Promise<AdapterFindResult>;
   count(query: Query): Promise<number>;
   insert(model: Model, connection: Connection | null,
@@ -69,6 +75,25 @@ class ExampleAdapter extends Adapter<
 > {}
 ```
 
+基底クラス自体の型パラメーターは次のとおりです。
+
+```typescript
+class Adapter<
+  Options extends object = DefaultAdapterOptions,
+  Model = unknown,
+  Connection = unknown,
+  Field = unknown,
+  Value = unknown,
+  Query extends AdapterQuery<Model, Connection> = AdapterQuery<Model, Connection>,
+> extends EventEmitter2 implements AdapterContract<
+  Model,
+  Connection,
+  Field,
+  Value,
+  Query
+>
+```
+
 基底クラスは全操作を持ちます。`getDBName()` は空文字列を返し、それ以外の初期実装は次の tick で未実装エラーとして reject します。具体的な Adapter は対応する操作を override してください。
 
 コンストラクターは `new Adapter(options?)` と `new Adapter(parent, options)` を受け付けます。`parent` は拡張実装だけの情報で、アプリケーション API には含まれません。
@@ -77,6 +102,20 @@ class ExampleAdapter extends Adapter<
 
 `adapterExecuteSpec` symbol 上に `AdapterExecuteSpec<Arguments, QueryArguments, Result>` を宣言すると、Toshihiko と Query の execute 引数、および戻り値を定義できます。
 
-`AdapterModel`、`AdapterConnection`、`AdapterField`、`AdapterValue`、`AdapterQueryType`、execute と transaction の補助型は、具体的な Adapter から境界型を抽出します。
+| 型 | `Instance` から抽出する内容 |
+|---|---|
+| `AdapterModel<Instance>` | `insert()` の Model 引数 |
+| `AdapterConnection<Instance>` | `insert()` の non-null Connection 引数 |
+| `AdapterField<Instance>` | `insert()` data の Field |
+| `AdapterValue<Instance>` | `insert()` data の Value |
+| `AdapterQueryType<Instance>` | `find()` の Query 引数 |
+| `AdapterUpdateByQueryResult<Instance>` | bulk update の awaited 結果 |
+| `AdapterDeleteByQueryResult<Instance>` | bulk delete の awaited 結果 |
+| `AdapterExecuteArguments<Instance>` | `Toshihiko.execute()` 引数 tuple |
+| `AdapterQueryExecuteArguments<Instance>` | `Query.execute()` 引数 tuple |
+| `AdapterExecuteResult<Instance>` | Raw 実行の awaited 結果 |
+| `AdapterTransactionConnection<Instance>` | transaction connection |
+| `AdapterCommitResult<Instance>` | commit の awaited 結果 |
+| `AdapterRollbackResult<Instance>` | rollback の awaited 結果 |
 
 完全な例は[拡張機能の作成](../extensions)を参照してください。

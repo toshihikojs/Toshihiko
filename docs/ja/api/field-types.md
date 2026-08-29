@@ -5,16 +5,23 @@ Schema entry は 1 つの論理プロパティを表します。Model は entry 
 ## Field 定義
 
 ```typescript
-interface FieldDefinition {
-  name: string;
+interface FieldDefinition<
+  Name extends string = string,
+  FieldTypeDefinition extends FieldTypeLike = FieldTypeLike,
+> {
+  readonly name: Name;
   column?: string;
-  type?: FieldType;
-  validators?: FieldValidator | readonly FieldValidator[];
+  type?: FieldTypeDefinition;
+  validators?:
+    | FieldValidator<FieldTypeValue<FieldTypeDefinition>>
+    | readonly FieldValidator<FieldTypeValue<FieldTypeDefinition>>[];
   allowNull?: boolean;
   primaryKey?: boolean;
   autoIncrement?: boolean;
-  defaultValue?: FieldValue;
+  defaultValue?: FieldTypeValue<FieldTypeDefinition>;
 }
+
+type SchemaDefinition = readonly FieldDefinitionShape[];
 ```
 
 | プロパティ | 初期値 | 説明 |
@@ -40,30 +47,66 @@ type FieldValidator<Value> = (
 
 空文字列または `undefined` は成功です。空でない文字列はエラーメッセージになります。Validator の `this` は Model です。
 
-## コンパイル済み `Field`
-
-公開プロパティは `name`、`column`、`type`、`allowNull`、`primaryKey`、`autoIncrement`、`validators`、`defaultValue`、`needQuotes`、`options` です。
-
 ```typescript
-field.parse(storageValue): FieldValue
-field.restore(value): StorageValue
-field.equal(left, right): boolean
-field.toJSON(value): JsonValue
+class Field<Definition extends FieldDefinitionShape = FieldDefinitionShape> {
+  readonly options: Readonly<Record<string, unknown>>;
+  readonly name: Definition['name'];
+  readonly column: string;
+  readonly type: FieldTypeFromDefinition<Definition>;
+  readonly validators: readonly FieldValidator<
+    FieldDefinitionNonNullValue<Definition>
+  >[];
+  readonly allowNull: boolean;
+  readonly primaryKey: boolean;
+  readonly autoIncrement: boolean;
+  readonly default: FieldDefinitionValue<Definition> | undefined;
+  readonly defaultValue: FieldDefinitionValue<Definition> | undefined;
+  readonly needQuotes: boolean;
+
+  parse(value: unknown): FieldDefinitionValue<Definition>;
+  restore(
+    value: FieldDefinitionValue<Definition>,
+  ): FieldDefinitionStorageValue<Definition>;
+  readonly equal: (
+    left: FieldDefinitionValue<Definition>,
+    right: FieldDefinitionValue<Definition>,
+  ) => boolean;
+  toJSON(
+    value: FieldDefinitionValue<Definition>,
+  ): FieldDefinitionJsonValue<Definition>;
+}
 ```
 
 ## 組み込み `Type`
 
-| Type | アプリケーション値 | 保存変換 |
-|---|---|---|
-| `Type.String` | `string` | `String(value)` |
-| `Type.Boolean` | `boolean` | `0` または `1` |
-| `Type.Integer` | `number` | `parseInt(value)` |
-| `Type.Float` | `number` | `parseFloat(value)` |
-| `Type.Json` | `JsonValue` | `JSON.stringify(value)` |
-| `Type.Datetime` | `Date` | `YYYY-MM-DD HH:mm:ss` |
+| Type | `parse()` 入力 | アプリケーション値 | `restore()` 出力 | JSON 値 |
+|---|---|---|---|---|
+| `Type.String` | `unknown` | `string` | `string` | `string` |
+| `Type.Boolean` | `unknown` | `boolean` | `number` | `boolean` |
+| `Type.Integer` | `unknown` | `number` | `number` | `number` |
+| `Type.Float` | `unknown` | `number` | `number` | `number` |
+| `Type.Json` | `unknown` | `JsonValue` | `string` | `JsonValue` |
+| `Type.Datetime` | `unknown` | `Date` | `string` | `string` |
 
 ## カスタム Field Type
 
 `FieldType<Value, StorageValue, JsonValue>` は `parse()`、`restore()`、任意の `equal()` と `toJSON()` を定義します。TypeScript は各関数の入出力が同じ application value 型に沿うことを検査します。
 
 行の推論には `RowFromSchema`、`JsonRowFromSchema`、`PrimaryKeyNames`、各 `FieldDefinition*Value` 型を利用できます。
+
+```typescript
+type RowFromSchema<Schema extends SchemaDefinition> = {
+  [Definition in Schema[number] as Definition['name']]:
+    FieldDefinitionValue<Definition>;
+};
+
+type JsonRowFromSchema<Schema extends SchemaDefinition> = {
+  [Definition in Schema[number] as Definition['name']]:
+    FieldDefinitionJsonValue<Definition>;
+};
+
+type PrimaryKeyNames<Schema extends SchemaDefinition> = Extract<
+  Schema[number],
+  { readonly primaryKey: true }
+>['name'];
+```

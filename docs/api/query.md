@@ -9,10 +9,18 @@ query === query.limit(20); // true
 
 Start again from the Model when two independent query configurations are needed.
 
+```typescript
+class Query<
+  Name extends string,
+  Schema extends SchemaDefinition,
+  AdapterInstance extends AdapterLike = Adapter,
+>
+```
+
 ## `where()`
 
 ```typescript
-query.where(condition: QueryWhere<Row>): this
+where(condition: QueryWhere<RowFromSchema<Schema>>): this
 ```
 
 Replaces the current condition. It does not merge with an earlier call.
@@ -44,8 +52,8 @@ Passing a non-object value throws synchronously.
 ## `fields()` and `field()`
 
 ```typescript
-query.fields(fields: string | readonly FieldName[]): this
-query.field(fields: string | readonly FieldName[]): this
+fields(fields: string | readonly FieldName<RowFromSchema<Schema>>[]): this
+field(fields: string | readonly FieldName<RowFromSchema<Schema>>[]): this
 ```
 
 `field()` is a compatibility alias. A string is split on commas and trimmed. An array receives schema field-name checking; a string remains available for compatible expressions.
@@ -64,8 +72,8 @@ Strings and arrays are compatibility forms. Values are parsed with `parseInt()`;
 ## `order()` and `orderBy()`
 
 ```typescript
-query.order(order: QueryOrder<Row>): this
-query.orderBy(order: QueryOrder<Row>): this
+order(order: QueryOrder<RowFromSchema<Schema>>): this
+orderBy(order: QueryOrder<RowFromSchema<Schema>>): this
 ```
 
 `orderBy()` is an alias of `order()`. Prefer the object form for field-name checking.
@@ -88,7 +96,7 @@ Stores an index hint. Interpretation belongs to the selected database backend.
 ## `conn()`
 
 ```typescript
-query.conn(connection: AdapterConnection | null): this
+conn(connection: AdapterConnection<AdapterInstance> | null): this
 ```
 
 Binds a typed transaction connection. Passing `null` returns execution to the
@@ -97,16 +105,16 @@ database backend's default connection behavior.
 ## `find()`
 
 ```typescript
-find(): Promise<readonly QueriedYukari[]>
-find(options: { single?: false; noCache?: boolean }): Promise<readonly QueriedYukari[]>
-find(options: { single: true; noCache?: boolean }): Promise<QueriedYukari | null>
-
-find(false, options?): Promise<readonly QueriedYukari[]>
-find(false, { single: true }): Promise<QueriedYukari | null>
-find(true, options?): Promise<readonly QueryJsonRow[]>
-find(true, { single: true }): Promise<QueryJsonRow | null>
-
-find(options, true): Promise<readonly QueryJsonRow[] | QueryJsonRow | null>
+find(): Promise<readonly QueriedYukari<Name, Schema, AdapterInstance>[]>
+find(options: QueryFindManyOptions): Promise<readonly QueriedYukari<Name, Schema, AdapterInstance>[]>
+find(options: QueryFindOneOptions): Promise<QueriedYukari<Name, Schema, AdapterInstance> | null>
+find(toJSON: false, options?: QueryFindManyOptions): Promise<readonly QueriedYukari<Name, Schema, AdapterInstance>[]>
+find(toJSON: false, options: QueryFindOneOptions): Promise<QueriedYukari<Name, Schema, AdapterInstance> | null>
+find(toJSON: true, options?: QueryFindManyOptions): Promise<readonly QueryJsonRow<Schema>[]>
+find(toJSON: true, options: QueryFindOneOptions): Promise<QueryJsonRow<Schema> | null>
+find(options: QueryFindManyOptions, toJSON: true): Promise<readonly QueryJsonRow<Schema>[]>
+find(options: QueryFindOneOptions, toJSON: false): Promise<QueriedYukari<Name, Schema, AdapterInstance> | null>
+find(options: QueryFindOneOptions, toJSON: true): Promise<QueryJsonRow<Schema> | null>
 ```
 
 ### Arguments
@@ -122,9 +130,9 @@ The boolean and options object may appear in either supported order. The literal
 ## `findOne()`
 
 ```typescript
-findOne(): Promise<QueriedYukari | null>
-findOne(false): Promise<QueriedYukari | null>
-findOne(true): Promise<QueryJsonRow | null>
+findOne(): Promise<QueriedYukari<Name, Schema, AdapterInstance> | null>
+findOne(toJSON: false): Promise<QueriedYukari<Name, Schema, AdapterInstance> | null>
+findOne(toJSON: true): Promise<QueryJsonRow<Schema> | null>
 ```
 
 Equivalent to a single-result find without `noCache`.
@@ -132,9 +140,9 @@ Equivalent to a single-result find without `noCache`.
 ## `findById()`
 
 ```typescript
-findById(id): Promise<QueriedYukari | null>
-findById(id, false): Promise<QueriedYukari | null>
-findById(id, true): Promise<QueryJsonRow | null>
+findById(id: FindByIdInput<Schema>): Promise<QueriedYukari<Name, Schema, AdapterInstance> | null>
+findById(id: FindByIdInput<Schema>, toJSON: false): Promise<QueriedYukari<Name, Schema, AdapterInstance> | null>
+findById(id: FindByIdInput<Schema>, toJSON: true): Promise<QueryJsonRow<Schema> | null>
 ```
 
 For one primary key, `id` may be the field value. Composite keys require an object. A primitive passed to a Model with zero or multiple primary keys throws.
@@ -154,7 +162,7 @@ Counts rows matching the current Query.
 ### `update()`
 
 ```typescript
-query.update(data: Partial<Row>): Promise<AdapterUpdateByQueryResult>
+update(data: Partial<RowFromSchema<Schema>>): Promise<AdapterUpdateByQueryResult<AdapterInstance>>
 ```
 
 Sets the data for the current bulk update. It is unavailable at the TypeScript
@@ -163,7 +171,7 @@ call site when the selected backend does not declare bulk update support.
 ### `delete()`
 
 ```typescript
-query.delete(): Promise<AdapterDeleteByQueryResult>
+delete(): Promise<AdapterDeleteByQueryResult<AdapterInstance>>
 ```
 
 Deletes rows matching the current Query.
@@ -171,7 +179,7 @@ Deletes rows matching the current Query.
 ### `execute()`
 
 ```typescript
-query.execute(...args): Promise<AdapterExecuteResult>
+execute(...args: AdapterQueryExecuteArguments<AdapterInstance>): Promise<AdapterExecuteResult<AdapterInstance>>
 ```
 
 Runs a raw operation with the connection selected by `conn()`. Arguments and

@@ -5,7 +5,13 @@ An Adapter translates Toshihiko Model, Query, Field, and row operations into a d
 ## Core contract
 
 ```typescript
-interface Adapter<Model, Connection, Field, Value, Query> {
+interface Adapter<
+  Model = unknown,
+  Connection = unknown,
+  Field = unknown,
+  Value = unknown,
+  Query extends AdapterQuery<Model, Connection> = AdapterQuery<Model, Connection>,
+> {
   find(query: Query, options?: AdapterFindOptions): Promise<AdapterFindResult>;
   count(query: Query): Promise<number>;
   insert(
@@ -73,6 +79,25 @@ class ExampleAdapter extends Adapter<
   Value,
   Query
 > {}
+```
+
+The base class itself is declared as:
+
+```typescript
+class Adapter<
+  Options extends object = DefaultAdapterOptions,
+  Model = unknown,
+  Connection = unknown,
+  Field = unknown,
+  Value = unknown,
+  Query extends AdapterQuery<Model, Connection> = AdapterQuery<Model, Connection>,
+> extends EventEmitter2 implements AdapterContract<
+  Model,
+  Connection,
+  Field,
+  Value,
+  Query
+>
 ```
 
 ### Constructor

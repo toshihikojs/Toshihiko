@@ -5,6 +5,10 @@ A Cache stores complete row objects by database, table, and key. The core owns t
 ## Core contract
 
 ```typescript
+type CacheDeleteResult = void | boolean | number;
+type CacheDeleteKeysResult = void | readonly number[];
+type CacheSetResult = void | boolean | 'OK' | null;
+
 interface Cache {
   getData<Value extends object>(
     database: string,
@@ -17,19 +21,19 @@ interface Cache {
     table: string,
     key: CacheKey,
     data: Value,
-  ): Promise<void | boolean | 'OK' | null>;
+  ): Promise<CacheSetResult>;
 
   deleteData(
     database: string,
     table: string,
     key: CacheKey,
-  ): Promise<void | boolean | number>;
+  ): Promise<CacheDeleteResult>;
 
   deleteKeys(
     database: string,
     table: string,
     keys: readonly CacheKey[],
-  ): Promise<void | readonly number[]>;
+  ): Promise<CacheDeleteKeysResult>;
 }
 ```
 
@@ -57,11 +61,17 @@ Objects represent composite keys. `null` and `undefined` may be interpreted as a
 
 ```typescript
 interface CacheOptions {
-  module?: { create(...args: readonly unknown[]): Cache };
-  name?: string;
-  path?: string;
-  [key: string]: unknown;
+  readonly [key: string]: unknown;
+  readonly module?: CacheModule;
+  readonly name?: string;
+  readonly path?: string;
 }
+
+interface CacheModule {
+  create(...args: readonly unknown[]): Cache;
+}
+
+type CacheSource = Cache | CacheOptions;
 ```
 
 Resolution order is `module`, `path`, then `name`. A name such as `'redis'` loads `@toshihiko/redis-cache`. Toshihiko inspects the selected module's `create()` parameter names and supplies matching option properties.
@@ -92,18 +102,18 @@ The class extends Node.js `EventEmitter` and leaves all four Cache operations ab
 ```typescript
 import { RedisCache, create } from '@toshihiko/redis-cache';
 
-new RedisCache(servers, options?, client?)
-create(servers, options?)
+new RedisCache(servers: string, options?: RedisCacheOptions, client?: RedisClient)
+create(servers: string, options?: RedisCacheOptions): RedisCache
 ```
 
 ### Options and properties
 
 `RedisCacheOptions` extends `ioredis` options and adds `prefix?: string`.
 
-| Property | Description |
+| Property | Type |
 |---|---|
-| `prefix` | Prefix captured from options |
-| `redis` | `ioredis` client |
+| `prefix` | `string` |
+| `redis` | `RedisClient` |
 
 `servers` is split as `host:port`. The optional third constructor argument injects an existing client.
 
@@ -114,26 +124,26 @@ Redis keys use `${prefix}${database}_${table}` followed by key material. Data is
 ```typescript
 import { MemcachedCache, create } from '@toshihiko/memcached-cache';
 
-new MemcachedCache(servers, options?, client?)
-create(servers, options?)
+new MemcachedCache(servers: MemcachedClient.Location, options?: MemcachedCacheOptions, client?: MemcachedClient)
+create(servers: MemcachedClient.Location, options?: MemcachedCacheOptions): MemcachedCache
 ```
 
 `MemcachedCacheOptions` extends the `memcached` client options and adds:
 
-| Option | Description |
+| Option | Type |
 |---|---|
-| `prefix` | Prepended to generated keys |
-| `customizeKey` | Replaces the default key generator |
+| `prefix` | `string \| undefined` |
+| `customizeKey` | `CustomizeKey \| undefined` |
 
 ### Public members
 
-| Member | Description |
+| Member | Type |
 |---|---|
-| `memcached` | Client instance |
-| `servers` | Constructor server location |
-| `options` | Constructor options |
-| `prefix` | Captured prefix |
-| `setCustomizeKeyFunc(func)` | Replaces the key generator after construction |
+| `memcached` | `MemcachedClient` |
+| `servers` | `MemcachedClient.Location` |
+| `options` | `MemcachedCacheOptions \| undefined` |
+| `prefix` | `string` |
+| `setCustomizeKeyFunc` | `(func: CustomizeKey) => void` |
 
 Client `failure` and `reconnecting` events are re-emitted by the Cache instance. Writes use expiry `0`. Multi-key reads are split to keep Memcached get commands within the package's command-length limit.
 

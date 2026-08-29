@@ -5,7 +5,13 @@
 ## 核心契约
 
 ```typescript
-interface Adapter<Model, Connection, Field, Value, Query> {
+interface Adapter<
+  Model = unknown,
+  Connection = unknown,
+  Field = unknown,
+  Value = unknown,
+  Query extends AdapterQuery<Model, Connection> = AdapterQuery<Model, Connection>,
+> {
   find(query: Query, options?: AdapterFindOptions): Promise<AdapterFindResult>;
   count(query: Query): Promise<number>;
   insert(model: Model, connection: Connection | null,
@@ -74,6 +80,25 @@ class ExampleAdapter extends Adapter<
 > {}
 ```
 
+基础类本身的声明为：
+
+```typescript
+class Adapter<
+  Options extends object = DefaultAdapterOptions,
+  Model = unknown,
+  Connection = unknown,
+  Field = unknown,
+  Value = unknown,
+  Query extends AdapterQuery<Model, Connection> = AdapterQuery<Model, Connection>,
+> extends EventEmitter2 implements AdapterContract<
+  Model,
+  Connection,
+  Field,
+  Value,
+  Query
+>
+```
+
 基础类实现全部方法。除 `getDBName()` 返回空字符串外，默认实现都会在下一个 tick 拒绝，并指出方法尚未实现。具体 Adapter 应覆写自己声明支持的操作。
 
 构造函数支持 `new Adapter(options?)` 和 `new Adapter(parent, options)`。后者由 Toshihiko 使用；`parent` 只属于扩展实现，不属于应用 API。
@@ -84,6 +109,20 @@ Adapter 可在 `adapterExecuteSpec` symbol 上声明 `AdapterExecuteSpec<Argumen
 
 ## 类型工具
 
-`AdapterModel`、`AdapterConnection`、`AdapterField`、`AdapterValue`、`AdapterQueryType`、`AdapterExecuteArguments`、`AdapterExecuteResult` 和事务辅助类型可以从具体 Adapter 实例类型中提取边界。
+| 类型 | 从 `Instance` 提取的内容 |
+|---|---|
+| `AdapterModel<Instance>` | `insert()` 的 Model 参数 |
+| `AdapterConnection<Instance>` | `insert()` 的非空 Connection 参数 |
+| `AdapterField<Instance>` | `insert()` 数据中的 Field |
+| `AdapterValue<Instance>` | `insert()` 数据中的 Value |
+| `AdapterQueryType<Instance>` | `find()` 的 Query 参数 |
+| `AdapterUpdateByQueryResult<Instance>` | 批量更新的 awaited 结果 |
+| `AdapterDeleteByQueryResult<Instance>` | 批量删除的 awaited 结果 |
+| `AdapterExecuteArguments<Instance>` | `Toshihiko.execute()` 参数元组 |
+| `AdapterQueryExecuteArguments<Instance>` | `Query.execute()` 参数元组 |
+| `AdapterExecuteResult<Instance>` | 原始执行的 awaited 结果 |
+| `AdapterTransactionConnection<Instance>` | `beginTransaction()` 的 awaited 结果 |
+| `AdapterCommitResult<Instance>` | `commit()` 的 awaited 结果 |
+| `AdapterRollbackResult<Instance>` | `rollback()` 的 awaited 结果 |
 
 完整示例见[编写扩展](../extensions)。

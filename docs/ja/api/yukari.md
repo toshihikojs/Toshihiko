@@ -4,10 +4,30 @@ Yukari は行単位の object です。Schema フィールドはインスタン�
 
 ## 行の型
 
-| 型 | 生成元 | フィールド |
-|---|---|---|
-| `BuiltYukari` | `Model.build(input)` | 入力とデフォルト値は既知、その他は optional |
-| `QueriedYukari` | `find()`、`findOne()`、`findById()` | 選択フィールドは静的型で optional |
+```typescript
+type BuiltYukari<
+  Name extends string,
+  Schema extends SchemaDefinition,
+  Input extends BuildInput<Schema>,
+  AdapterInstance extends AdapterLike = Adapter,
+> = Yukari<Name, Schema, AdapterInstance>
+  & Omit<
+    BuiltRowFromSchema<Schema, Input>,
+    keyof Yukari<Name, Schema, AdapterInstance>
+  >;
+
+type QueriedYukari<
+  Name extends string,
+  Schema extends SchemaDefinition,
+  AdapterInstance extends AdapterLike = Adapter,
+> = Yukari<Name, Schema, AdapterInstance>
+  & Omit<
+    Partial<RowFromSchema<Schema>>,
+    keyof Yukari<Name, Schema, AdapterInstance>
+  >;
+```
+
+`BuiltYukari` は入力済みフィールドと default field を既知にし、残りを optional にします。`QueriedYukari` は `fields()` による部分選択を表すため、Schema field が optional です。
 
 ## ライフサイクル
 
@@ -18,8 +38,11 @@ Yukari は行単位の object です。Schema フィールドはインスタン�
 ## 検証
 
 ```typescript
-row.validateOne(name, value): Promise<void>
-row.validateAll(): Promise<void>
+validateOne<Field extends FieldName<RowFromSchema<Schema>>>(
+  name: Field,
+  value: RowFromSchema<Schema>[Field],
+): Promise<void>
+validateAll(): Promise<void>
 ```
 
 存在しないフィールド、null 非許可フィールドへの `null`、Validator が返した空でない文字列は rejection になります。`validateAll()` はマッピングされたフィールドを最大 10 件並行で検証します。
@@ -27,10 +50,10 @@ row.validateAll(): Promise<void>
 ## 永続化
 
 ```typescript
-row.insert(connection?): Promise<this>
-row.update(connection?): Promise<this>
-row.delete(connection?): Promise<true>
-row.save(connection?): Promise<this>
+insert(connection?: AdapterConnection<AdapterInstance> | null): Promise<this>
+update(connection?: AdapterConnection<AdapterInstance> | null): Promise<this>
+delete(connection?: AdapterConnection<AdapterInstance> | null): Promise<true>
+save(connection?: AdapterConnection<AdapterInstance> | null): Promise<this>
 ```
 
 - `insert()` は built row を検証して保存し、データベース生成値を同じ object に反映します。
@@ -41,7 +64,7 @@ row.save(connection?): Promise<this>
 ## `toJSON()`
 
 ```typescript
-row.toJSON(useOriginalData?: boolean): Partial<JsonRowFromSchema<Schema>>
+toJSON(useOriginalData?: boolean): Partial<JsonRowFromSchema<Schema>>
 ```
 
 各 Field Type の `toJSON()` でマッピング済みフィールドをシリアライズします。`true` は変更前 snapshot をシリアライズします。

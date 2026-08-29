@@ -9,15 +9,25 @@ import { Toshihiko } from 'toshihiko';
 ## Constructor
 
 ```typescript
-new Toshihiko(adapter, options?)
+class Toshihiko<
+  AdapterInstance extends AdapterLike = Adapter,
+  Options extends object = ToshihikoOptions,
+> extends EventEmitter2 {
+  constructor(
+    adapter: AdapterSource<Options, AdapterInstance>,
+    ...options: {} extends Options
+      ? readonly [options?: Options]
+      : readonly [options: Options]
+  );
+}
 ```
 
 ### Parameters
 
 | Name | Type | Description |
 |---|---|---|
-| `adapter` | dialect name, Adapter constructor, or Adapter instance | Selects the storage implementation |
-| `options` | inferred from the Adapter constructor | Passed to the Adapter and retained as `database.options` |
+| `adapter` | `AdapterSource<Options, AdapterInstance>` | Dialect name, Adapter constructor, or Adapter instance |
+| `options` | `Options` | Passed to the Adapter and retained as `database.options` |
 
 The `options` parameter becomes required when the selected Adapter declares required options.
 
@@ -36,13 +46,26 @@ A plain name such as `'mysql'` loads `@toshihiko/mysql-adapter`. A name beginnin
 | `cache` | `Cache \| null \| undefined` | Database-level Cache configured in Adapter options |
 | `database` | `string` | Current database namespace |
 | `dialect` | `string \| null` | Dialect name or Adapter constructor name |
-| `options` | selected options type | Constructor options |
-| `pool` | Adapter-specific pool or `undefined` | Compatibility facade for Adapters exposing a `mysql` property |
+| `options` | `Options` | Constructor options |
+| `pool` | `AdapterInstance extends { readonly mysql: infer Pool } ? Pool : undefined` | Compatibility facade for Adapters exposing a `mysql` property |
 
 ## `define()`
 
 ```typescript
-database.define(name, schema, options?)
+define<
+  const Name extends string,
+  const Schema extends SchemaDefinition,
+  const Methods extends object = object,
+>(
+  collectionName: Name,
+  schema: Schema,
+  options?: ModelDefinitionOptions<
+    Name,
+    Schema,
+    AdapterInstance,
+    Methods
+  >,
+): Model<Name, Schema, AdapterInstance> & Methods
 ```
 
 Creates a [Model](model) bound to this Toshihiko instance. Its return type retains the literal table name, schema field names, field value types, nullability, primary keys, and custom methods.
@@ -85,7 +108,9 @@ The schema is checked against the Adapter's declared Model, Query, Field, connec
 ## `execute()`
 
 ```typescript
-database.execute(...args): Promise<AdapterExecuteResult>
+execute(
+  ...args: AdapterExecuteArguments<AdapterInstance>
+): Promise<AdapterExecuteResult<AdapterInstance>>
 ```
 
 Forwards the arguments to the Adapter. Both arguments and result are inferred from the concrete Adapter. With the MySQL Adapter, see [raw execution](mysql#execute).
@@ -112,7 +137,7 @@ Returns an existing Cache unchanged, creates one from a module-style configurati
 
 | Type | Purpose |
 |---|---|
-| `ToshihikoOptions` | Default open options type |
-| `AdapterSource` | Dialect name, Adapter instance, or Adapter constructor |
-| `AdapterConstructor` | Constructor accepted by `Toshihiko` |
-| `ModelDefinitionOptions` | `cache` and contextually typed `methods` |
+| `ToshihikoOptions` | Default `object` options type |
+| `AdapterSource<Options, Instance>` | `string \| Instance \| AdapterConstructor<Options, Instance>` |
+| `AdapterConstructor<Options, Instance>` | `new (parent: Toshihiko<Instance, Options>, options: Options) => Instance` |
+| `ModelDefinitionOptions<Name, Schema, Instance, Methods>` | `cache` and contextually typed `methods` |

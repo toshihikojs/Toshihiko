@@ -5,16 +5,23 @@ Schema 条目描述一个逻辑属性。Model 会把它编译成 `Field`，并�
 ## 字段定义
 
 ```typescript
-interface FieldDefinition {
-  name: string;
+interface FieldDefinition<
+  Name extends string = string,
+  FieldTypeDefinition extends FieldTypeLike = FieldTypeLike,
+> {
+  readonly name: Name;
   column?: string;
-  type?: FieldType;
-  validators?: FieldValidator | readonly FieldValidator[];
+  type?: FieldTypeDefinition;
+  validators?:
+    | FieldValidator<FieldTypeValue<FieldTypeDefinition>>
+    | readonly FieldValidator<FieldTypeValue<FieldTypeDefinition>>[];
   allowNull?: boolean;
   primaryKey?: boolean;
   autoIncrement?: boolean;
-  defaultValue?: FieldValue;
+  defaultValue?: FieldTypeValue<FieldTypeDefinition>;
 }
+
+type SchemaDefinition = readonly FieldDefinitionShape[];
 ```
 
 | 属性 | 默认值 | 说明 |
@@ -40,27 +47,46 @@ type FieldValidator<Value> = (
 
 返回空字符串或 `undefined` 表示通过；非空字符串会成为错误信息。校验器的 `this` 是 Model。
 
-## 编译后的 `Field`
-
-公开属性包括 `name`、`column`、`type`、`allowNull`、`primaryKey`、`autoIncrement`、`validators`、`defaultValue`、`needQuotes` 和 `options`。
-
 ```typescript
-field.parse(storageValue): FieldValue
-field.restore(value): StorageValue
-field.equal(left, right): boolean
-field.toJSON(value): JsonValue
+class Field<Definition extends FieldDefinitionShape = FieldDefinitionShape> {
+  readonly options: Readonly<Record<string, unknown>>;
+  readonly name: Definition['name'];
+  readonly column: string;
+  readonly type: FieldTypeFromDefinition<Definition>;
+  readonly validators: readonly FieldValidator<
+    FieldDefinitionNonNullValue<Definition>
+  >[];
+  readonly allowNull: boolean;
+  readonly primaryKey: boolean;
+  readonly autoIncrement: boolean;
+  readonly default: FieldDefinitionValue<Definition> | undefined;
+  readonly defaultValue: FieldDefinitionValue<Definition> | undefined;
+  readonly needQuotes: boolean;
+
+  parse(value: unknown): FieldDefinitionValue<Definition>;
+  restore(
+    value: FieldDefinitionValue<Definition>,
+  ): FieldDefinitionStorageValue<Definition>;
+  readonly equal: (
+    left: FieldDefinitionValue<Definition>,
+    right: FieldDefinitionValue<Definition>,
+  ) => boolean;
+  toJSON(
+    value: FieldDefinitionValue<Definition>,
+  ): FieldDefinitionJsonValue<Definition>;
+}
 ```
 
 ## 内置 `Type`
 
-| Type | 应用值 | 存储转换 |
-|---|---|---|
-| `Type.String` | `string` | `String(value)` |
-| `Type.Boolean` | `boolean` | `0` 或 `1` |
-| `Type.Integer` | `number` | `parseInt(value)` |
-| `Type.Float` | `number` | `parseFloat(value)` |
-| `Type.Json` | `JsonValue` | `JSON.stringify(value)` |
-| `Type.Datetime` | `Date` | `YYYY-MM-DD HH:mm:ss` |
+| Type | `parse()` 输入 | 应用值 | `restore()` 输出 | JSON 值 |
+|---|---|---|---|---|
+| `Type.String` | `unknown` | `string` | `string` | `string` |
+| `Type.Boolean` | `unknown` | `boolean` | `number` | `boolean` |
+| `Type.Integer` | `unknown` | `number` | `number` | `number` |
+| `Type.Float` | `unknown` | `number` | `number` | `number` |
+| `Type.Json` | `unknown` | `JsonValue` | `string` | `JsonValue` |
+| `Type.Datetime` | `unknown` | `Date` | `string` | `string` |
 
 ## 自定义 Field Type
 
@@ -77,3 +103,22 @@ type FieldType<Value, StorageValue = Value, JsonValue = Value> = {
 ```
 
 TypeScript 会检查 `parse()`、`restore()`、`equal()` 与 `toJSON()` 的值类型是否一致。行推断可使用 `RowFromSchema`、`JsonRowFromSchema`、`PrimaryKeyNames` 和各类 `FieldDefinition*Value` 辅助类型。
+
+## 类型展开
+
+```typescript
+type RowFromSchema<Schema extends SchemaDefinition> = {
+  [Definition in Schema[number] as Definition['name']]:
+    FieldDefinitionValue<Definition>;
+};
+
+type JsonRowFromSchema<Schema extends SchemaDefinition> = {
+  [Definition in Schema[number] as Definition['name']]:
+    FieldDefinitionJsonValue<Definition>;
+};
+
+type PrimaryKeyNames<Schema extends SchemaDefinition> = Extract<
+  Schema[number],
+  { readonly primaryKey: true }
+>['name'];
+```

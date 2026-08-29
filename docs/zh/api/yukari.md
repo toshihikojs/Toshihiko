@@ -4,10 +4,30 @@ Yukari 是行级对象。Schema 字段会成为实例上可枚举、可直接读
 
 ## 两种行类型
 
-| 类型 | 来源 | 字段是否存在 |
-|---|---|---|
-| `BuiltYukari` | `Model.build(input)` | 输入字段和默认字段已知，其余可选 |
-| `QueriedYukari` | `find()`、`findOne()`、`findById()` | 选择字段在静态类型中为可选 |
+```typescript
+type BuiltYukari<
+  Name extends string,
+  Schema extends SchemaDefinition,
+  Input extends BuildInput<Schema>,
+  AdapterInstance extends AdapterLike = Adapter,
+> = Yukari<Name, Schema, AdapterInstance>
+  & Omit<
+    BuiltRowFromSchema<Schema, Input>,
+    keyof Yukari<Name, Schema, AdapterInstance>
+  >;
+
+type QueriedYukari<
+  Name extends string,
+  Schema extends SchemaDefinition,
+  AdapterInstance extends AdapterLike = Adapter,
+> = Yukari<Name, Schema, AdapterInstance>
+  & Omit<
+    Partial<RowFromSchema<Schema>>,
+    keyof Yukari<Name, Schema, AdapterInstance>
+  >;
+```
+
+`BuiltYukari` 会把传给 `build()` 的字段和有默认值的字段标为已知，其余字段可选。`QueriedYukari` 的字段全部可选，因为 `fields()` 可能只选择部分列。
 
 ## 生命周期
 
@@ -18,8 +38,11 @@ Yukari 是行级对象。Schema 字段会成为实例上可枚举、可直接读
 ## 校验
 
 ```typescript
-row.validateOne(name, value): Promise<void>
-row.validateAll(): Promise<void>
+validateOne<Field extends FieldName<RowFromSchema<Schema>>>(
+  name: Field,
+  value: RowFromSchema<Schema>[Field],
+): Promise<void>
+validateAll(): Promise<void>
 ```
 
 `validateOne()` 校验一个字段；字段名和值受 Schema 类型约束。字段不存在、不可空字段收到 `null`、或校验器返回非空字符串时会拒绝。
@@ -29,10 +52,18 @@ row.validateAll(): Promise<void>
 ## 持久化
 
 ```typescript
-row.insert(connection?): Promise<this>
-row.update(connection?): Promise<this>
-row.delete(connection?): Promise<true>
-row.save(connection?): Promise<this>
+insert(
+  connection?: AdapterConnection<AdapterInstance> | null,
+): Promise<this>
+update(
+  connection?: AdapterConnection<AdapterInstance> | null,
+): Promise<this>
+delete(
+  connection?: AdapterConnection<AdapterInstance> | null,
+): Promise<true>
+save(
+  connection?: AdapterConnection<AdapterInstance> | null,
+): Promise<this>
 ```
 
 - `insert()` 校验并写入 built row，并把数据库生成值复制回当前对象。
@@ -45,7 +76,7 @@ row.save(connection?): Promise<this>
 ## `toJSON()`
 
 ```typescript
-row.toJSON(useOriginalData?: boolean): Partial<JsonRowFromSchema<Schema>>
+toJSON(useOriginalData?: boolean): Partial<JsonRowFromSchema<Schema>>
 ```
 
 使用各 Field Type 的 `toJSON()` 序列化映射字段。传入 `true` 会序列化修改前的原始快照。
@@ -57,4 +88,4 @@ const beforeChanges = user.toJSON(true);
 
 ## 相关类型
 
-`BuiltYukari` 与 `QueriedYukari` 是应用层行类型；`YukariFieldData` 仅供 Adapter 扩展契约使用。
+`BuiltYukari` 与 `QueriedYukari` 是应用层行类型。`YukariFieldData<Definition>` 展开为 `{ readonly field: Field<Definition>; readonly value: FieldDefinitionValue<Definition> }`，仅供 Adapter 扩展契约使用。

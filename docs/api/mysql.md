@@ -34,6 +34,25 @@ const database = new Toshihiko(MySQLAdapter, {
 
 `MySQLAdapterOptions` extends `mysql2` `PoolOptions`, except that Toshihiko redeclares the following properties.
 
+```typescript
+type MySQLValues = readonly unknown[] | Readonly<Record<string, unknown>>;
+type MySQLShowSql = false | true | ((sql: string) => void);
+
+interface MySQLAdapterOptions extends Omit<
+  PoolOptions,
+  'database' | 'password' | 'user'
+> {
+  readonly [key: string]: unknown;
+  readonly database?: string;
+  readonly password?: string;
+  readonly package?: string;
+  readonly pool?: MySQLPool;
+  readonly showSql?: MySQLShowSql;
+  readonly user?: string;
+  readonly username?: string;
+}
+```
+
 | Option | Type | Description |
 |---|---|---|
 | `database` | `string` | Database name and Cache namespace |
@@ -52,7 +71,7 @@ const database = new Toshihiko(MySQLAdapter, {
 | `username` | `string` | Normalized user name |
 | `mysql` | `Pool` | Promise pool |
 | `package` | `'mysql2'` | Driver identifier |
-| `format` | `(sql, values?) => string` | Pool-bound SQL formatter |
+| `format` | `(sql: string, values?: MySQLValues) => string` | Pool-bound SQL formatter |
 | `options` | `MySQLAdapterOptions` | Public copied options |
 
 The owning Toshihiko instance exposes `database.pool` as the same pool.
@@ -60,12 +79,15 @@ The owning Toshihiko instance exposes `database.pool` as the same pool.
 ## `execute()`
 
 ```typescript
-adapter.execute(sql, values?): Promise<MySQLQueryResult>
-adapter.execute(connection, sql, values?): Promise<MySQLQueryResult>
+type MySQLExecuteArguments =
+  | readonly [sql: string, values?: MySQLValues]
+  | readonly [connection: MySQLConnection | null, sql: string, values?: MySQLValues];
 
-database.execute(sql, values?): Promise<MySQLQueryResult>
-database.execute(connection, sql, values?): Promise<MySQLQueryResult>
-query.execute(sql, values?): Promise<MySQLQueryResult>
+type MySQLQueryExecuteArguments = readonly [sql: string, values?: MySQLValues];
+
+adapter.execute(...args: MySQLExecuteArguments): Promise<MySQLQueryResult>
+database.execute(...args: MySQLExecuteArguments): Promise<MySQLQueryResult>
+query.execute(...args: MySQLQueryExecuteArguments): Promise<MySQLQueryResult>
 ```
 
 `values` may be an array or an object. Array values use `connection.execute()` unless the SQL contains `??`; object values and `??` use `connection.query()`. When no connection is supplied, the pool executes the statement.
@@ -76,7 +98,7 @@ query.execute(sql, values?): Promise<MySQLQueryResult>
 
 | Method | Return type | Behavior |
 |---|---|---|
-| `find(query, options?)` | row, row array, or `null` | Uses Cache unless absent or `noCache` is true |
+| `find(query: MySQLQuery, options?: AdapterFindOptions)` | `Promise<AdapterRow \| readonly AdapterRow[] \| null>` | Uses Cache unless absent or `noCache` is true |
 | `count(query)` | `Promise<number>` | Compiles `COUNT(0)` |
 | `updateByQuery(query)` | `Promise<ResultSetHeader>` | Invalidates related Cache entries before execution |
 | `deleteByQuery(query)` | `Promise<ResultSetHeader>` | Invalidates related Cache entries before execution |
@@ -98,8 +120,8 @@ adapter.rollback(connection): Promise<void>
 ## Cache-aware reads
 
 ```typescript
-adapter.findWithNoCache(model, options?): Promise<AdapterRow | readonly AdapterRow[] | null>
-adapter.findWithCache(cache, model, options?): Promise<AdapterRow | readonly AdapterRow[] | null>
+adapter.findWithNoCache(model: MySQLModel, options?: MySQLQueryOptions): Promise<AdapterRow | readonly AdapterRow[] | null>
+adapter.findWithCache(cache: NonNullable<MySQLModel['cache']>, model: MySQLModel, options?: MySQLQueryOptions): Promise<AdapterRow | readonly AdapterRow[] | null>
 ```
 
 The Cache path first selects primary keys, reads cached rows, loads misses with a concurrency limit, and then restores requested field selection.
@@ -133,6 +155,16 @@ interface MySQLStatement {
   readonly sql: string;
   readonly values: readonly unknown[];
 }
+
+compileFieldWhere(model: MySQLModel, key: string, condition: unknown, logic?: string): MySQLStatement
+compileArrayWhere(model: MySQLModel, condition: readonly Readonly<Record<string, unknown>>[], logic?: string): MySQLStatement
+compileWhere(model: MySQLModel, condition: Readonly<Record<string, unknown>> | readonly Readonly<Record<string, unknown>>[], logic?: string): MySQLStatement
+compileSet(model: MySQLModel, update: Readonly<Record<string, unknown>>): MySQLStatement
+compileValue(field: MySQLField, value: unknown): MySQLStatement
+compileFind(model: MySQLModel, options?: MySQLQueryOptions): MySQLStatement
+compileUpdate(model: MySQLModel, options?: MySQLQueryOptions): MySQLStatement
+compileDelete(model: MySQLModel, options?: MySQLQueryOptions): MySQLStatement
+compileSql(type: string, model: MySQLModel, options?: MySQLQueryOptions): MySQLStatement
 ```
 
 Prefer `compileFind()`, `compileUpdate()`, `compileDelete()`, `compileWhere()`, and `compileSql()` when executing generated SQL. The `make*()` forms format values into a string and are mainly compatibility and inspection helpers.
