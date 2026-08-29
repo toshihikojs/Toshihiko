@@ -333,7 +333,6 @@ export class MySQLAdapter extends Adapter<
       });
 
       if (cached !== undefined && cached !== null) {
-        (cached as Record<string, unknown>).$fromCache = true;
         result.push(cached);
       } else {
         result.push(undefined);
@@ -406,14 +405,14 @@ export class MySQLAdapter extends Adapter<
     overrides: Partial<MySQLQueryOptions> = {},
   ): MySQLQueryOptions {
     const options = extend({
-      fields: query._fields,
-      index: query._index,
-      limit: query._limit,
-      order: query._order,
-      update: query._updateData,
-      where: query._where,
+      fields: [...query.fields],
+      index: query.index,
+      limit: [...query.limit],
+      order: [...query.order],
+      update: query.updateData,
+      where: query.where,
     }, overrides) as MySQLQueryOptions;
-    options.conn = query._conn;
+    options.conn = query.connection;
 
     if (!options.single) {
       return options;

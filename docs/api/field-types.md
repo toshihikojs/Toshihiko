@@ -1,0 +1,125 @@
+# `Field` and `Type`
+
+A schema entry describes one logical property. `Model` compiles each entry into a `Field`, which delegates parsing, storage conversion, comparison, and JSON conversion to a Field Type.
+
+## Field definition
+
+```typescript
+interface FieldDefinition {
+  name: string;
+  column?: string;
+  type?: FieldType;
+  validators?: FieldValidator | readonly FieldValidator[];
+  allowNull?: boolean;
+  primaryKey?: boolean;
+  autoIncrement?: boolean;
+  defaultValue?: FieldValue;
+}
+```
+
+| Property | Default | Description |
+|---|---:|---|
+| `name` | required | Logical property name |
+| `column` | `name` | Storage column name; an empty string also falls back to `name` |
+| `type` | `Type.String` | Value conversion contract |
+| `validators` | `[]` | One validator or an array |
+| `allowNull` | `false` | Adds `null` to the field value type |
+| `primaryKey` | `false` | Includes the field in ID lookup and row locators |
+| `autoIncrement` | `false` | Marks a storage-generated field |
+| `defaultValue` | Field Type default | Value copied into rows built without this field |
+
+An ordinary schema array literal retains field-level inference when passed directly to `define()`.
+
+## Validators
+
+```typescript
+type FieldValidator<Value> = (
+  value: Value,
+) => string | void | Promise<string | void>;
+```
+
+Returning `undefined` or an empty string succeeds. A non-empty string becomes the rejection message. A nullable field accepts `null` before validators are called; a non-nullable field rejects it. Validator `this` is the Model.
+
+## Compiled `Field`
+
+### Properties
+
+| Property | Description |
+|---|---|
+| `name`, `column` | Logical and storage names |
+| `type` | Selected Field Type |
+| `allowNull`, `primaryKey`, `autoIncrement` | Normalized booleans |
+| `validators` | Normalized validator array |
+| `defaultValue` | Field-level or Type-level default |
+| `needQuotes` | Copied from the Field Type |
+| `options` | Remaining definition options |
+
+### Methods
+
+```typescript
+field.parse(storageValue): FieldValue
+field.restore(value): StorageValue
+field.equal(left, right): boolean
+field.toJSON(value): JsonValue
+```
+
+`equal()` and `toJSON()` use the Field Type implementation when present. Otherwise they use strict equality and return the value unchanged.
+
+## Built-in `Type`
+
+```typescript
+import { Type } from 'toshihiko';
+```
+
+| Type | Application value | Storage conversion | JSON conversion |
+|---|---|---|---|
+| `Type.String` | `string` | `String(value)` | string unchanged |
+| `Type.Boolean` | `boolean` | `0` or `1` | boolean unchanged |
+| `Type.Integer` | `number` | `parseInt(value)` | number unchanged |
+| `Type.Float` | `number` | `parseFloat(value)` | number unchanged |
+| `Type.Json` | `JsonValue` | `JSON.stringify(value)` | JSON value unchanged |
+| `Type.Datetime` | `Date` | `YYYY-MM-DD HH:mm:ss` | ISO-style string with offset |
+
+`Type.String`, `Boolean`, `Integer`, `Float`, and `Json` provide defaults. `Datetime` does not.
+
+## Custom Field Type
+
+```typescript
+type FieldType<Value, StorageValue = Value, JsonValue = Value> = {
+  name?: string;
+  needQuotes?: boolean;
+  defaultValue?: Value;
+  parse(value: StorageValue): Value;
+  restore(value: Value): StorageValue;
+  equal?(left: Value, right: Value): boolean;
+  toJSON?(value: Value): JsonValue;
+};
+```
+
+When `JsonValue` differs from `Value`, `toJSON()` is required.
+
+```typescript
+const LowercaseEmail = {
+  name: 'LowercaseEmail',
+  needQuotes: true,
+  parse(value: string) {
+    return value.toLowerCase();
+  },
+  restore(value: string) {
+    return value.toLowerCase();
+  },
+} satisfies FieldType<string>;
+```
+
+The compiler verifies that `restore()` accepts the value produced by `parse()`, returns a storage value accepted by `parse()`, and that optional `equal()` and `toJSON()` receive the same application value type.
+
+## Row inference types
+
+| Type | Result |
+|---|---|
+| `RowFromSchema<Schema>` | Application values by logical field name |
+| `JsonRowFromSchema<Schema>` | JSON values by logical field name |
+| `PrimaryKeyNames<Schema>` | Union of primary-key field names |
+| `FieldDefinitionValue<Definition>` | Application value, including `null` when allowed |
+| `FieldDefinitionStorageValue<Definition>` | Value returned by `restore()` |
+| `FieldDefinitionJsonValue<Definition>` | Value returned by `toJSON()` |

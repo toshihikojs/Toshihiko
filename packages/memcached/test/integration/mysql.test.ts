@@ -49,11 +49,16 @@ test('v1 MySQL and Memcached cooperate for reads and invalidation', async () => 
     { id: 1, name: 'first' },
     { id: 2, name: 'second' },
   ]);
-  assert.equal(firstRead[0]?.$fromCache, false);
+  await adapter.execute(
+    `UPDATE \`${table}\` SET \`name\` = ? WHERE \`record_id\` = ?`,
+    ['changed outside Toshihiko', 1],
+  );
 
   const cachedRead = await Record.order({ id: 1 }).find();
-  assert.equal(cachedRead[0]?.$fromCache, true);
-  assert.equal(cachedRead[1]?.$fromCache, true);
+  assert.deepEqual(cachedRead.map((row) => row.toJSON()), [
+    { id: 1, name: 'first' },
+    { id: 2, name: 'second' },
+  ]);
 
   const first = await Record.findById(1);
   assert.notEqual(first, null);

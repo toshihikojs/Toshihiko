@@ -362,9 +362,6 @@ TypedConnectionModel.findOne().then((row) => {
   row?.save({ transaction: 1 });
   row?.delete({ transaction: 1 });
 });
-const concreteAdapter: TypedConnectionAdapter = TypedConnectionModel.parent.getAdapter();
-void concreteAdapter;
-
 // @ts-expect-error Query update requires an Adapter updateByQuery() implementation.
 TypedConnectionModel.update({ id: '1' });
 

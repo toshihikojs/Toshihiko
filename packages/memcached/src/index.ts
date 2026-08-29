@@ -19,6 +19,7 @@ export interface MemcachedCacheOptions extends MemcachedClient.options {
 }
 
 export class MemcachedCache extends Cache {
+  #keyGenerator: CustomizeKey;
   readonly memcached: MemcachedClient;
   readonly options: MemcachedCacheOptions | undefined;
   readonly prefix: string;
@@ -35,20 +36,19 @@ export class MemcachedCache extends Cache {
     this.prefix = options?.prefix || '';
     if (options) delete options.prefix;
     this.memcached = client ?? new MemcachedClient(servers, options);
+    this.#keyGenerator = options?.customizeKey?.bind(this)
+      ?? this.#defaultKey.bind(this);
 
     this.memcached.on('failure', (details) => this.emit('failure', details));
     this.memcached.on('reconnecting', (details) => this.emit('reconnecting', details));
 
-    if (options?.customizeKey) {
-      this._getKey = options.customizeKey.bind(this);
-    }
   }
 
   setCustomizeKeyFunc(func: CustomizeKey): void {
-    this._getKey = func.bind(this);
+    this.#keyGenerator = func.bind(this);
   }
 
-  _getKey(database: string, table: string, key: CacheKey): string {
+  #defaultKey(database: string, table: string, key: CacheKey): string {
     if (typeof key !== 'object') {
       return `${this.prefix}${database}:${table}:${String(key)}`;
     }
@@ -90,12 +90,12 @@ export class MemcachedCache extends Cache {
     return base;
   }
 
-  _getKeys(
+  #getKeys(
     database: string,
     table: string,
     keys: readonly CacheKey[],
   ): string[] {
-    return keys.map((key) => this._getKey(database, table, key));
+    return keys.map((key) => this.#keyGenerator(database, table, key));
   }
 
   async deleteData(
@@ -103,7 +103,7 @@ export class MemcachedCache extends Cache {
     table: string,
     key: CacheKey,
   ): Promise<boolean> {
-    const cacheKey = this._getKey(database, table, key);
+    const cacheKey = this.#keyGenerator(database, table, key);
     return await new Promise<boolean>((resolve, reject) => {
       this.memcached.del(cacheKey, (error) => {
         if (error) reject(error);
@@ -136,7 +136,7 @@ export class MemcachedCache extends Cache {
     key: CacheKey,
     data: Value,
   ): Promise<boolean> {
-    const cacheKey = this._getKey(database, table, key);
+    const cacheKey = this.#keyGenerator(database, table, key);
     return await new Promise<boolean>((resolve, reject) => {
       this.memcached.set(cacheKey, data, 0, (error) => {
         if (error) reject(error);
@@ -151,7 +151,7 @@ export class MemcachedCache extends Cache {
     keys: CacheKey | readonly CacheKey[],
   ): Promise<(Value | null)[]> {
     const normalized = Array.isArray(keys) ? keys : [keys];
-    const cacheKeys = this._getKeys(database, table, normalized);
+    const cacheKeys = this.#getKeys(database, table, normalized);
     if (cacheKeys.length === 0) return [];
     if (cacheKeys.length === 1) {
       const data = await this.get<Value>(cacheKeys[0]!);

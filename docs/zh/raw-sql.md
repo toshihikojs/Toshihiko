@@ -14,12 +14,17 @@ await User.conn(connection).execute(
 );
 ```
 
-MySQL Adapter 也支持把连接放在第一个参数：
+在事务中，通过 Model 获取连接，再把连接交给 Query。应用代码不需要取得 Adapter 实例：
 
 ```typescript
-const adapter = database.getAdapter();
-await adapter.execute('SELECT 1');
-await adapter.execute(connection, 'SELECT ?', [1]);
+const connection = await User.beginTransaction();
+try {
+  await User.conn(connection).execute('SELECT ?', [1]);
+  await User.commit(connection);
+} catch (error) {
+  await User.rollback(connection);
+  throw error;
+}
 ```
 
 ## SQL 日志

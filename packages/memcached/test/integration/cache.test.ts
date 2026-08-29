@@ -12,10 +12,9 @@ test('Memcached cache preserves the v1 service-backed contract', async () => {
   const second = { id: 2, name: 'second' };
 
   try {
-    assert.equal(
-      cache._getKey('database', 'records', { siteId: 1, userId: 2 }),
-      `${prefix}database:records:s1:u2`,
-    );
+    const composite = { siteId: 1, userId: 2 };
+    await cache.setData('database', 'records', composite, first);
+    assert.deepEqual(await cache.getData('database', 'records', composite), [first]);
     assert.equal(await cache.setData('database', 'records', 1, first), true);
     assert.equal(await cache.setData('database', 'records', 2, second), true);
     assert.deepEqual(await cache.getData('database', 'records', [1, 2]), [first, second]);

@@ -56,10 +56,11 @@ export interface MySQLModel {
   ): Readonly<Record<string, unknown>>;
 }
 
-export interface MySQLQuery extends AdapterQuery<MySQLModel, PoolConnection> {
-  readonly cache: Cache | null;
-  readonly _updateData?: Readonly<Record<string, unknown>>;
-}
+export interface MySQLQuery extends AdapterQuery<
+  MySQLModel,
+  PoolConnection,
+  Cache | null
+> {}
 
 export interface MySQLQueryOptions {
   conn?: PoolConnection | null;

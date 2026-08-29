@@ -66,23 +66,25 @@ MySQL reads cached rows and fills misses without changing their input order. Upd
 
 ## Raw SQL
 
-`execute` accepts an optional connection before the SQL string at the Adapter layer. All forms are Promise-only.
+`execute` accepts an optional transaction connection before the SQL string. All forms are Promise-only.
 
 ```typescript
-await toshihiko.adapter.execute(
+await toshihiko.execute(
   'UPDATE `users` SET `name` = ? WHERE `user_id` = ?',
   ['Alice', 1],
 );
 
-const adapter = toshihiko.getAdapter();
-const connection = await adapter.beginTransaction();
+const connection = await User.beginTransaction();
 try {
-  await adapter.execute(connection, 'DELETE FROM `users` WHERE `user_id` = ?', [1]);
+  await User.conn(connection).execute(
+    'DELETE FROM `users` WHERE `user_id` = ?',
+    [1],
+  );
+  await User.commit(connection);
 } catch (error) {
-  await adapter.rollback(connection);
+  await User.rollback(connection);
   throw error;
 }
-await adapter.commit(connection);
 ```
 
 Committed or rolled-back connections are always released to the pool, including error paths.

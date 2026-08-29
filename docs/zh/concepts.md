@@ -21,7 +21,7 @@ Toshihiko 用四个公开概念描述一次数据库操作。它们是生命周�
 
 **Toshihiko 是项目和软件包的名字。** 它是一个带缓存层的简单 Node.js ORM。ORM 在数据库记录和 JavaScript 对象之间做映射。Toshihiko 负责这些记录周围的 CRUD，不负责创建或修改表结构，也不定义表关系。
 
-**`Toshihiko` 也是软件包导出的类。** `new Toshihiko(...)` 创建一个配置好的数据库入口。这个实例持有 Adapter、暴露当前数据库名、创建 Model、执行 Adapter 提供的原始操作，并可向 Model 提供 Cache。
+**`Toshihiko` 也是软件包导出的类。** `new Toshihiko(...)` 创建一个配置好的数据库入口。这个实例暴露当前数据库名、创建 Model、执行数据库后端提供的原始操作，并可向 Model 提供 Cache。
 
 ```typescript
 const database = new Toshihiko('mysql', {
@@ -64,7 +64,7 @@ const users = await User
 
 ## Yukari
 
-Yukari 是 record instance。这个名字呼应 Toshihiko 是 Yukari 分身的人设；在 ORM 里，一个 Yukari 则是某个 Model 下代表一行数据的具体对象实例。映射字段是可以直接读写的普通属性；对象内部还保留 Model、Schema、Adapter、来源状态，以及查询数据的原始快照。
+Yukari 是 record instance。这个名字呼应 Toshihiko 是 Yukari 分身的人设；在 ORM 里，一个 Yukari 则是某个 Model 下代表一行数据的具体对象实例。映射字段是可以直接读写的普通属性；更新和删除所需的状态由对象内部维护，不属于应用 API。
 
 ```typescript
 const row = await User.findById(1);
@@ -80,7 +80,7 @@ if (row) {
 
 ## Adapter 与 Cache
 
-Adapter 负责连接池、SQL、绑定参数、事务和驱动返回值。Cache 提供读取、写入、删除单键和批量删除四个 Promise 操作。Model 可以继承、替换或禁用数据库级 Cache，具体缓存路径由 Adapter 落地。
+Adapter 负责连接池、SQL、绑定参数、事务和驱动返回值。普通应用只需在创建 `Toshihiko` 时选择 Adapter；Adapter 契约只面向数据库扩展开发者。Cache 提供读取、写入、删除单键和批量删除四个 Promise 操作。Model 可以继承、替换或禁用数据库级 Cache，具体缓存路径由 Adapter 落地。
 
 ## 类型流
 

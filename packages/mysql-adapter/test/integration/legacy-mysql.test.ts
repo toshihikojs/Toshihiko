@@ -119,7 +119,7 @@ test('v1 complex field and where operators return the intended rows', async () =
     $or: [{ name: { $like: 'B%' } }, { id: { $in: [99] } }],
   }).order({ id: -1 }).find(true);
   assert.deepEqual(rows.map((row) => row.name), ['Bob']);
-  assert.equal(await adapter.count(Record.where({ id: { $gte: 2 } })), 2);
+  assert.equal(await Record.where({ id: { $gte: 2 } }).count(), 2);
 });
 
 test('v1 single-row limit variants preserve offset and empty behavior', async () => {
@@ -166,8 +166,7 @@ test('v1 update and updateByQuery preserve typed and raw values', async () => {
   });
 
   const query = Record.where({ id: { $gte: 2 } }).order({ id: 1 }).limit(1);
-  query._updateData = { name: 'updated' };
-  assert.equal((await adapter.updateByQuery(query)).affectedRows, 1);
+  assert.equal((await query.update({ name: 'updated' })).affectedRows, 1);
   const updated = await Record.findById(2, true);
   const untouched = await Record.findById(3, true);
   assert.notEqual(updated, null);
@@ -178,7 +177,7 @@ test('v1 update and updateByQuery preserve typed and raw values', async () => {
 
 test('v1 deleteByQuery respects ordering and row-count limit', async () => {
   const query = Record.where({ id: { $gte: 2 } }).order({ id: -1 }).limit(0, 1);
-  assert.equal((await adapter.deleteByQuery(query)).affectedRows, 1);
+  assert.equal((await query.delete()).affectedRows, 1);
   assert.equal(await Record.findById(3, true), null);
   assert.notEqual(await Record.findById(2, true), null);
 });

@@ -46,9 +46,8 @@ Adapter combine hits and database results without losing key order.
 
 ## Read path
 
-`findById()` first asks the Model Cache for its primary-key condition. A cache
-hit is hydrated into a queried Yukari and marked with `$fromCache`. A miss falls
-back to the Adapter.
+`findById()` first asks the Model Cache for its primary-key condition. A hit is
+hydrated into a queried Yukari; a miss falls back to the database backend.
 
 The MySQL Adapter also supports cached query reads. It fills missing rows and
 preserves selected fields when it falls back to MySQL.

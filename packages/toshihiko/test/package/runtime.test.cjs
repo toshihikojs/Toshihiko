@@ -27,7 +27,9 @@ test('the CommonJS entry point preserves the v1 runtime exports', () => {
 class MemoryAdapter {
   constructor(parentOrOptions, adapterOptions) {
     const hasParent = arguments.length >= 2;
-    this.parent = hasParent ? parentOrOptions : undefined;
+    if (hasParent) {
+      this.parent = parentOrOptions;
+    }
     this.options = (hasParent ? adapterOptions : parentOrOptions) ?? {};
     this.calls = [];
     this.countCalls = [];
@@ -45,14 +47,14 @@ class MemoryAdapter {
 
   async find(query, options) {
     this.calls.push({
-      connection: query._conn,
-      fields: [...query._fields],
-      index: query._index,
-      limit: [...query._limit],
+      connection: query.connection,
+      fields: [...query.fields],
+      index: query.index,
+      limit: [...query.limit],
       options,
-      order: query._order,
+      order: query.order,
       table: query.model.name,
-      where: query._where,
+      where: query.where,
     });
 
     const rows = this.options.rows;
@@ -61,10 +63,10 @@ class MemoryAdapter {
 
   async count(query) {
     this.countCalls.push({
-      connection: query._conn,
-      index: query._index,
+      connection: query.connection,
+      index: query.index,
       table: query.model.name,
-      where: query._where,
+      where: query.where,
     });
     if (this.options.countError) {
       throw this.options.countError;
@@ -74,9 +76,9 @@ class MemoryAdapter {
 
   async updateByQuery(query) {
     this.queryUpdateCalls.push({
-      connection: query._conn,
-      data: query._updateData,
-      where: query._where,
+      connection: query.connection,
+      data: query.updateData,
+      where: query.where,
     });
     return this.options.queryUpdateResult;
   }
@@ -108,10 +110,10 @@ class MemoryAdapter {
 
   async deleteByQuery(query) {
     this.deleteCalls.push({
-      connection: query._conn,
-      limit: [...query._limit],
+      connection: query.connection,
+      limit: [...query.limit],
       table: query.model.name,
-      where: query._where,
+      where: query.where,
     });
     if (this.options.deleteError) {
       throw this.options.deleteError;
@@ -140,7 +142,8 @@ class MemoryAdapter {
 
 test('define compiles the documented schema into model metadata', () => {
   const options = { database: 'toshihiko' };
-  const toshihiko = new Toshihiko(MemoryAdapter, options);
+  const adapter = new MemoryAdapter(options);
+  const toshihiko = new Toshihiko(adapter);
   const User = toshihiko.define('user', [
     {
       name: 'id',
@@ -155,8 +158,8 @@ test('define compiles the documented schema into model metadata', () => {
 
   assert.equal(User.name, 'user');
   assert.equal(User.parent, toshihiko);
-  assert.equal(toshihiko.adapter.parent, toshihiko);
-  assert.equal(toshihiko.adapter.options, options);
+  assert.equal(adapter.parent, toshihiko);
+  assert.equal(adapter.options, options);
   assert.deepEqual(User.nameToColumn, {
     id: 'user_id',
     username: 'username',
@@ -172,10 +175,6 @@ test('define compiles the documented schema into model metadata', () => {
   assert.equal(User.ai, User.autoIncrementField);
   assert.equal(typeof toshihiko.onAny, 'function');
   assert.equal(typeof User.onAny, 'function');
-  assert.equal(User._fieldsKeyMap.n2c, User.nameToColumn);
-  assert.equal(User._fieldsKeyMap.c2n, User.columnToName);
-  assert.equal(User._fieldsKeyMap.name, User.fieldNamesMap);
-  assert.equal(User._fieldsKeyMap.column, User.fieldColumnsMap);
   assert.equal(User.fieldNamesMap.nickname.type, Type.String);
   assert.equal(User.fieldNamesMap.nickname.default, '');
   assert.equal(User.fieldNamesMap.nickname.defaultValue, '');
@@ -437,9 +436,6 @@ test('build creates a new Yukari and clones field defaults', () => {
   const first = User.build({ id: 1, birthday: null, ignored: true });
   const second = User.build({ id: 2 });
 
-  assert.equal(first.$model, User);
-  assert.equal(first._initRow, undefined);
-  assert.equal(first.$source, 'new');
   assert.equal(first.id, 1);
   assert.equal(first.name, 'anonymous');
   assert.equal(first.birthday, null);
@@ -481,10 +477,9 @@ test('custom FieldType values keep their class and v1 fallback equality', async 
   assert.equal(account.balance instanceof Money, true);
   assert.equal(account.balance.format(), '$12');
 
-  const queried = new Yukari(Account, 'query');
-  queried.fillRowFromSource({ balance: 12 }, true);
+  const queried = new Yukari(Account, 'query', { balance: 12 }, true);
   await queried.update();
-  assert.equal(queried.$origData.balance.data.amount, 12);
+  assert.equal(queried.toJSON(true).balance.amount, 12);
   assert.deepEqual(adapter.updateCalls[0].data.map(({ name, value }) => ({
     name,
     value: value.amount,
@@ -562,7 +557,7 @@ test('Yukari validation rejects nulls and preserves v1 synchronous messages', as
 test('build().insert() validates, writes, and adopts the Adapter row like v1', async () => {
   const validationCalls = [];
   const connection = { transaction: 1 };
-  const toshihiko = new Toshihiko(MemoryAdapter, {
+  const adapter = new MemoryAdapter({
     database: 'toshihiko',
     insertRow: {
       id: 41,
@@ -570,6 +565,7 @@ test('build().insert() validates, writes, and adopts the Adapter row like v1', a
       profile: { role: 'admin' },
     },
   });
+  const toshihiko = new Toshihiko(adapter);
   const User = toshihiko.define('user', [
     {
       name: 'id',
@@ -597,13 +593,12 @@ test('build().insert() validates, writes, and adopts the Adapter row like v1', a
   const inserted = await user.insert(connection);
 
   assert.equal(inserted, user);
-  assert.equal(user.$source, 'new');
   assert.equal(user.id, 41);
   assert.equal(user.name, 'Stored Alice');
   assert.deepEqual(user.profile, { role: 'admin' });
   assert.deepEqual(user.toJSON(true), {});
   assert.deepEqual(validationCalls, ['Input Alice']);
-  assert.deepEqual(toshihiko.adapter.insertCalls, [{
+  assert.deepEqual(adapter.insertCalls, [{
     connection,
     data: [
       { name: 'id', value: 0 },
@@ -627,7 +622,6 @@ test('insert failures leave a new Yukari unchanged', async () => {
   const invalid = Invalid.build({ score: -1 });
 
   await assert.rejects(invalid.insert(), /invalid score/);
-  assert.equal(invalid.$source, 'new');
   assert.equal(validationAdapter.insertCalls.length, 0);
 
   const adapterError = new Error('insert readback failed');
@@ -640,15 +634,13 @@ test('insert failures leave a new Yukari unchanged', async () => {
   const failure = Failure.build({ name: 'Alice' });
 
   await assert.rejects(failure.insert(), (error) => error === adapterError);
-  assert.equal(failure.$source, 'new');
 });
 
 test('insert rejects old Yukari objects and adopts synchronous or empty Adapter results', async () => {
   const adapter = new MemoryAdapter({ database: 'toshihiko' });
   const toshihiko = new Toshihiko(adapter);
   const User = toshihiko.define('user', [{ name: 'id', type: Type.Integer }]);
-  const queried = new Yukari(User, 'query');
-  queried.fillRowFromSource({ id: 1 }, true);
+  const queried = new Yukari(User, 'query', { id: 1 }, true);
 
   await assert.rejects(
     queried.insert(),
@@ -693,8 +685,7 @@ test('queried Yukari updates changed fields with its original primary key', asyn
     },
     { name: 'profile', type: Type.Json },
   ]);
-  const user = new Yukari(User, 'query');
-  user.fillRowFromSource({
+  const user = new Yukari(User, 'query', {
     user_id: '7',
     display_name: 'Alice',
     profile: '{"role":"writer"}',
@@ -706,7 +697,6 @@ test('queried Yukari updates changed fields with its original primary key', asyn
   const updated = await user.update(connection);
 
   assert.equal(updated, user);
-  assert.equal(user.$source, 'query');
   assert.deepEqual(adapter.updateCalls, [{
     connection,
     data: [
@@ -741,15 +731,15 @@ test('update failures preserve original snapshots and pending changes', async ()
     { name: 'id', type: Type.Integer, primaryKey: true },
     { name: 'name' },
   ]);
-  const user = new Yukari(User, 'query');
-  user.fillRowFromSource({ id: 1, name: 'Alice' }, true);
+  const user = new Yukari(User, 'query', { id: 1, name: 'Alice' }, true);
   user.name = 'Bob';
 
   await assert.rejects(user.update(), (error) => error === updateError);
   assert.deepEqual(user.toJSON(true), { id: 1, name: 'Alice' });
   assert.deepEqual(user.toJSON(), { id: 1, name: 'Bob' });
 
-  const Invalid = new Toshihiko(new MemoryAdapter({ database: 'toshihiko' }))
+  const invalidAdapter = new MemoryAdapter({ database: 'toshihiko' });
+  const Invalid = new Toshihiko(invalidAdapter)
     .define('invalid', [
       { name: 'id', type: Type.Integer, primaryKey: true },
       {
@@ -760,11 +750,10 @@ test('update failures preserve original snapshots and pending changes', async ()
         },
       },
     ]);
-  const invalid = new Yukari(Invalid, 'query');
-  invalid.fillRowFromSource({ id: 1, score: 1 }, true);
+  const invalid = new Yukari(Invalid, 'query', { id: 1, score: 1 }, true);
   invalid.score = -1;
   await assert.rejects(invalid.update(), /invalid score/);
-  assert.equal(Invalid.parent.adapter.updateCalls.length, 0);
+  assert.equal(invalidAdapter.updateCalls.length, 0);
 });
 
 test('update preserves v1 source and locator fallbacks', async () => {
@@ -779,26 +768,21 @@ test('update preserves v1 source and locator fallbacks', async () => {
     User.build({ id: 1, name: 'Alice' }).update(),
     /You must call this function via an old Yukari object/,
   );
-  const deleted = new Yukari(User, 'delete');
-  deleted.fillRowFromSource({ id: 2, name: 'Deleted' }, true);
+  const deleted = new Yukari(User, 'delete', { id: 2, name: 'Deleted' }, true);
   await deleted.update();
-  assert.equal(deleted.$source, 'query');
 
   const Keyless = toshihiko.define('keyless', [{ name: 'name' }]);
-  const keyless = new Yukari(Keyless, 'query');
-  keyless.fillRowFromSource({ name: 'Alice' }, true);
+  const keyless = new Yukari(Keyless, 'query', { name: 'Alice' }, true);
   keyless.name = 'Bob';
   await keyless.update();
   assert.deepEqual(adapter.updateCalls.at(-1).primaryKey, { name: 'Alice' });
 
-  const projected = new Yukari(User, 'query');
-  projected.fillRowFromSource({ name: 'Alice' }, true);
+  const projected = new Yukari(User, 'query', { name: 'Alice' }, true);
   projected.name = 'Bob';
   await projected.update();
   assert.deepEqual(adapter.updateCalls.at(-1).primaryKey, {});
 
-  const synchronous = new Yukari(User, 'query');
-  synchronous.fillRowFromSource({ id: 1, name: 'Alice' }, true);
+  const synchronous = new Yukari(User, 'query', { id: 1, name: 'Alice' }, true);
   synchronous.name = 'Bob';
   adapter.update = function synchronousUpdate() {
     return {};
@@ -813,15 +797,13 @@ test('queried Yukari deletes by original primary key and enters delete state', a
     { name: 'id', type: Type.Integer, primaryKey: true },
     { name: 'name' },
   ]);
-  const user = new Yukari(User, 'query');
-  user.fillRowFromSource({ id: 7, name: 'Alice' }, true);
+  const user = new Yukari(User, 'query', { id: 7, name: 'Alice' }, true);
   user.id = 8;
   user.name = 'Changed locally';
 
   const deleted = await user.delete(connection);
 
   assert.equal(deleted, true);
-  assert.equal(user.$source, 'delete');
   assert.deepEqual(adapter.deleteCalls, [{
     connection,
     limit: [0, 1],
@@ -836,8 +818,12 @@ test('queried Yukari deletes by original primary key and enters delete state', a
     { name: 'groupId', type: Type.Integer, primaryKey: true },
     { name: 'role' },
   ]);
-  const membership = new Yukari(Membership, 'query');
-  membership.fillRowFromSource({ userId: 2, groupId: 3, role: 'member' }, true);
+  const membership = new Yukari(
+    Membership,
+    'query',
+    { userId: 2, groupId: 3, role: 'member' },
+    true,
+  );
   await membership.delete();
   assert.deepEqual(adapter.deleteCalls.at(-1), {
     connection: null,
@@ -855,11 +841,9 @@ test('delete failures and invalid records preserve their state', async () => {
     { name: 'id', type: Type.Integer, primaryKey: true },
     { name: 'name' },
   ]);
-  const user = new Yukari(User, 'query');
-  user.fillRowFromSource({ id: 1, name: 'Alice' }, true);
+  const user = new Yukari(User, 'query', { id: 1, name: 'Alice' }, true);
 
   await assert.rejects(user.delete(), (error) => error === deleteError);
-  assert.equal(user.$source, 'query');
   adapter.options.deleteError = null;
   await assert.rejects(
     User.build({ id: 1 }).delete(),
@@ -867,13 +851,11 @@ test('delete failures and invalid records preserve their state', async () => {
   );
 
   const Keyless = toshihiko.define('keyless', [{ name: 'name' }]);
-  const keyless = new Yukari(Keyless, 'query');
-  keyless.fillRowFromSource({ name: 'Alice' }, true);
+  const keyless = new Yukari(Keyless, 'query', { name: 'Alice' }, true);
   await keyless.delete();
   assert.deepEqual(adapter.deleteCalls.at(-1).where, { name: 'Alice' });
 
-  const projected = new Yukari(User, 'query');
-  projected.fillRowFromSource({ name: 'Alice' }, true);
+  const projected = new Yukari(User, 'query', { name: 'Alice' }, true);
   await projected.delete();
   assert.deepEqual(adapter.deleteCalls.at(-1).where, {});
 
@@ -881,23 +863,19 @@ test('delete failures and invalid records preserve their state', async () => {
   const SyncUser = new Toshihiko(synchronousAdapter).define('sync-user', [
     { name: 'id', type: Type.Integer, primaryKey: true },
   ]);
-  const synchronous = new Yukari(SyncUser, 'query');
-  synchronous.fillRowFromSource({ id: 1 }, true);
+  const synchronous = new Yukari(SyncUser, 'query', { id: 1 }, true);
   synchronousAdapter.deleteByQuery = function synchronousDelete() {
     return {};
   };
   assert.equal(await synchronous.delete(), true);
-  assert.equal(synchronous.$source, 'delete');
 
   const falseAdapter = new MemoryAdapter({ database: 'toshihiko', deleteResult: false });
   const FalseUser = new Toshihiko(falseAdapter).define('false-user', [{
     name: 'id',
     primaryKey: true,
   }]);
-  const falseUser = new Yukari(FalseUser, 'query');
-  falseUser.fillRowFromSource({ id: 1 }, true);
+  const falseUser = new Yukari(FalseUser, 'query', { id: 1 }, true);
   await assert.rejects(falseUser.delete(), /unknown error/);
-  assert.equal(falseUser.$source, 'query');
 });
 
 test('save preserves v1 new-versus-old dispatch', async () => {
@@ -913,19 +891,16 @@ test('save preserves v1 new-versus-old dispatch', async () => {
   const user = User.build({ id: 1, name: 'Alice' });
 
   assert.equal(await user.save(connection), user);
-  assert.equal(user.$source, 'new');
   assert.equal(adapter.insertCalls[0].connection, connection);
 
   assert.equal(await user.save(connection), user);
   assert.equal(adapter.insertCalls.length, 2);
 
-  const queried = new Yukari(User, 'query');
-  queried.fillRowFromSource({ id: 1, name: 'Alice' }, true);
+  const queried = new Yukari(User, 'query', { id: 1, name: 'Alice' }, true);
   queried.name = 'Bob';
   assert.equal(await queried.save(connection), queried);
   await queried.delete(connection);
   assert.equal(await queried.save(connection), queried);
-  assert.equal(queried.$source, 'query');
 });
 
 test('Model and Query count through the configured Adapter', async () => {
@@ -1027,9 +1002,7 @@ test('Yukari restores database columns without applying build defaults', () => {
       type: Type.Datetime,
     },
   ]);
-  const yukari = new Yukari(User, 'query');
-
-  yukari.fillRowFromSource({
+  const yukari = new Yukari(User, 'query', {
     user_id: '7',
     settings: '{"theme":"dark"}',
     created_at: '2026-08-26T01:02:03.000Z',
@@ -1039,11 +1012,14 @@ test('Yukari restores database columns without applying build defaults', () => {
   assert.equal(yukari.name, undefined);
   assert.deepEqual(yukari.settings, { theme: 'dark' });
   assert.equal(yukari.createdAt.toISOString(), '2026-08-26T01:02:03.000Z');
-  assert.equal(yukari.fieldIndex('id'), 0);
-  assert.equal(yukari.fieldIndex('name'), -1);
+  assert.deepEqual(yukari.toJSON(true), {
+    id: 7,
+    settings: { theme: 'dark' },
+    createdAt: new Date('2026-08-26T01:02:03.000Z'),
+  });
 });
 
-test('Yukari serializes current and original rows and extracts Adapter data', () => {
+test('Yukari serializes current and original rows', () => {
   const toshihiko = new Toshihiko(MemoryAdapter);
   const User = toshihiko.define('user', [
     { name: 'id', column: 'user_id', type: Type.Integer },
@@ -1056,8 +1032,7 @@ test('Yukari serializes current and original rows and extracts Adapter data', ()
     },
     { name: 'handler' },
   ]);
-  const yukari = new Yukari(User, 'query');
-  yukari.fillRowFromSource({
+  const yukari = new Yukari(User, 'query', {
     user_id: '7',
     settings: '{"theme":"dark"}',
     created_at: '2026-08-26T01:02:03.000Z',
@@ -1081,29 +1056,18 @@ test('Yukari serializes current and original rows and extracts Adapter data', ()
   });
 
   yukari.createdAt = null;
-  assert.deepEqual(
-    Yukari.extractAdapterData(User, yukari).map(({ field, value }) => ({
-      name: field.name,
-      value,
-    })),
-    [
-      { name: 'id', value: 8 },
-      { name: 'settings', value: { theme: 'light' } },
-      { name: 'createdAt', value: null },
-      { name: 'handler', value: handler },
-    ],
-  );
 });
 
 test('a Promise Adapter plugs directly into the original Model query API', async () => {
   const connection = { transaction: 1 };
-  const toshihiko = new Toshihiko(MemoryAdapter, {
+  const adapter = new MemoryAdapter({
     database: 'toshihiko',
     rows: [
       { user_id: '7', user_name: 'Alice' },
       { user_id: '8', user_name: 'Bob' },
     ],
   });
+  const toshihiko = new Toshihiko(adapter);
   const User = toshihiko.define('user', [
     { name: 'id', column: 'user_id', type: Type.Integer, primaryKey: true },
     { name: 'name', column: 'user_name', type: Type.String },
@@ -1115,8 +1079,10 @@ test('a Promise Adapter plugs directly into the original Model query API', async
   assert.equal(Object.keys(freshQuery).includes('model'), false);
   assert.equal(Object.keys(freshQuery).includes('toshihiko'), false);
   assert.equal(Object.keys(freshQuery).includes('cache'), false);
-  assert.deepEqual(User.order({ id: 2 })._order, [{ id: 2 }]);
-  assert.deepEqual(User.order(['id  desc'])._order, [{ id: 1 }]);
+  await User.order({ id: 2 }).find();
+  assert.deepEqual(adapter.calls.at(-1).order, [{ id: 2 }]);
+  await User.order(['id  desc']).find();
+  assert.deepEqual(adapter.calls.at(-1).order, [{ id: 1 }]);
 
   const users = await User
     .where({ id: { $gte: 7 } })
@@ -1128,12 +1094,12 @@ test('a Promise Adapter plugs directly into the original Model query API', async
     .find();
 
   assert.equal(toshihiko.database, 'toshihiko');
-  assert.equal(toshihiko.adapter instanceof MemoryAdapter, true);
+  assert.equal('adapter' in toshihiko, false);
   assert.deepEqual(users.map((user) => user.toJSON()), [
     { id: 7, name: 'Alice' },
     { id: 8, name: 'Bob' },
   ]);
-  assert.deepEqual(toshihiko.adapter.calls[0], {
+  assert.deepEqual(adapter.calls[2], {
     connection,
     fields: ['id', 'name'],
     index: 'PRIMARY',
@@ -1146,25 +1112,25 @@ test('a Promise Adapter plugs directly into the original Model query API', async
 
   const first = await User.findOne();
   assert.equal(first.id, 7);
-  assert.deepEqual(toshihiko.adapter.calls[1].options, {
+  assert.deepEqual(adapter.calls[3].options, {
     noCache: false,
     single: true,
   });
 
   const json = await User.findById(7, true);
   assert.deepEqual(json, { id: 7, name: 'Alice' });
-  assert.deepEqual(toshihiko.adapter.calls[2].where, { id: 7 });
+  assert.deepEqual(adapter.calls[4].where, { id: 7 });
 
   await User.order('id').find(false, { noCache: true });
-  assert.deepEqual(toshihiko.adapter.calls[3].order, [{ id: 1 }]);
-  assert.deepEqual(toshihiko.adapter.calls[3].options, {
+  assert.deepEqual(adapter.calls[5].order, [{ id: 1 }]);
+  assert.deepEqual(adapter.calls[5].options, {
     noCache: true,
     single: false,
   });
 
   const withoutCache = await User.find({ noCache: 'yes' });
   assert.equal(withoutCache[0] instanceof Yukari, true);
-  assert.deepEqual(toshihiko.adapter.calls[4].options, {
+  assert.deepEqual(adapter.calls[6].options, {
     noCache: true,
     single: false,
   });
@@ -1172,20 +1138,20 @@ test('a Promise Adapter plugs directly into the original Model query API', async
   const single = await User.find({ single: true });
   assert.equal(single instanceof Yukari, true);
   assert.equal(single.id, 7);
-  assert.deepEqual(toshihiko.adapter.calls[5].options, {
+  assert.deepEqual(adapter.calls[7].options, {
     noCache: false,
     single: true,
   });
 
   const singleJSON = await User.find({ noCache: true, single: true }, true);
   assert.deepEqual(singleJSON, { id: 7, name: 'Alice' });
-  assert.deepEqual(toshihiko.adapter.calls[6].options, {
+  assert.deepEqual(adapter.calls[8].options, {
     noCache: true,
     single: true,
   });
 });
 
-test('Query and Model configuration retains the v1 argument behavior', () => {
+test('Query and Model configuration retains the v1 argument behavior', async () => {
   const adapter = new MemoryAdapter({ database: 'toshihiko', rows: [] });
   const toshihiko = new Toshihiko(adapter);
   const User = toshihiko.define('user', [
@@ -1197,14 +1163,15 @@ test('Query and Model configuration retains the v1 argument behavior', () => {
 
   const condition = { name: 'Alice' };
   assert.equal(query.where(condition), query);
-  assert.equal(query._where, condition);
   assert.throws(() => query.where(1), /query condition expected to be an object/);
 
   assert.equal(query.fields('id, name, , '), query);
-  assert.deepEqual(query._fields, ['id', 'name']);
+  await query.find();
+  assert.deepEqual(adapter.calls.at(-1).fields, ['id', 'name']);
   const fields = ['tenantId', 'name'];
   assert.equal(query.fields(fields), query);
-  assert.equal(query._fields, fields);
+  await query.find();
+  assert.deepEqual(adapter.calls.at(-1).fields, fields);
   assert.throws(() => query.fields(1), /query fields expected to be an array or string/);
 
   for (const [input, expected] of [
@@ -1222,55 +1189,65 @@ test('Query and Model configuration retains the v1 argument behavior', () => {
     [-1, [-1]],
   ]) {
     assert.equal(query.limit(input), query);
-    assert.deepEqual(query._limit, expected);
+    await query.find();
+    assert.deepEqual(adapter.calls.at(-1).limit, expected);
   }
   assert.equal(query.limit('1', 'invalid'), query);
-  assert.deepEqual(query._limit, [1, 0]);
+  await query.find();
+  assert.deepEqual(adapter.calls.at(-1).limit, [1, 0]);
   assert.throws(
     () => query.limit(true),
     /query limit expected to be an array, number or string but got boolean true/,
   );
 
   assert.equal(query.order('   name, tenantId aSc    , id     desc'), query);
-  assert.deepEqual(query._order, [
+  await query.find();
+  assert.deepEqual(adapter.calls.at(-1).order, [
     { name: 1 },
     { tenantId: 1 },
     { id: -1 },
   ]);
-  assert.deepEqual(query.order('  ')._order, []);
-  assert.deepEqual(query.order([
+  await query.order('  ').find();
+  assert.deepEqual(adapter.calls.at(-1).order, []);
+  await query.order([
     'name',
     'tenantId DeSc',
     { id: 'aSc' },
     { other: -1 },
-  ])._order, [
+  ]).find();
+  assert.deepEqual(adapter.calls.at(-1).order, [
     { name: 1 },
     { tenantId: -1 },
     { id: 1 },
     { other: -1 },
   ]);
-  assert.deepEqual(query.order({
+  await query.order({
     name: 1,
     tenantId: 'DesC',
     id: 'aSc',
     other: -1,
-  })._order, [
+  }).find();
+  assert.deepEqual(adapter.calls.at(-1).order, [
     { name: 1 },
     { tenantId: -1 },
     { id: 1 },
     { other: -1 },
   ]);
-  assert.deepEqual(query.order(1)._order, []);
+  await query.order(1).find();
+  assert.deepEqual(adapter.calls.at(-1).order, []);
   assert.throws(() => query.order(null), TypeError);
 
   const connection = { transaction: true };
   assert.equal(query.conn(connection), query);
-  assert.equal(query._conn, connection);
   assert.equal(query.index(connection), query);
-  assert.equal(query._index, connection);
+  await query.find();
+  assert.equal(adapter.calls.at(-1).connection, connection);
+  assert.equal(adapter.calls.at(-1).index, connection);
 
-  assert.deepEqual(User.limit(1, 2)._limit, [1, 2]);
-  assert.deepEqual(User.limit([1, 2])._limit, [1, 2]);
+  await User.limit(1, 2).find();
+  assert.deepEqual(adapter.calls.at(-1).limit, [1, 2]);
+  await User.limit([1, 2]).find();
+  assert.deepEqual(adapter.calls.at(-1).limit, [1, 2]);
   assert.deepEqual(User.convertColumnToName(['user_id', 'name']), ['id', 'name']);
   assert.deepEqual(User.convertColumnToName({ user_id: 1, name: 'Alice' }), {
     id: 1,
@@ -1371,22 +1348,17 @@ test('Query preserves v1 pass-through behavior for unusual Adapter result shapes
   assert.deepEqual((await User.findOne()).toJSON(), {});
 });
 
-test('Query and Yukari retain the Adapter captured at construction like v1', async () => {
-  const first = new MemoryAdapter({ database: 'first', rows: [] });
-  const second = new MemoryAdapter({ database: 'second', rows: [] });
-  const toshihiko = new Toshihiko(first);
+test('Toshihiko keeps its Adapter outside the application-facing object surface', async () => {
+  const adapter = new MemoryAdapter({ database: 'private', rows: [] });
+  const toshihiko = new Toshihiko(adapter);
   const User = toshihiko.define('user', [{ name: 'id' }]);
-  const query = User.where({ id: 1 });
-  const built = User.build({ id: 2 });
 
-  toshihiko.adapter = second;
-  await query.find();
-  await built.insert();
-  await User.where({ id: 3 }).find();
-
-  assert.equal(first.calls.length, 1);
-  assert.equal(first.insertCalls.length, 1);
-  assert.equal(second.calls.length, 1);
+  assert.equal('adapter' in toshihiko, false);
+  assert.equal('getAdapter' in toshihiko, false);
+  await User.where({ id: 1 }).find();
+  await User.build({ id: 2 }).insert();
+  assert.equal(adapter.calls.length, 1);
+  assert.equal(adapter.insertCalls.length, 1);
 });
 
 test('v1 runtime aliases execute through the same Model and Query paths', async () => {
@@ -1403,21 +1375,29 @@ test('v1 runtime aliases execute through the same Model and Query paths', async 
     { name: 'name' },
   ]);
 
-  assert.equal(User._fields, User.schema);
   assert.equal(User.toshihiko, toshihiko);
-  assert.deepEqual(User.field('id')._fields, ['id']);
-  assert.deepEqual(User.fields(['id', 'name'])._fields, ['id', 'name']);
-  assert.equal(User.index('PRIMARY')._index, 'PRIMARY');
-  assert.deepEqual(User.orderBy({ id: 'desc' })._order, [{ id: -1 }]);
-  assert.equal(User.conn(connection)._conn, connection);
+  await User.field('id').find();
+  assert.deepEqual(adapter.calls.at(-1).fields, ['id']);
+  await User.fields(['id', 'name']).find();
+  assert.deepEqual(adapter.calls.at(-1).fields, ['id', 'name']);
+  await User.index('PRIMARY').find();
+  assert.equal(adapter.calls.at(-1).index, 'PRIMARY');
+  await User.orderBy({ id: 'desc' }).find();
+  assert.deepEqual(adapter.calls.at(-1).order, [{ id: -1 }]);
+  await User.conn(connection).find();
+  assert.equal(adapter.calls.at(-1).connection, connection);
 
   const query = User.where({});
   assert.equal(query.field('id'), query);
-  assert.deepEqual(query._fields, ['id']);
+  await query.find();
+  assert.deepEqual(adapter.calls.at(-1).fields, ['id']);
   assert.equal(query.orderBy('id desc'), query);
-  assert.deepEqual(query._order, [{ id: -1 }]);
-  assert.deepEqual(query.limit([2], 3)._limit, [2, 3]);
-  assert.deepEqual(query.limit([], undefined)._limit, [0, 0]);
+  await query.find();
+  assert.deepEqual(adapter.calls.at(-1).order, [{ id: -1 }]);
+  await query.limit([2], 3).find();
+  assert.deepEqual(adapter.calls.at(-1).limit, [2, 3]);
+  await query.limit([], undefined).find();
+  assert.deepEqual(adapter.calls.at(-1).limit, [0, 0]);
 
   assert.deepEqual(await User.update({ name: 'Alice' }), { affectedRows: 1 });
   assert.deepEqual(await User.delete(), { affectedRows: 1 });
@@ -1578,12 +1558,10 @@ test('Adapter loading and direct injection retain the v1 compatibility surface',
   }
 });
 
-test('Yukari covers cached rows, validation aliases, and Adapter row filtering', async () => {
+test('Yukari keeps internal row metadata out of the application-facing surface', async () => {
   const adapter = new MemoryAdapter({
     database: 'yukari',
     insertRow: {
-      $fromCache: true,
-      $origData: { id: { fieldIdx: 0, data: 9 } },
       ignored() {},
       id: 9,
     },
@@ -1594,41 +1572,35 @@ test('Yukari covers cached rows, validation aliases, and Adapter row filtering',
     { name: 'nullable', allowNull: true },
   ]);
 
-  const built = User.build({ id: 1, nullable: null, $fromCache: true });
-  assert.equal(built.$fromCache, true);
+  const built = User.build({ id: 1, nullable: null, ignored: true });
   await built.validateOne('nullable', null);
   await assert.rejects(built.validateOne('missing', 1), /No such field missing/);
   await built.insert();
   assert.equal(built.id, 9);
-  assert.equal(built.$fromCache, true);
   assert.equal(built.ignored, undefined);
+  assert.deepEqual(Object.keys(built).sort(), ['id', 'nullable']);
 
-  const queried = new Yukari(User, 'query');
-  queried.fillRowFromSource({ id: 1, nullable: 'value', $fromCache: true });
-  assert.equal(queried.$fromCache, true);
+  const queried = new Yukari(User, 'query', { id: 1, nullable: 'value' });
   queried.nullable = null;
-  assert.deepEqual(queried.updateChanges().map(({ field, value }) => [field.name, value]), [
-    ['nullable', null],
-  ]);
+  await queried.update();
+  assert.deepEqual(adapter.updateCalls.at(-1).data, [{ name: 'nullable', value: null }]);
 
   adapter.options.rows = [queried];
   assert.equal(await User.findOne(), queried);
   assert.deepEqual(await User.find(true), [queried.toJSON()]);
 
-  const originalNameBuild = new Yukari(User, 'new');
-  originalNameBuild.buildNewRow({ id: 3 }, true);
+  const originalNameBuild = new Yukari(User, 'new', { id: 3 }, true);
   assert.equal(originalNameBuild.id, 3);
 
-  const nullableSource = new Yukari(User, 'query');
-  nullableSource.fillRowFromSource({ id: 2, nullable: null });
+  const nullableSource = new Yukari(User, 'query', { id: 2, nullable: null });
   assert.equal(nullableSource.nullable, null);
-  assert.deepEqual(Yukari.extractAdapterData(User, { $meta: true, id: 2 }), [
-    { field: User.fieldNamesMap.id, value: 2 },
-  ]);
-  nullableSource.$meta = true;
   nullableSource.extra = 'ignored';
   nullableSource.handler = () => undefined;
-  assert.deepEqual(nullableSource.updateChanges(), []);
+  await nullableSource.update();
+  assert.deepEqual(adapter.updateCalls.at(-1).data, [
+    { name: 'id', value: 2 },
+    { name: 'nullable', value: null },
+  ]);
 
   const Membership = new Toshihiko(new MemoryAdapter({ database: 'composite', rows: [] }))
     .define('membership', [
@@ -1645,7 +1617,8 @@ test('remaining v1 branch shapes preserve empty and scalar return values', async
   assert.deepEqual(Empty.convertColumnToName('id'), 'id');
   assert.equal(Empty.getPrimaryKeysName(), 'id');
   assert.equal(Empty.getPrimaryKeysColumn(), 'id');
-  assert.deepEqual(Empty.limit([], 2)._limit, [0, 2]);
+  await Empty.limit([], 2).find();
+  assert.deepEqual(emptyAdapter.calls.at(-1).limit, [0, 2]);
 
   const NoPrimary = new Toshihiko(new MemoryAdapter({ rows: [] }))
     .define('no-primary', [{ name: 'value' }]);

@@ -24,7 +24,7 @@ test('find and count execute through the Promise pool', async () => {
 
   const row = await User.where({ id: 1 }).findOne(true);
   assert.deepEqual(row, { id: 1, name: 'Alice' });
-  assert.equal(await adapter.count(User.where({ id: { $gte: 2 } })), 3);
+  assert.equal(await User.where({ id: { $gte: 2 } }).count(), 3);
   assert.deepEqual(pool.calls[0], {
     method: 'execute',
     sql: 'SELECT `user_id`, `name` FROM `users` WHERE (`user_id` = ?) LIMIT 0, 1',
@@ -293,7 +293,7 @@ test('empty driver and cache result shapes retain v1 fallbacks', async () => {
   );
 });
 
-test('cache invalidation accepts null related rows and missing field lists', async () => {
+test('cache invalidation accepts null related rows', async () => {
   const deleted: readonly object[][] = [];
   const cache = {
     async deleteData() {},
@@ -321,16 +321,10 @@ test('cache invalidation accepts null related rows and missing field lists', asy
   ])).affectedRows, 1);
 
   const query = User.where({ id: 1 });
-  (query as { _fields: string[] | undefined })._fields = undefined;
-  query._updateData = { name: 'Bob' };
   adapter.findWithNoCache = async () => ({ id: 1 });
-  assert.equal((await adapter.updateByQuery(query)).affectedRows, 1);
+  assert.equal((await query.update({ name: 'Bob' })).affectedRows, 1);
   adapter.findWithNoCache = async () => null;
   const nullRelatedQuery = User.where({ id: 2 });
-  nullRelatedQuery._updateData = { name: 'Dave' };
-  assert.equal((await adapter.updateByQuery(nullRelatedQuery)).affectedRows, 1);
+  assert.equal((await nullRelatedQuery.update({ name: 'Dave' })).affectedRows, 1);
   assert.deepEqual(deleted, [[{ id: 1 }], [], [{ id: 1 }], []]);
-
-  (query as { _limit: number[] | undefined })._limit = undefined;
-  assert.deepEqual(adapter.queryToOptions(query, { single: true }).limit, [0, 1]);
 });

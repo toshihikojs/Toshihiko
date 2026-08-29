@@ -34,17 +34,23 @@ test('Redis cache preserves v1 key and round-trip result shapes', async () => {
   } as unknown as RedisClient;
   const cache = new RedisCache('127.0.0.1:6379', { prefix: '__test__' }, client);
 
-  assert.equal(cache._getKey('database', 'records', 1), '__test__database_records:1');
-  assert.equal(cache._getKey('database', 'records', null), '__test__database_records');
-  assert.equal(
-    cache._getKey('database', 'records', { siteId: 1, userId: 2 }),
-    '__test__database_records:siteId1:userId2',
-  );
   assert.equal(await cache.setData('database', 'records', 1, { id: 1 }), 'OK');
   assert.deepEqual(operations.at(-1), [
     'set',
     '__test__database_records:1',
     '{"id":1}',
+  ]);
+  await cache.setData('database', 'records', null, { id: 0 });
+  assert.deepEqual(operations.at(-1), [
+    'set',
+    '__test__database_records',
+    '{"id":0}',
+  ]);
+  await cache.setData('database', 'records', { siteId: 1, userId: 2 }, { id: 2 });
+  assert.deepEqual(operations.at(-1), [
+    'set',
+    '__test__database_records:siteId1:userId2',
+    '{"id":2}',
   ]);
 
   pipelineResult = [
@@ -72,7 +78,8 @@ test('Redis cache preserves v1 key and round-trip result shapes', async () => {
 
   const withoutOptions = new RedisCache('127.0.0.1:6379', undefined, client);
   assert.equal(withoutOptions.prefix, '');
-  assert.equal(withoutOptions._getKey('database', 'records', 1), 'database_records:1');
+  await withoutOptions.setData('database', 'records', 1, { id: 1 });
+  assert.deepEqual(operations.at(-1), ['set', 'database_records:1', '{"id":1}']);
 });
 
 test('Redis cache create constructs a lazy client with v1 server parsing', () => {
@@ -82,7 +89,6 @@ test('Redis cache create constructs a lazy client with v1 server parsing', () =>
   });
 
   assert.equal(cache.prefix, '__created__');
-  assert.equal(cache._getKey('database', 'records', 1), '__created__database_records:1');
   cache.redis.disconnect();
 
   const defaults = create('127.0.0.1:6379');

@@ -31,7 +31,7 @@ import type {
   AdapterUpdateValue,
   AdapterValue,
 } from './contracts/adapter';
-import type { Query } from './query';
+import type { QueryAdapterData } from './query';
 import {
   createCache,
   type Cache,
@@ -39,6 +39,8 @@ import {
 } from './contracts/cache';
 
 export type ToshihikoOptions = object;
+
+const adapterInstances = new WeakMap<object, AdapterLike>();
 
 type IsAdapterCompatible<
   Name extends string,
@@ -50,11 +52,11 @@ type IsAdapterCompatible<
     AdapterModel<AdapterInstance>
   >
   | IsAssignableWhenUsed<
-    Query<Name, Schema, AdapterInstance>,
+    QueryAdapterData<Name, Schema, AdapterInstance>,
     AdapterQueryType<AdapterInstance>
   >
   | IsAssignableWhenUsed<
-    Query<Name, Schema, AdapterInstance>,
+    QueryAdapterData<Name, Schema, AdapterInstance>,
     AdapterCountQueryType<AdapterInstance>
   >
   | IsAssignableWhenUsed<
@@ -82,11 +84,11 @@ type IsAdapterCompatible<
     AdapterUpdateValue<AdapterInstance>
   >
   | IsAssignableWhenUsed<
-    Query<Name, Schema, AdapterInstance>,
+    QueryAdapterData<Name, Schema, AdapterInstance>,
     AdapterDeleteQueryType<AdapterInstance>
   >
   | IsAssignableWhenUsed<
-    Query<Name, Schema, AdapterInstance>,
+    QueryAdapterData<Name, Schema, AdapterInstance>,
     AdapterUpdateByQueryType<AdapterInstance>
   >
   ? false
@@ -108,7 +110,6 @@ export class Toshihiko<
   AdapterInstance extends AdapterLike = Adapter,
   Options extends object = ToshihikoOptions,
 > extends EventEmitter2 {
-  readonly adapter: AdapterInstance;
   declare readonly cache: Cache | null | undefined;
   readonly dialect: string | null;
   readonly options: Options;
@@ -125,20 +126,23 @@ export class Toshihiko<
     super();
     this.options = (options ?? {}) as Options;
 
+    let adapterInstance: AdapterInstance;
+
     if (typeof adapter === 'string') {
       const Constructor = loadAdapter<Options, AdapterInstance>(adapter);
-      this.adapter = new Constructor(this, this.options);
+      adapterInstance = new Constructor(this, this.options);
       this.dialect = adapter;
     } else if (typeof adapter === 'function') {
       const Constructor = adapter as AdapterConstructor<Options, AdapterInstance>;
-      this.adapter = new Constructor(this, this.options);
+      adapterInstance = new Constructor(this, this.options);
       this.dialect = Constructor.name || null;
     } else {
-      this.adapter = adapter;
+      adapterInstance = adapter;
       this.dialect = adapter.constructor.name || null;
     }
 
-    attachAdapterCompatibility(this, this.adapter);
+    adapterInstances.set(this, adapterInstance);
+    attachAdapterCompatibility(this, adapterInstance);
 
     const cacheSource = (this.options as { readonly cache?: CacheSource }).cache;
     if (cacheSource) {
@@ -151,17 +155,13 @@ export class Toshihiko<
   }
 
   get database(): string {
-    return this.adapter.getDBName();
-  }
-
-  getAdapter(): AdapterInstance {
-    return this.adapter;
+    return getAdapterInstance(this).getDBName();
   }
 
   async execute(
     ...arguments_: AdapterExecuteArguments<AdapterInstance>
   ): Promise<AdapterExecuteResult<AdapterInstance>> {
-    const adapter = this.getAdapter() as unknown as {
+    const adapter = getAdapterInstance(this) as unknown as {
       execute(...values: AdapterExecuteArguments<AdapterInstance>): Promise<AdapterExecuteResult<AdapterInstance>>;
     };
     return await adapter.execute(...arguments_);
@@ -180,11 +180,11 @@ export class Toshihiko<
       AdapterInstance,
       Methods
     > = {},
-    ..._validation: IsValidDefinition<Name, Schema, AdapterInstance> extends true
+    ...validation: IsValidDefinition<Name, Schema, AdapterInstance> extends true
       ? readonly []
       : readonly [schemaTypeError: never]
   ): Model<Name, Schema, AdapterInstance> & Methods {
-    void _validation;
+    void validation;
     const model = new Model<Name, Schema, AdapterInstance>(
       collectionName,
       this,
@@ -196,6 +196,12 @@ export class Toshihiko<
     }
     return model as Model<Name, Schema, AdapterInstance> & Methods;
   }
+}
+
+export function getAdapterInstance<AdapterInstance extends AdapterLike>(
+  toshihiko: Toshihiko<AdapterInstance>,
+): AdapterInstance {
+  return adapterInstances.get(toshihiko) as AdapterInstance;
 }
 
 function attachAdapterCompatibility<

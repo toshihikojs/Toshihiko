@@ -5,6 +5,7 @@ import { Toshihiko, Type, type FieldType } from 'toshihiko';
 import {
   MySQLAdapter,
   type MySQLModel,
+  type MySQLQuery,
   type MySQLQueryOptions,
 } from '../../dist';
 import {
@@ -118,13 +119,17 @@ test('v1 queryToOptions preserves query state and single-row limit rules', () =>
     { name: 'name', type: Type.String },
   ]);
   const connection = asConnection({ marker: true });
-  const query = User.where({ id: { $gte: 2 } })
-    .fields('id,name')
-    .order({ name: -1 })
-    .limit(10, 20)
-    .index('idx')
-    .conn(connection);
-  query._updateData = { name: 'Bob' };
+  const query: MySQLQuery = {
+    cache: null,
+    connection,
+    fields: ['id', 'name'],
+    index: 'idx',
+    limit: [10, 20],
+    model: User,
+    order: [{ name: -1 }],
+    updateData: { name: 'Bob' },
+    where: { id: { $gte: 2 } },
+  };
 
   const options = adapter.queryToOptions(query);
   assert.deepEqual(options, {
@@ -138,8 +143,8 @@ test('v1 queryToOptions preserves query state and single-row limit rules', () =>
   });
   (options.where as { id: { $gte: number } }).id.$gte = 3;
   (options.fields as string[]).push('missing');
-  assert.deepEqual(query._where, { id: { $gte: 2 } });
-  assert.deepEqual(query._fields, ['id', 'name']);
+  assert.deepEqual(query.where, { id: { $gte: 2 } });
+  assert.deepEqual(query.fields, ['id', 'name']);
 
   assert.deepEqual(adapter.queryToOptions(query, {
     where: { id: { $lt: 10 }, name: 'Alice' },
@@ -147,9 +152,9 @@ test('v1 queryToOptions preserves query state and single-row limit rules', () =>
     id: { $gte: 2, $lt: 10 },
     name: 'Alice',
   });
-  assert.deepEqual(adapter.queryToOptions(User.where({}), { single: true }).limit, [0, 1]);
-  assert.deepEqual(adapter.queryToOptions(User.limit(10), { single: true }).limit, [1]);
-  assert.deepEqual(adapter.queryToOptions(User.limit(2, 10), { single: true }).limit, [2, 1]);
+  assert.deepEqual(adapter.queryToOptions({ ...query, limit: [] }, { single: true }).limit, [0, 1]);
+  assert.deepEqual(adapter.queryToOptions({ ...query, limit: [10] }, { single: true }).limit, [1]);
+  assert.deepEqual(adapter.queryToOptions({ ...query, limit: [2, 10] }, { single: true }).limit, [2, 1]);
 });
 
 test('v1 makeSql dispatch remains override-compatible', () => {
@@ -213,15 +218,15 @@ test('v1 count returns only the COUNT(0) field and keeps malformed failures', as
   const adapter = new MySQLAdapter({ pool });
   const User = define(adapter, 'users', [{ name: 'id', type: Type.Integer, primaryKey: true }]);
 
-  assert.equal(await adapter.count(User.where({ id: { $gte: 2 } })), 3);
-  assert.equal(await adapter.count(User.where({})), undefined);
-  await assert.rejects(adapter.count(User.where({})), TypeError);
-  await assert.rejects(adapter.count(User.where({})), TypeError);
+  assert.equal(await User.where({ id: { $gte: 2 } }).count(), 3);
+  assert.equal(await User.where({}).count(), undefined);
+  await assert.rejects(User.where({}).count(), TypeError);
+  await assert.rejects(User.where({}).count(), TypeError);
 
   Object.defineProperty(adapter, 'execute', {
     value: async () => null,
   });
-  assert.equal(await adapter.count(User.where({})), 0);
+  assert.equal(await User.where({}).count(), 0);
 });
 
 test('v1 insert reads auto-increment primary keys back with bound values', async () => {
@@ -493,8 +498,7 @@ test('v1 updateByQuery and deleteByQuery preserve query clauses and values', asy
     { name: 'score', type: Type.Float },
   ]);
   const update = Item.where({ id: { $lt: 3 } }).order({ id: -1 }).limit(5);
-  update._updateData = { score: 2.5 };
-  assert.equal((await adapter.updateByQuery(update)).affectedRows, 2);
+  assert.equal((await update.update({ score: 2.5 })).affectedRows, 2);
   assert.deepEqual(pool.calls[0], {
     method: 'execute',
     sql: 'UPDATE `items` SET `score` = ? WHERE (`id` < ?) ORDER BY `id` DESC LIMIT 5',
@@ -502,7 +506,7 @@ test('v1 updateByQuery and deleteByQuery preserve query clauses and values', asy
   });
 
   const deletion = Item.where({ score: { $gte: 2 } }).order({ id: -1 }).limit(0, 1);
-  assert.equal((await adapter.deleteByQuery(deletion)).affectedRows, 1);
+  assert.equal((await deletion.delete()).affectedRows, 1);
   assert.deepEqual(pool.calls[1], {
     method: 'execute',
     sql: 'DELETE FROM `items` WHERE (`score` >= ?) ORDER BY `id` DESC LIMIT 1',
@@ -518,9 +522,8 @@ test('v1 query mutations pass driver results through unchanged', async () => {
     { name: 'name', type: Type.String },
   ]);
   const update = Item.where({ id: 1 });
-  update._updateData = { name: 'Bob' };
-  assert.deepEqual(await adapter.updateByQuery(update), []);
-  assert.deepEqual(await adapter.deleteByQuery(Item.where({ id: 1 })), []);
+  assert.deepEqual(await update.update({ name: 'Bob' }), []);
+  assert.deepEqual(await Item.where({ id: 1 }).delete(), []);
 });
 
 test('v1 query mutations propagate errors from a supplied connection', async () => {
@@ -532,10 +535,9 @@ test('v1 query mutations propagate errors from a supplied connection', async () 
     { name: 'name', type: Type.String },
   ]);
   const update = Item.where({ id: 1 }).conn(connection);
-  update._updateData = { name: 'Bob' };
 
-  await assert.rejects(adapter.updateByQuery(update), /dummy update/);
-  await assert.rejects(adapter.deleteByQuery(Item.where({ id: 1 }).conn(connection)), /dummy delete/);
+  await assert.rejects(update.update({ name: 'Bob' }), /dummy update/);
+  await assert.rejects(Item.where({ id: 1 }).conn(connection).delete(), /dummy delete/);
   assert.equal(pool.calls.length, 0);
 });
 

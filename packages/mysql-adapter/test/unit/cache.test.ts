@@ -68,10 +68,8 @@ test('v1 MySQL cache reads hits, fills misses, and honors noCache', async () => 
   const rows = await User.fields(['id', 'name']).find();
   assert.equal(rows.length, 2);
   assert.equal(rows[0]?.name, 'cached');
-  assert.equal(rows[0]?.$fromCache, true);
   assert.equal(rows[0]?.ignored, undefined);
   assert.equal(rows[1]?.name, 'database');
-  assert.equal(rows[1]?.$fromCache, false);
   assert.equal(rows[1]?.ignored, undefined);
   assert.deepEqual(cache.reads, [[{ user_id: 1 }, { user_id: 2 }]]);
   assert.deepEqual(cache.writes, [{

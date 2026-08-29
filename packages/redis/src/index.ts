@@ -36,7 +36,7 @@ export class RedisCache extends Cache {
       : new RedisClient(Number(parts[1]), parts[0]!));
   }
 
-  _getKey(database: string, table: string, key: CacheKey): string {
+  #getKey(database: string, table: string, key: CacheKey): string {
     let base = `${this.prefix}${database}_${table}`;
     if (typeof key !== 'object') {
       return `${base}:${String(key)}`;
@@ -54,7 +54,7 @@ export class RedisCache extends Cache {
     table: string,
     key: CacheKey,
   ): Promise<number> {
-    return await this.redis.del(this._getKey(database, table, key));
+    return await this.redis.del(this.#getKey(database, table, key));
   }
 
   async deleteKeys(
@@ -64,7 +64,7 @@ export class RedisCache extends Cache {
   ): Promise<number[]> {
     const pipeline = this.redis.pipeline();
     for (const key of keys) {
-      pipeline.del(this._getKey(database, table, key));
+      pipeline.del(this.#getKey(database, table, key));
     }
     const result = await pipeline.exec() as readonly (readonly [Error | null, number])[] | null;
     return result?.map((entry) => entry[1]) ?? [];
@@ -77,7 +77,7 @@ export class RedisCache extends Cache {
     data: Value,
   ): Promise<'OK' | null> {
     return await this.redis.set(
-      this._getKey(database, table, key),
+      this.#getKey(database, table, key),
       JSON.stringify(data),
     );
   }
@@ -90,7 +90,7 @@ export class RedisCache extends Cache {
     const normalized = Array.isArray(keys) ? keys : [keys];
     const pipeline = this.redis.pipeline();
     for (const key of normalized) {
-      pipeline.get(this._getKey(database, table, key));
+      pipeline.get(this.#getKey(database, table, key));
     }
     const result = await pipeline.exec() as readonly (readonly [Error | null, string | null])[] | null;
     return result?.map((entry) => entry[1] === null

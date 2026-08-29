@@ -17,14 +17,20 @@ export interface AdapterFindOptions {
   readonly single: boolean;
 }
 
-export interface AdapterQuery<Model = unknown, Connection = unknown> {
-  readonly _conn: Connection | null;
-  readonly _fields: readonly string[];
-  readonly _index: string;
-  readonly _limit: readonly number[];
-  readonly _order: readonly Readonly<Record<string, number>>[];
-  readonly _where: Readonly<Record<string, unknown>>;
+export interface AdapterQuery<
+  Model = unknown,
+  Connection = unknown,
+  Cache = unknown,
+> {
+  readonly cache: Cache;
+  readonly connection: Connection | null;
+  readonly fields: readonly string[];
+  readonly index: string;
+  readonly limit: readonly number[];
   readonly model: Model;
+  readonly order: readonly Readonly<Record<string, number>>[];
+  readonly updateData: Readonly<Record<string, unknown>>;
+  readonly where: Readonly<Record<string, unknown>>;
 }
 
 export type AdapterRow = Readonly<Record<string, unknown>>;

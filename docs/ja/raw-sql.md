@@ -14,12 +14,17 @@ await User.conn(connection).execute(
 );
 ```
 
-MySQL Adapter は接続を最初の引数に置く形式も利用できます。
+トランザクションでは Model から接続を取得し、Query に渡します。アプリケーションコードが Adapter インスタンスを取得する必要はありません。
 
 ```typescript
-const adapter = database.getAdapter();
-await adapter.execute('SELECT 1');
-await adapter.execute(connection, 'SELECT ?', [1]);
+const connection = await User.beginTransaction();
+try {
+  await User.conn(connection).execute('SELECT ?', [1]);
+  await User.commit(connection);
+} catch (error) {
+  await User.rollback(connection);
+  throw error;
+}
 ```
 
 ## SQL ログ

@@ -16,9 +16,8 @@ test('the v1 mysql dialect name resolves the scoped adapter package', () => {
   };
   const toshihiko = new Toshihiko('mysql', { pool, database: 'package' });
 
-  assert.ok(toshihiko.adapter instanceof MySQLAdapter);
   assert.equal(Adapter.mysql, MySQLAdapter);
-  assert.equal(toshihiko.adapter.parent, toshihiko);
+  assert.equal('adapter' in toshihiko, false);
   assert.equal(toshihiko.pool, pool);
   assert.equal(toshihiko.database, 'package');
 });

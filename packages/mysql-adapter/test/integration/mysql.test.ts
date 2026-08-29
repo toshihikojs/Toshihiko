@@ -38,7 +38,6 @@ test.after(async () => {
 test('read, write, raw execution, and transactions work end to end', async () => {
   const inserted = User.build({ name: 'Alice', score: 1.5 });
   assert.equal(await inserted.save(), inserted);
-  assert.equal(inserted.$source, 'new');
   assert.deepEqual(inserted.toJSON(), { id: 1, name: 'Alice', score: 1.5 });
 
   const rows = await User.where({ score: { $gte: 1 } }).order({ id: -1 }).find(true);
@@ -66,7 +65,6 @@ test('read, write, raw execution, and transactions work end to end', async () =>
   const stale = await User.findById(1);
   assert.notEqual(stale, null);
   assert.equal(await persisted!.delete(), true);
-  assert.equal(persisted!.$source, 'delete');
   assert.equal(await User.findById(1, true), null);
   await assert.rejects(persisted!.save(), /Out-dated yukari data/);
 

@@ -9,12 +9,15 @@ const {
 } = require('../..');
 const { Adapter: CoreAdapter, Toshihiko, Type } = require('toshihiko');
 
-test('the v1 base dialect name resolves the scoped adapter package', () => {
+test('the v1 base dialect name resolves the scoped adapter package', async () => {
   const toshihiko = new Toshihiko('base', { database: 'typed' });
 
-  assert.ok(toshihiko.adapter instanceof Adapter);
   assert.equal(CoreAdapter.base, Adapter);
-  assert.equal(toshihiko.adapter.parent, toshihiko);
+  assert.equal('adapter' in toshihiko, false);
+  const User = toshihiko.define('user', [
+    { name: 'id', type: Type.Integer, primaryKey: true },
+  ]);
+  await assert.rejects(User.find(), /find function is not implemented/);
 });
 
 test('Adapter copies options and remains directly usable by Toshihiko', async () => {
@@ -26,8 +29,16 @@ test('Adapter copies options and remains directly usable by Toshihiko', async ()
   assert.equal(new Adapter(null).getDBName(), '');
   assert.equal(new Adapter(null, { database: 'parentless' }).parent, undefined);
 
-  const toshihiko = new Toshihiko(Adapter, { database: 'typed' });
-  assert.equal(toshihiko.adapter.parent, toshihiko);
+  let attached;
+  class CapturingAdapter extends Adapter {
+    constructor(...args) {
+      super(...args);
+      attached = this;
+    }
+  }
+  const toshihiko = new Toshihiko(CapturingAdapter, { database: 'typed' });
+  assert.equal(attached.parent, toshihiko);
+  assert.equal('adapter' in toshihiko, false);
   const User = toshihiko.define('user', [
     { name: 'id', type: Type.Integer, primaryKey: true },
   ]);
@@ -61,13 +72,15 @@ test('Adapter deep-clones non-plain option objects like v1', () => {
 test('base operations preserve the original not-implemented failures', async () => {
   const adapter = new Adapter({});
   const query = {
-    _conn: null,
-    _fields: [],
-    _index: '',
-    _limit: [],
-    _order: [],
-    _where: {},
+    cache: null,
+    connection: null,
+    fields: [],
+    index: '',
+    limit: [],
     model: {},
+    order: [],
+    updateData: {},
+    where: {},
   };
   const operations = [
     ['find', () => adapter.find(query)],

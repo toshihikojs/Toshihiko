@@ -57,27 +57,20 @@ test('Memcached cache preserves v1 key generation and data behavior', async () =
     client as unknown as MemcachedClient,
   );
 
-  assert.equal(cache._getKey('database', 'records', 1), '__test__database:records:1');
-  assert.equal(cache._getKey('database', 'records', null), '__test__database:records');
-  assert.equal(
-    cache._getKey('database', 'records', { id: null }),
-    '__test__database:records:null',
-  );
-  assert.equal(
-    cache._getKey('database', 'records', { a: 2, b: 3 }),
-    '__test__database:records:a2:b3',
-  );
-  assert.equal(
-    cache._getKey('database', 'records', { aabd: 2, aac: 3 }),
-    '__test__database:records:aab2:aac3',
-  );
-  assert.equal(
-    cache._getKey('database', 'records', { ab: 2, abc: 3 }),
-    '__test__database:records:ab2:abc3',
-  );
-  assert.equal(cache._getKey('database', 'records', {}), '__test__database:records');
-
   assert.equal(await cache.setData('database', 'records', 1, { id: 1 }), true);
+  assert.equal(client.values.has('__test__database:records:1'), true);
+  await cache.setData('database', 'records', null, { id: 0 });
+  assert.equal(client.values.has('__test__database:records'), true);
+  await cache.setData('database', 'records', { id: null }, { id: 2 });
+  assert.equal(client.values.has('__test__database:records:null'), true);
+  await cache.setData('database', 'records', { a: 2, b: 3 }, { id: 3 });
+  assert.equal(client.values.has('__test__database:records:a2:b3'), true);
+  await cache.setData('database', 'records', { aabd: 2, aac: 3 }, { id: 4 });
+  assert.equal(client.values.has('__test__database:records:aab2:aac3'), true);
+  await cache.setData('database', 'records', { ab: 2, abc: 3 }, { id: 5 });
+  assert.equal(client.values.has('__test__database:records:ab2:abc3'), true);
+  await cache.setData('database', 'records', {}, { id: 6 });
+  assert.deepEqual(client.values.get('__test__database:records'), { id: 6 });
   assert.deepEqual(await cache.getData('database', 'records', 1), [{ id: 1 }]);
   assert.deepEqual(await cache.getData('database', 'records', [999, 1]), [{ id: 1 }]);
   assert.equal(await cache.deleteData('database', 'records', 1), true);
@@ -90,8 +83,8 @@ test('Memcached cache preserves v1 key generation and data behavior', async () =
 
   const longKey1 = `a${'x'.repeat(125)}`;
   const longKey2 = `b${'y'.repeat(125)}`;
-  client.values.set(cache._getKey('database', 'records', longKey1), { id: 1 });
-  client.values.set(cache._getKey('database', 'records', longKey2), { id: 2 });
+  await cache.setData('database', 'records', longKey1, { id: 1 });
+  await cache.setData('database', 'records', longKey2, { id: 2 });
   assert.deepEqual(
     await cache.getData('database', 'records', [longKey1, longKey2]),
     [{ id: 1 }, { id: 2 }],
@@ -115,7 +108,7 @@ test('Memcached cache preserves v1 key generation and data behavior', async () =
   await assert.rejects(cache.deleteData('database', 'records', 3), /delete failed/);
 });
 
-test('Memcached cache forwards connection events and custom key functions', () => {
+test('Memcached cache forwards connection events and custom key functions', async () => {
   const client = new FakeMemcached();
   const cache = new MemcachedCache(
     '127.0.0.1:11211',
@@ -134,10 +127,11 @@ test('Memcached cache forwards connection events and custom key functions', () =
   cache.setCustomizeKeyFunc(function(database, table, key) {
     return `:${database}${table}${String(key)}`;
   });
-  assert.equal(cache._getKey('db', 'table', 1), ':dbtable1');
+  await cache.setData('db', 'table', 1, { id: 1 });
+  assert.equal(client.values.has(':dbtable1'), true);
 });
 
-test('Memcached cache constructor option and create helper retain the v1 surface', () => {
+test('Memcached cache constructor option and create helper retain the v1 surface', async () => {
   const client = new FakeMemcached();
   const customized = new MemcachedCache(
     '127.0.0.1:11211',
@@ -148,7 +142,8 @@ test('Memcached cache constructor option and create helper retain the v1 surface
     },
     client as unknown as MemcachedClient,
   );
-  assert.equal(customized._getKey('db', 'table', 1), 'db/table/1');
+  await customized.setData('db', 'table', 1, { id: 1 });
+  assert.equal(client.values.has('db/table/1'), true);
 
   const cache = create('127.0.0.1:11211');
   assert.equal(cache.servers, '127.0.0.1:11211');

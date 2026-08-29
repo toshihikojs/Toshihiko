@@ -40,7 +40,7 @@ import {
   type SchemaDefinition,
   type ValidatedFieldDefinition,
 } from './field';
-import type { Toshihiko } from '../toshihiko';
+import { getAdapterInstance, type Toshihiko } from '../toshihiko';
 import {
   createCache,
   type Cache,
@@ -128,8 +128,6 @@ export class Model<
   Schema extends SchemaDefinition,
   AdapterInstance extends AdapterLike = Adapter,
 > extends EventEmitter2 {
-  declare readonly $inferPrimaryKey: PrimaryKeyNames<Schema>;
-
   declare readonly name: Name;
   declare readonly parent: Toshihiko<AdapterInstance>;
   declare readonly originalSchema: Schema;
@@ -142,12 +140,6 @@ export class Model<
   declare readonly columnToName: Readonly<Record<string, FieldName<RowFromSchema<Schema>>>>;
   declare readonly fieldNamesMap: FieldNamesMap<Schema>;
   declare readonly fieldColumnsMap: Readonly<Record<string, Field<Schema[number]>>>;
-  declare readonly _fieldsKeyMap: {
-    readonly n2c: NameToColumnMap<Schema>;
-    readonly c2n: Readonly<Record<string, FieldName<RowFromSchema<Schema>>>>;
-    readonly name: FieldNamesMap<Schema>;
-    readonly column: Readonly<Record<string, Field<Schema[number]>>>;
-  };
   declare readonly cache: Cache | null;
 
   constructor(
@@ -204,14 +196,6 @@ export class Model<
       parent: { value: parent },
       primaryKeys: { enumerable: true, value: primaryKeys },
       schema: { enumerable: true, value: compiled },
-      _fieldsKeyMap: {
-        value: {
-          n2c: typedNameToColumn,
-          c2n: columnToName,
-          name: typedFieldNamesMap,
-          column: fieldColumnsMap,
-        },
-      },
     });
 
     if (this.primaryKeys.length === 0) {
@@ -219,19 +203,15 @@ export class Model<
     }
   }
 
-  get _fields(): CompiledSchema<Schema> {
-    return this.schema;
-  }
-
   get toshihiko(): Toshihiko<AdapterInstance> {
     return this.parent;
   }
 
   beginTransaction(
-    ..._support: AdapterBeginTransactionArguments<AdapterInstance>
+    ...support: AdapterBeginTransactionArguments<AdapterInstance>
   ): Promise<AdapterTransactionConnection<AdapterInstance>> {
-    void _support;
-    const adapter = this.parent.getAdapter() as unknown as {
+    void support;
+    const adapter = getAdapterInstance(this.parent) as unknown as {
       beginTransaction(): Promise<AdapterTransactionConnection<AdapterInstance>>;
     };
     return adapter.beginTransaction();
@@ -240,7 +220,7 @@ export class Model<
   commit(
     ...[connection]: AdapterCommitArguments<AdapterInstance>
   ): Promise<AdapterCommitResult<AdapterInstance>> {
-    const adapter = this.parent.getAdapter() as unknown as {
+    const adapter = getAdapterInstance(this.parent) as unknown as {
       commit(value: AdapterTransactionConnection<AdapterInstance>): Promise<AdapterCommitResult<AdapterInstance>>;
     };
     return adapter.commit(connection);
@@ -249,7 +229,7 @@ export class Model<
   rollback(
     ...[connection]: AdapterRollbackArguments<AdapterInstance>
   ): Promise<AdapterRollbackResult<AdapterInstance>> {
-    const adapter = this.parent.getAdapter() as unknown as {
+    const adapter = getAdapterInstance(this.parent) as unknown as {
       rollback(value: AdapterTransactionConnection<AdapterInstance>): Promise<AdapterRollbackResult<AdapterInstance>>;
     };
     return adapter.rollback(connection);
@@ -258,8 +238,7 @@ export class Model<
   build<const Input extends BuildInput<Schema>>(
     fields: NoUnknownBuildFields<Schema, Input>,
   ): BuiltYukari<Name, Schema, Input, AdapterInstance> {
-    const yukari = new Yukari<Name, Schema, AdapterInstance>(this, 'new');
-    yukari.buildNewRow(fields);
+    const yukari = new Yukari<Name, Schema, AdapterInstance>(this, 'new', fields);
     return yukari as BuiltYukari<Name, Schema, Input, AdapterInstance>;
   }
 

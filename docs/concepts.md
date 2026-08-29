@@ -121,12 +121,9 @@ The Adapter owns database-specific behavior: connection pools, SQL generation,
 bound values, transactions, and driver results. The core expresses operations
 through a typed Adapter contract without assuming a particular driver.
 
-Use `database.getAdapter()` when application code needs the concrete Adapter
-type:
-
-```typescript
-const adapter = database.getAdapter();
-```
+Applications select an Adapter when constructing `Toshihiko`, then use
+Toshihiko, Model, Query, and Yukari methods. The Adapter contract itself is an
+extension API for database integration authors.
 
 ## Cache
 

@@ -3,11 +3,22 @@ import { defineConfig, type DefaultTheme } from 'vitepress';
 const repository = 'https://github.com/toshihikojs/Toshihiko';
 
 interface LocaleText {
+  readonly applicationApi: string;
   readonly api: string;
+  readonly apiAdapter: string;
+  readonly apiCache: string;
+  readonly apiFieldTypes: string;
+  readonly apiModel: string;
+  readonly apiMysql: string;
+  readonly apiQuery: string;
+  readonly apiSqlUtils: string;
+  readonly apiToshihiko: string;
+  readonly apiYukari: string;
   readonly cache: string;
   readonly concepts: string;
   readonly development: string;
   readonly extensions: string;
+  readonly extensionApi: string;
   readonly guide: string;
   readonly home: string;
   readonly migration: string;
@@ -24,11 +35,22 @@ interface LocaleText {
 }
 
 const english: LocaleText = {
+  applicationApi: 'Application API',
   api: 'API reference',
+  apiAdapter: 'Adapter',
+  apiCache: 'Cache',
+  apiFieldTypes: 'Field and Type',
+  apiModel: 'Model',
+  apiMysql: 'MySQL Adapter',
+  apiQuery: 'Query',
+  apiSqlUtils: 'SQL utilities',
+  apiToshihiko: 'Toshihiko',
+  apiYukari: 'Yukari',
   cache: 'Caching',
   concepts: 'Core concepts',
   development: 'Development and testing',
   extensions: 'Writing extensions',
+  extensionApi: 'Extension API',
   guide: 'Guide',
   home: 'Home',
   migration: 'Migrating from v1',
@@ -45,11 +67,22 @@ const english: LocaleText = {
 };
 
 const chinese: LocaleText = {
+  applicationApi: '应用 API',
   api: 'API 参考',
+  apiAdapter: 'Adapter',
+  apiCache: 'Cache',
+  apiFieldTypes: 'Field 与 Type',
+  apiModel: 'Model',
+  apiMysql: 'MySQL Adapter',
+  apiQuery: 'Query',
+  apiSqlUtils: 'SQL 工具',
+  apiToshihiko: 'Toshihiko',
+  apiYukari: 'Yukari',
   cache: '缓存',
   concepts: '核心概念',
   development: '开发与测试',
   extensions: '编写扩展',
+  extensionApi: '扩展 API',
   guide: '指南',
   home: '首页',
   migration: '从 v1 升级',
@@ -66,11 +99,22 @@ const chinese: LocaleText = {
 };
 
 const japanese: LocaleText = {
+  applicationApi: 'アプリケーション API',
   api: 'API リファレンス',
+  apiAdapter: 'Adapter',
+  apiCache: 'Cache',
+  apiFieldTypes: 'Field と Type',
+  apiModel: 'Model',
+  apiMysql: 'MySQL Adapter',
+  apiQuery: 'Query',
+  apiSqlUtils: 'SQL ユーティリティ',
+  apiToshihiko: 'Toshihiko',
+  apiYukari: 'Yukari',
   cache: 'キャッシュ',
   concepts: 'コアコンセプト',
   development: '開発とテスト',
   extensions: '拡張機能の作成',
+  extensionApi: '拡張 API',
   guide: 'ガイド',
   home: 'ホーム',
   migration: 'v1 からの移行',
@@ -142,10 +186,29 @@ function theme(prefix: string, text: LocaleText): DefaultTheme.Config {
         ],
       },
       {
-        text: prefix === '/zh' ? '参考与迁移' : prefix === '/ja' ? 'リファレンスと移行' : 'Reference and migration',
+        text: text.applicationApi,
+        items: [
+          { text: text.api, link: withPrefix(prefix, '/api') },
+          { text: text.apiToshihiko, link: withPrefix(prefix, '/api/toshihiko') },
+          { text: text.apiModel, link: withPrefix(prefix, '/api/model') },
+          { text: text.apiQuery, link: withPrefix(prefix, '/api/query') },
+          { text: text.apiYukari, link: withPrefix(prefix, '/api/yukari') },
+          { text: text.apiFieldTypes, link: withPrefix(prefix, '/api/field-types') },
+        ],
+      },
+      {
+        text: text.extensionApi,
+        items: [
+          { text: text.apiAdapter, link: withPrefix(prefix, '/api/adapter') },
+          { text: text.apiCache, link: withPrefix(prefix, '/api/cache') },
+          { text: text.apiMysql, link: withPrefix(prefix, '/api/mysql') },
+          { text: text.apiSqlUtils, link: withPrefix(prefix, '/api/sql-utils') },
+        ],
+      },
+      {
+        text: prefix === '/zh' ? '迁移与开发' : prefix === '/ja' ? '移行と開発' : 'Migration and development',
         items: [
           { text: text.migration, link: withPrefix(prefix, '/migration-v1') },
-          { text: text.api, link: withPrefix(prefix, '/api') },
           { text: text.development, link: withPrefix(prefix, '/testing') },
         ],
       },

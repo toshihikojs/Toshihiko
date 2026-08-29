@@ -8,6 +8,7 @@ import type {
   AdapterFindOptions,
   AdapterFindResult,
   AdapterLike,
+  AdapterQuery,
   AdapterQueryExecuteArguments,
   AdapterQueryType,
   AdapterRow,
@@ -24,6 +25,7 @@ import type {
 import type { Model } from './contracts/model';
 import { Yukari, type QueriedYukari } from './yukari';
 import type { Cache } from './contracts/cache';
+import { getAdapterInstance } from './toshihiko';
 
 export type QueryOrderDirection = number | 'asc' | 'ASC' | 'desc' | 'DESC';
 
@@ -92,38 +94,50 @@ export type FindByIdInput<Schema extends SchemaDefinition> =
     : RowFromSchema<Schema>[PrimaryKeyName<Schema>]
       | Readonly<Record<string, unknown>>;
 
+export interface QueryAdapterData<
+  Name extends string,
+  Schema extends SchemaDefinition,
+  AdapterInstance extends AdapterLike,
+> extends AdapterQuery<
+  Model<Name, Schema, AdapterInstance>,
+  AdapterConnection<AdapterInstance>,
+  Cache | null
+> {
+  readonly updateData: Partial<RowFromSchema<Schema>>;
+  readonly where: QueryWhere<RowFromSchema<Schema>>;
+}
+
 export class Query<
   Name extends string,
   Schema extends SchemaDefinition,
   AdapterInstance extends AdapterLike = Adapter,
 > {
-  declare readonly adapter: AdapterInstance;
-  declare readonly cache: Cache | null;
-  declare readonly model: Model<Name, Schema, AdapterInstance>;
-  declare readonly toshihiko: Model<Name, Schema, AdapterInstance>['parent'];
-
-  _conn: AdapterConnection<AdapterInstance> | null = null;
-  _fields: string[];
-  _index = '';
-  _limit: number[] = [];
-  _order: Readonly<Record<string, number>>[] = [];
-  _updateData: Partial<RowFromSchema<Schema>> = {};
-  _where: QueryWhere<RowFromSchema<Schema>> = {};
+  readonly #adapter: AdapterInstance;
+  readonly #cache: Cache | null;
+  #connection: AdapterConnection<AdapterInstance> | null = null;
+  #fields: string[];
+  #index = '';
+  #limit: number[] = [];
+  readonly #model: Model<Name, Schema, AdapterInstance>;
+  #order: Readonly<Record<string, number>>[] = [];
+  readonly #toshihiko: Model<Name, Schema, AdapterInstance>['parent'];
+  #updateData: Partial<RowFromSchema<Schema>> = {};
+  #where: QueryWhere<RowFromSchema<Schema>> = {};
 
   constructor(model: Model<Name, Schema, AdapterInstance>) {
+    this.#adapter = getAdapterInstance(model.parent);
+    this.#cache = model.cache;
+    this.#model = model;
+    this.#toshihiko = model.parent;
     Object.defineProperties(this, {
-      adapter: { value: model.parent.adapter },
-      cache: { value: model.cache },
       field: { value: this.fields, writable: true },
-      model: { value: model },
       orderBy: { value: this.order, writable: true },
-      toshihiko: { value: model.parent },
     });
-    this._fields = model.schema.map((field) => field.name);
+    this.#fields = model.schema.map((field) => field.name);
   }
 
   index(indexName: string): this {
-    this._index = indexName;
+    this.#index = indexName;
     return this;
   }
 
@@ -132,7 +146,7 @@ export class Query<
       throw new Error(`query condition expected to be an object but got ${typeof condition} ${String(condition)}.`);
     }
 
-    this._where = condition;
+    this.#where = condition;
     return this;
   }
 
@@ -147,7 +161,7 @@ export class Query<
       throw new Error(`query fields expected to be an array or string but got ${typeof fields} ${String(fields)}.`);
     }
 
-    this._fields = normalized as string[];
+    this.#fields = normalized as string[];
     return this;
   }
 
@@ -158,12 +172,12 @@ export class Query<
     second?: number | string,
   ): this {
     if (arguments.length >= 2) {
-      this._limit = [normalizeLimit(first), normalizeLimit(second ?? 0)];
+      this.#limit = [normalizeLimit(first), normalizeLimit(second ?? 0)];
       return this;
     }
 
     if (typeof first === 'number') {
-      this._limit = [first];
+      this.#limit = [first];
       return this;
     }
 
@@ -175,58 +189,58 @@ export class Query<
         `query limit expected to be an array, number or string but got ${typeof first} ${String(first)}.`,
       );
     }
-    this._limit = values.slice(0, 2).map(normalizeLimit);
+    this.#limit = values.slice(0, 2).map(normalizeLimit);
     return this;
   }
 
   order(order: QueryOrder<RowFromSchema<Schema>>): this {
-    this._order = normalizeOrder(order);
+    this.#order = normalizeOrder(order);
     return this;
   }
 
   declare orderBy: (order: QueryOrder<RowFromSchema<Schema>>) => this;
 
   conn(connection: AdapterConnection<AdapterInstance> | null): this {
-    this._conn = connection;
+    this.#connection = connection;
     return this;
   }
 
   async count(): Promise<number> {
-    return await this.adapter.count(
-      this as AdapterCountQueryType<AdapterInstance>,
+    return await this.#adapter.count(
+      this.#adapterData() as AdapterCountQueryType<AdapterInstance>,
     );
   }
 
   async update(
     data: Partial<RowFromSchema<Schema>>,
-    ..._support: AdapterUpdateByQueryCallArguments<AdapterInstance>
+    ...support: AdapterUpdateByQueryCallArguments<AdapterInstance>
   ): Promise<AdapterUpdateByQueryResult<AdapterInstance>> {
-    void _support;
-    this._updateData = data;
-    const adapter = this.adapter as unknown as {
+    void support;
+    this.#updateData = data;
+    const adapter = this.#adapter as unknown as {
       updateByQuery(query: AdapterUpdateByQueryType<AdapterInstance>): Promise<AdapterUpdateByQueryResult<AdapterInstance>>;
     };
     return await adapter.updateByQuery(
-      this as unknown as AdapterUpdateByQueryType<AdapterInstance>,
+      this.#adapterData() as unknown as AdapterUpdateByQueryType<AdapterInstance>,
     );
   }
 
   async delete(): Promise<AdapterDeleteByQueryResult<AdapterInstance>> {
-    const adapter = this.adapter as unknown as {
+    const adapter = this.#adapter as unknown as {
       deleteByQuery(query: AdapterDeleteQueryType<AdapterInstance>): Promise<AdapterDeleteByQueryResult<AdapterInstance>>;
     };
     return await adapter.deleteByQuery(
-      this as unknown as AdapterDeleteQueryType<AdapterInstance>,
+      this.#adapterData() as unknown as AdapterDeleteQueryType<AdapterInstance>,
     );
   }
 
   async execute(
     ...arguments_: AdapterQueryExecuteArguments<AdapterInstance>
   ): Promise<AdapterExecuteResult<AdapterInstance>> {
-    const adapter = this.adapter as unknown as {
+    const adapter = this.#adapter as unknown as {
       execute(connection: AdapterConnection<AdapterInstance> | null, ...values: AdapterQueryExecuteArguments<AdapterInstance>): Promise<AdapterExecuteResult<AdapterInstance>>;
     };
-    return await adapter.execute(this._conn, ...arguments_);
+    return await adapter.execute(this.#connection, ...arguments_);
   }
 
   find(): Promise<readonly QueriedYukari<Name, Schema, AdapterInstance>[]>;
@@ -331,12 +345,12 @@ export class Query<
     const condition = this.primaryKeyCondition(id);
     this.where(condition);
 
-    if (this.cache) {
+    if (this.#cache) {
       let data: readonly (AdapterRow | null)[] = [];
       try {
-        data = await this.cache.getData<AdapterRow>(
-          this.toshihiko.database,
-          this.model.name,
+        data = await this.#cache.getData<AdapterRow>(
+          this.#toshihiko.database,
+          this.#model.name,
           condition,
         );
       } catch {
@@ -352,9 +366,23 @@ export class Query<
     return toJSON ? await this.findOne(true) : await this.findOne(false);
   }
 
+  #adapterData(): QueryAdapterData<Name, Schema, AdapterInstance> {
+    return {
+      cache: this.#cache,
+      connection: this.#connection,
+      fields: [...this.#fields],
+      index: this.#index,
+      limit: [...this.#limit],
+      model: this.#model,
+      order: [...this.#order],
+      updateData: { ...this.#updateData },
+      where: this.#where,
+    };
+  }
+
   private async fetch(options: AdapterFindOptions): Promise<AdapterFindResult> {
-    return this.adapter.find(
-      this as AdapterQueryType<AdapterInstance>,
+    return this.#adapter.find(
+      this.#adapterData() as AdapterQueryType<AdapterInstance>,
       options,
     );
   }
@@ -364,15 +392,19 @@ export class Query<
       return row as QueriedYukari<Name, Schema, AdapterInstance>;
     }
 
-    const yukari = new Yukari<Name, Schema, AdapterInstance>(this.model, 'query');
-    yukari.fillRowFromSource(row as Readonly<Record<string, unknown>>, true);
+    const yukari = new Yukari<Name, Schema, AdapterInstance>(
+      this.#model,
+      'query',
+      row as Readonly<Record<string, unknown>>,
+      true,
+    );
     return yukari as QueriedYukari<Name, Schema, AdapterInstance>;
   }
 
   private primaryKeyCondition(
     id: FindByIdInput<Schema>,
   ): QueryWhere<RowFromSchema<Schema>> {
-    const primaryKeys = this.model.primaryKeys;
+    const primaryKeys = this.#model.primaryKeys;
     if (primaryKeys.length === 1 && typeof id !== 'object') {
       return {
         [primaryKeys[0]!.name]: id,

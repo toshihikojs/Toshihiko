@@ -43,7 +43,6 @@ export type {
   QueriedYukari,
   Yukari,
   YukariFieldData,
-  YukariSource,
 } from './yukari';
 export type {
   adapterExecuteSpec,

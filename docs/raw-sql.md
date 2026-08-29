@@ -31,16 +31,21 @@ await User
 Model execution starts a Query. Calling `.conn(connection)` sends the command
 through that existing Adapter connection.
 
-## Execute from the MySQL Adapter
+## Execute on a transaction connection
 
-The MySQL Adapter accepts an optional connection as its first argument:
+The MySQL backend accepts an optional connection as the first argument. Obtain
+it through the Model transaction API; application code does not need the
+Adapter instance.
 
 ```typescript
-const adapter = database.getAdapter();
-
-await adapter.execute('SELECT 1');
-await adapter.execute('SELECT ? + ?', [1, 2]);
-await adapter.execute(connection, 'SELECT ?', [1]);
+const connection = await User.beginTransaction();
+try {
+  await User.conn(connection).execute('SELECT ?', [1]);
+  await User.commit(connection);
+} catch (error) {
+  await User.rollback(connection);
+  throw error;
+}
 ```
 
 The returned Promise resolves with the `mysql2` query result used by the

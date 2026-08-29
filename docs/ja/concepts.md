@@ -21,7 +21,7 @@ ORM がレコードオブジェクトを **Yukari instance** と呼ぶのは、�
 
 **Toshihiko はプロジェクトとパッケージの名前です。** キャッシュ層を備えたシンプルな Node.js ORM です。ORM はデータベースレコードと JavaScript オブジェクトを対応付けます。Toshihiko はレコードの CRUD を扱いますが、テーブルの作成や変更、テーブル間のリレーション定義は行いません。
 
-**`Toshihiko` はパッケージが公開するクラスでもあります。** `new Toshihiko(...)` は、設定済みのデータベース入口を作ります。このインスタンスは Adapter を保持し、データベース名を公開し、Model を作成し、Adapter の Raw 操作を実行し、Model に Cache を提供できます。
+**`Toshihiko` はパッケージが公開するクラスでもあります。** `new Toshihiko(...)` は、設定済みのデータベース入口を作ります。このインスタンスはデータベース名を公開し、Model を作成し、データベースバックエンドの Raw 操作を実行し、Model に Cache を提供できます。
 
 ```typescript
 const database = new Toshihiko('mysql', {
@@ -64,7 +64,7 @@ const users = await User
 
 ## Yukari
 
-Yukari は record instance です。この名前は、人物設定で Toshihiko が Yukari の分身であることに由来します。ORM では、特定の Model に属する 1 行を表す具体的なオブジェクトインスタンスです。マッピングされたフィールドは直接読み書きできるプロパティであり、オブジェクトは Model、Schema、Adapter、生成元の状態、検索時の元データも保持します。
+Yukari は record instance です。この名前は、人物設定で Toshihiko が Yukari の分身であることに由来します。ORM では、特定の Model に属する 1 行を表す具体的なオブジェクトインスタンスです。マッピングされたフィールドは直接読み書きできるプロパティであり、更新と削除に必要な状態はアプリケーション API に公開されません。
 
 ```typescript
 const row = await User.findById(1);
@@ -80,7 +80,7 @@ Model と Yukari は、それぞれテーブル単位と行単位のオブジェ
 
 ## Adapter と Cache
 
-Adapter は接続プール、SQL、バインド値、トランザクション、ドライバー戻り値を担当します。Cache は取得、保存、単一キー削除、複数キー削除の 4 つの Promise 操作を提供します。Model はデータベースの Cache を継承、置換、無効化できます。
+Adapter は接続プール、SQL、バインド値、トランザクション、ドライバー戻り値を担当します。通常のアプリケーションは `Toshihiko` の作成時に Adapter を選ぶだけです。Adapter 契約はデータベース拡張の開発者向けです。Cache は取得、保存、単一キー削除、複数キー削除の 4 つの Promise 操作を提供します。Model はデータベースの Cache を継承、置換、無効化できます。
 
 ## 型の流れ
 
