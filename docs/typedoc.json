@@ -1,0 +1,85 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "name": "Toshihiko API",
+  "entryPoints": [
+    "../packages/toshihiko",
+    "../packages/base-adapter",
+    "../packages/mysql-adapter",
+    "../packages/base-cache",
+    "../packages/redis",
+    "../packages/memcached",
+    "../packages/sql-utils"
+  ],
+  "entryPointStrategy": "packages",
+  "packageOptions": {
+    "entryPoints": ["src/index.ts"],
+    "categorizeByGroup": false,
+    "defaultCategory": "Advanced types",
+    "categoryOrder": [
+      "Application API",
+      "Schema and fields",
+      "Extension API",
+      "Advanced types",
+      "*"
+    ],
+    "excludeExternals": true,
+    "excludeInternal": true,
+    "excludePrivate": true,
+    "excludeProtected": true,
+    "readme": "none",
+    "validation": {
+      "notExported": false,
+      "invalidLink": true,
+      "notDocumented": false
+    }
+  },
+  "out": ".vitepress/dist/typedoc",
+  "customCss": ".typedoc/theme.css",
+  "favicon": "public/logo.png",
+  "titleLink": "https://toshihikojs.github.io/Toshihiko/",
+  "navigationLinks": {
+    "Guides": "https://toshihikojs.github.io/Toshihiko/",
+    "GitHub": "https://github.com/toshihikojs/Toshihiko"
+  },
+  "hostedBaseUrl": "https://toshihikojs.github.io/Toshihiko/typedoc/",
+  "includeVersion": true,
+  "readme": "none",
+  "categorizeByGroup": false,
+  "defaultCategory": "Advanced types",
+  "categoryOrder": [
+    "Application API",
+    "Schema and fields",
+    "Extension API",
+    "Advanced types",
+    "*"
+  ],
+  "navigation": {
+    "includeCategories": false,
+    "includeGroups": false,
+    "includeFolders": true,
+    "compactFolders": true,
+    "excludeReferences": true
+  },
+  "navigationLeaves": [
+    "toshihiko",
+    "@toshihiko/base-adapter",
+    "@toshihiko/base-cache",
+    "@toshihiko/memcached-cache",
+    "@toshihiko/mysql-adapter",
+    "@toshihiko/redis-cache",
+    "@toshihiko/sql-utils"
+  ],
+  "excludeInternal": true,
+  "excludeExternals": true,
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "lightHighlightTheme": "github-light-default",
+  "darkHighlightTheme": "github-dark-default",
+  "useFirstParagraphOfCommentAsSummary": true,
+  "validation": {
+    "notExported": false,
+    "invalidLink": true,
+    "notDocumented": false
+  },
+  "githubPages": false
+}

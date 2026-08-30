@@ -2,6 +2,7 @@ import fbbkJson = require('fbbk-json');
 import moment = require('moment');
 import type { FieldType } from './contracts/field';
 
+/** A recursively serializable JSON value. */
 export type JsonValue =
   | boolean
   | null
@@ -10,10 +11,15 @@ export type JsonValue =
   | readonly JsonValue[]
   | { readonly [key: string]: JsonValue };
 
+/** Storage values accepted by `Type.String.parse()`. */
 export type StringStorageValue = string | number | bigint | boolean | null | undefined;
+/** Storage values accepted by `Type.Boolean.parse()`. */
 export type BooleanStorageValue = string | number | boolean | null | undefined;
+/** Storage values accepted by numeric Field Types. */
 export type NumberStorageValue = string | number;
+/** Storage values accepted by `Type.Json.parse()`. */
 export type JsonStorageValue = string | JsonValue;
+/** Storage values accepted by `Type.Datetime.parse()`. */
 export type DatetimeStorageValue = moment.MomentInput;
 
 const StringType = {
@@ -133,13 +139,29 @@ const DatetimeType = {
   },
 } satisfies FieldType<Date, DatetimeStorageValue, string>;
 
+/**
+ * Built-in Field Types used by schema definitions.
+ *
+ * @category Schema and fields
+ */
 export const Type = {
+  /** Converts storage truthiness to `boolean` and restores it as `0` or `1`. */
   Boolean: BooleanType,
+  /** Converts supported date inputs to `Date` and restores SQL datetime text. */
   Datetime: DatetimeType,
+  /** Converts storage values with `parseFloat()`. */
   Float: FloatType,
+  /** Converts storage values with `parseInt()`. */
   Integer: IntegerType,
+  /** Parses JSON-compatible input and restores JSON text. */
   Json: JsonType,
+  /** Converts storage values to strings. */
   String: StringType,
+  /**
+   * Default strict-equality comparator retained for v1 runtime compatibility.
+   *
+   * @internal
+   */
   $equal<Value>(left: Value, right: Value): boolean {
     return left === right;
   },

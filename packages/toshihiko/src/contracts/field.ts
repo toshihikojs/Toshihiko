@@ -19,6 +19,11 @@ type FieldTypeJsonMethod<Value, JsonValue> = SameType<Value, JsonValue> extends 
   ? { readonly toJSON?: (value: Value) => JsonValue }
   : { readonly toJSON: (value: Value) => JsonValue };
 
+/**
+ * Defines conversion between storage, application, and JSON values.
+ *
+ * @category Schema and fields
+ */
 export type FieldType<
   Value,
   StorageValue = Value,
@@ -27,11 +32,17 @@ export type FieldType<
   readonly [fieldTypeValue]?: Value;
   readonly [fieldTypeStorageValue]?: StorageValue;
   readonly [fieldTypeJsonValue]?: JsonValue;
+  /** Human-readable Field Type name. */
   readonly name?: string;
+  /** Whether SQL adapters should quote restored values. */
   readonly needQuotes?: boolean;
+  /** Default application value used when a field omits `defaultValue`. */
   readonly defaultValue?: Value;
+  /** Converts a storage value into its application representation. */
   parse(value: StorageValue): Value;
+  /** Converts an application value into its storage representation. */
   restore(value: Value): StorageValue;
+  /** Compares two application values for change detection. */
   equal?(left: Value, right: Value): boolean;
 } & FieldTypeJsonMethod<Value, JsonValue>;
 
@@ -53,67 +64,120 @@ export type FieldTypeValue<Type extends FieldTypeLike> =
     ? Exclude<Type[typeof fieldTypeValue], undefined>
     : ReturnType<Type['parse']>;
 
+/** Resolves the storage value returned by a Field Type's `restore()` method. */
 export type FieldTypeStorageValue<Type extends FieldTypeLike> =
   ReturnType<Type['restore']>;
 
+/**
+ * A validator executed before a Yukari row is written.
+ *
+ * @category Schema and fields
+ */
 export type FieldValidator<Value> = (
   value: Value,
 ) => string | void | Promise<string | void>;
 
-type FieldValidatorShape = {
-  validate(value: never): string | void | Promise<string | void>;
-}['validate'];
-
-export interface FieldDefinitionShape {
+/**
+ * The common shape accepted for one entry in a Toshihiko schema.
+ *
+ * Use {@link FieldDefinition} when a reusable declaration should retain its
+ * literal field name and concrete Field Type. This broader interface is the
+ * structural constraint used by {@link SchemaDefinition}.
+ *
+ * @category Schema and fields
+ */
+export interface SchemaFieldDefinition {
+  /** Logical property name exposed on Yukari rows. */
   readonly name: string;
+  /** Storage column name; defaults to {@link name}. */
   readonly column?: string;
+  /** Value conversion contract; defaults to `Type.String`. */
   readonly type?: FieldTypeLike;
+  /** One validator or a list executed before writes. */
   readonly validators?:
-    | FieldValidatorShape
-    | readonly FieldValidatorShape[];
+    | FieldValidator<never>
+    | readonly FieldValidator<never>[];
+  /** Whether the application value may be `null`. */
   readonly allowNull?: boolean;
+  /** Whether the field participates in primary-key lookups and row locators. */
   readonly primaryKey?: boolean;
+  /** Whether the storage backend generates this field on insert. */
   readonly autoIncrement?: boolean;
+  /** Application value used when a newly built row omits this field. */
   readonly defaultValue?: DataValue;
 }
 
+/**
+ * A schema entry which retains its field name and Field Type.
+ *
+ * @category Schema and fields
+ */
 export interface FieldDefinition<
   Name extends string = string,
   FieldTypeDefinition extends FieldTypeLike = FieldTypeLike,
-> extends FieldDefinitionShape {
+> extends SchemaFieldDefinition {
+  /** Literal logical property name retained for schema inference. */
   readonly name: Name;
+  /** Storage column name; defaults to {@link name}. */
   readonly column?: string;
+  /** Concrete Field Type retained for value inference. */
   readonly type?: FieldTypeDefinition;
+  /** Validators receiving the inferred application value. */
   readonly validators?:
     | FieldValidator<FieldTypeValue<FieldTypeDefinition>>
     | readonly FieldValidator<FieldTypeValue<FieldTypeDefinition>>[];
+  /** Whether the inferred application value includes `null`. */
   readonly allowNull?: boolean;
+  /** Whether the field participates in primary-key lookup. */
   readonly primaryKey?: boolean;
+  /** Whether the storage backend generates this field on insert. */
   readonly autoIncrement?: boolean;
+  /** Application value used when a newly built row omits this field. */
   readonly defaultValue?: FieldTypeValue<FieldTypeDefinition> | undefined;
 }
 
-export type SchemaDefinition = readonly FieldDefinitionShape[];
+/**
+ * A readonly list of field definitions accepted by {@link Toshihiko.define}.
+ *
+ * An ordinary array literal passed directly to `define()` retains each field's
+ * literal name and Field Type.
+ *
+ * @example
+ * ```ts
+ * const User = database.define('user', [
+ *   { name: 'id', type: Type.Integer, primaryKey: true },
+ *   { name: 'email', type: Type.String },
+ * ]);
+ * ```
+ *
+ * @category Schema and fields
+ */
+export type SchemaDefinition = readonly SchemaFieldDefinition[];
 
-export type FieldTypeFromDefinition<Definition extends FieldDefinitionShape> =
+/** Resolves the concrete Field Type used by one schema entry. */
+export type FieldTypeFromDefinition<Definition extends SchemaFieldDefinition> =
   Definition extends { readonly type: infer FieldTypeDefinition extends FieldTypeLike }
     ? FieldTypeDefinition
     : typeof Type.String;
 
-type NullableValue<Definition extends FieldDefinitionShape> =
+type NullableValue<Definition extends SchemaFieldDefinition> =
   Definition extends { readonly allowNull: true } ? null : never;
 
-export type FieldDefinitionValue<Definition extends FieldDefinitionShape> =
+/** Resolves one schema entry's application value, including nullable fields. */
+export type FieldDefinitionValue<Definition extends SchemaFieldDefinition> =
   | FieldTypeValue<FieldTypeFromDefinition<Definition>>
   | NullableValue<Definition>;
 
-export type FieldDefinitionNonNullValue<Definition extends FieldDefinitionShape> =
+/** Resolves one schema entry's non-null application value. */
+export type FieldDefinitionNonNullValue<Definition extends SchemaFieldDefinition> =
   FieldTypeValue<FieldTypeFromDefinition<Definition>>;
 
-export type FieldDefinitionStorageValue<Definition extends FieldDefinitionShape> =
+/** Resolves the storage value produced by one schema entry's Field Type. */
+export type FieldDefinitionStorageValue<Definition extends SchemaFieldDefinition> =
   FieldTypeStorageValue<FieldTypeFromDefinition<Definition>>;
 
-export type FieldDefinitionJsonValue<Definition extends FieldDefinitionShape> =
+/** Resolves the JSON value produced by one schema entry's Field Type. */
+export type FieldDefinitionJsonValue<Definition extends SchemaFieldDefinition> =
   null extends FieldDefinitionValue<Definition>
     ? FieldTypeJsonValue<FieldTypeFromDefinition<Definition>> | null
     : FieldTypeJsonValue<FieldTypeFromDefinition<Definition>>;
@@ -125,12 +189,13 @@ type FieldTypeJsonValue<Type extends FieldTypeLike> =
       ? JsonValue
       : FieldTypeValue<Type>;
 
+/** Maps a Schema to its serialized row object. */
 export type JsonRowFromSchema<Schema extends SchemaDefinition> = {
   [Definition in Schema[number] as Definition['name']]:
     FieldDefinitionJsonValue<Definition>;
 };
 
-export type ValidatedFieldDefinition<Definition extends FieldDefinitionShape> = Omit<
+export type ValidatedFieldDefinition<Definition extends SchemaFieldDefinition> = Omit<
   Definition,
   'defaultValue' | 'type' | 'validators'
 > & {
@@ -157,6 +222,10 @@ type HasValidToJSON<Type extends FieldTypeLike, Value> =
     ? SameType<Input, Value>
     : true;
 
+/**
+ * Verifies that a Field Type's conversion and comparison methods agree on the
+ * same application and storage values. Invalid definitions resolve to `never`.
+ */
 export type ValidatedFieldType<Type extends FieldTypeLike> =
   Type extends {
     parse(value: infer StorageValue): infer Value;
@@ -171,32 +240,49 @@ export type ValidatedFieldType<Type extends FieldTypeLike> =
       : never
     : never;
 
+/** Applies Field Type and validator consistency checks to every schema entry. */
 export type ValidatedSchema<Schema extends SchemaDefinition> = {
-  readonly [Index in keyof Schema]: Schema[Index] extends FieldDefinitionShape
+  readonly [Index in keyof Schema]: Schema[Index] extends SchemaFieldDefinition
     ? ValidatedFieldDefinition<Schema[Index]>
     : never;
 };
 
+/** Maps a Schema to its application row object. */
 export type RowFromSchema<Schema extends SchemaDefinition> = {
   [Definition in Schema[number] as Definition['name']]: FieldDefinitionValue<Definition>;
 };
 
+/** Extracts the logical names of fields marked with `primaryKey: true`. */
 export type PrimaryKeyNames<Schema extends SchemaDefinition> = Extract<
   Schema[number],
   { readonly primaryKey: true }
 >['name'];
 
+/**
+ * The runtime representation of one compiled schema entry.
+ *
+ * @category Schema and fields
+ */
 export class Field<
-  Definition extends FieldDefinitionShape = FieldDefinitionShape,
+  Definition extends SchemaFieldDefinition = SchemaFieldDefinition,
 > {
+  /** Normalized field options. */
   declare readonly options: Readonly<Definition>;
+  /** Logical property name exposed on Yukari rows. */
   declare readonly name: Definition['name'];
+  /** Storage column name used by Adapters. */
   declare readonly column: string;
+  /** Field Type used for parsing, restoring, comparison, and JSON conversion. */
   declare readonly type: FieldTypeFromDefinition<Definition>;
+  /** Normalized validator list. */
   declare readonly validators: readonly FieldValidator<FieldDefinitionNonNullValue<Definition>>[];
+  /** Whether the field accepts `null`. */
   declare readonly allowNull: boolean;
+  /** Whether the field participates in row locators. */
   declare readonly primaryKey: boolean;
+  /** Whether the storage backend generates this field. */
   declare readonly autoIncrement: boolean;
+  /** Resolved schema or Field Type default. */
   declare readonly default: FieldDefinitionValue<Definition> | undefined;
 
   constructor(definition: Definition & ValidatedFieldDefinition<Definition>) {
@@ -242,31 +328,53 @@ export class Field<
     });
   }
 
+  /** Compatibility getter for {@link default}. */
   get defaultValue(): FieldDefinitionValue<Definition> | undefined {
     return this.default;
   }
 
+  /** Whether SQL adapters should quote the restored value. */
   get needQuotes(): boolean {
     return Boolean(this.type.needQuotes);
   }
 
+  /**
+   * Converts a storage value into its application representation.
+   *
+   * @param value - Value returned by the storage backend.
+   * @returns Parsed application value.
+   */
   parse(
     value: FieldDefinitionStorageValue<Definition>,
   ): FieldDefinitionValue<Definition> {
     return this.type.parse(value as never) as FieldDefinitionValue<Definition>;
   }
 
+  /**
+   * Converts an application value into its storage representation.
+   *
+   * @param value - Current Yukari field value.
+   * @returns Value ready for the Adapter.
+   */
   restore(
     value: FieldDefinitionValue<Definition>,
   ): FieldDefinitionStorageValue<Definition> {
     return this.type.restore(value as never) as FieldDefinitionStorageValue<Definition>;
   }
 
+  /** Compares two application values using the Field Type or strict equality. */
   declare readonly equal: (
     left: FieldDefinitionValue<Definition>,
     right: FieldDefinitionValue<Definition>,
   ) => boolean;
 
+  /**
+   * Converts an application value into its JSON representation.
+   *
+   * @param value - Application value to serialize.
+   * @returns Field Type JSON value, or the input unchanged when no converter
+   * is defined.
+   */
   toJSON(
     value: FieldDefinitionValue<Definition>,
   ): FieldDefinitionJsonValue<Definition> {
@@ -299,7 +407,7 @@ function normalizeValidators<Value>(
     : [];
 }
 
-function resolveDefaultValue<Definition extends FieldDefinitionShape>(
+function resolveDefaultValue<Definition extends SchemaFieldDefinition>(
   definition: Definition,
   type: FieldTypeFromDefinition<Definition>,
 ): FieldDefinitionValue<Definition> | undefined {
@@ -316,10 +424,10 @@ function isRuntimeFieldType(type: FieldTypeLike | undefined): type is FieldTypeL
     && typeof type.restore === 'function';
 }
 
-function normalizeDefinition<Definition extends FieldDefinitionShape>(
+function normalizeDefinition<Definition extends SchemaFieldDefinition>(
   definition: Definition,
-): FieldDefinitionShape {
+): SchemaFieldDefinition {
   return otrans.toCamel(
     definition as Readonly<Record<string, unknown>>,
-  ) as unknown as FieldDefinitionShape;
+  ) as unknown as SchemaFieldDefinition;
 }

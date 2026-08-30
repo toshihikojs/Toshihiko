@@ -5,6 +5,17 @@ Schema 条目描述一个逻辑属性。Model 会把它编译成 `Field`，并�
 ## 字段定义
 
 ```typescript
+interface SchemaFieldDefinition {
+  readonly name: string;
+  column?: string;
+  type?: FieldTypeLike;
+  validators?: FieldValidator<never> | readonly FieldValidator<never>[];
+  allowNull?: boolean;
+  primaryKey?: boolean;
+  autoIncrement?: boolean;
+  defaultValue?: DataValue;
+}
+
 interface FieldDefinition<
   Name extends string = string,
   FieldTypeDefinition extends FieldTypeLike = FieldTypeLike,
@@ -21,8 +32,10 @@ interface FieldDefinition<
   defaultValue?: FieldTypeValue<FieldTypeDefinition>;
 }
 
-type SchemaDefinition = readonly FieldDefinitionShape[];
+type SchemaDefinition = readonly SchemaFieldDefinition[];
 ```
+
+`SchemaFieldDefinition` 是任意 Schema 条目都满足的宽泛结构；需要单独声明可复用的字段并保留具体字段名和 Field Type 时，使用 `FieldDefinition`。多数业务代码直接把数组字面量传给 `define()`，让 TypeScript 推断即可。
 
 | 属性 | 默认值 | 说明 |
 |---|---:|---|
@@ -48,7 +61,7 @@ type FieldValidator<Value> = (
 返回空字符串或 `undefined` 表示通过；非空字符串会成为错误信息。校验器的 `this` 是 Model。
 
 ```typescript
-class Field<Definition extends FieldDefinitionShape = FieldDefinitionShape> {
+class Field<Definition extends SchemaFieldDefinition = SchemaFieldDefinition> {
   readonly options: Readonly<Definition>;
   readonly name: Definition['name'];
   readonly column: string;

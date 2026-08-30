@@ -1,12 +1,12 @@
 import { EventEmitter2 } from 'eventemitter2';
 import type {
   Adapter as AdapterContract,
-  AdapterData,
-  AdapterFindOptions,
-  AdapterFindResult,
+  AdapterData as AdapterDataContract,
+  AdapterFindOptions as AdapterFindOptionsContract,
+  AdapterFindResult as AdapterFindResultContract,
   AdapterOperationResult,
-  AdapterQuery,
-  AdapterRow,
+  AdapterQuery as AdapterQueryContract,
+  AdapterRow as AdapterRowContract,
   AdapterExecuteSpec,
   DefaultAdapterExecuteSpec,
   DataRow,
@@ -14,10 +14,39 @@ import type {
 } from 'toshihiko';
 import { extend } from './util';
 
-export type { AdapterData } from 'toshihiko';
+/** Field/value pair passed to Adapter insert and update operations. */
+export type AdapterData<Field = object, Value = DataValue> = AdapterDataContract<Field, Value>;
 
+/** Options supplied to Adapter find operations. */
+export type AdapterFindOptions = AdapterFindOptionsContract;
+
+/** Row, row array, or `null` returned by Adapter find operations. */
+export type AdapterFindResult = AdapterFindResultContract;
+
+/** Normalized Query state consumed by an Adapter. */
+export type AdapterQuery<
+  Model = object,
+  Connection = object,
+  Cache = object | null,
+  UpdateData extends object = DataRow,
+  Where extends object = DataRow,
+> = AdapterQueryContract<Model, Connection, Cache, UpdateData, Where>;
+
+/** Storage row returned by an Adapter. */
+export type AdapterRow = AdapterRowContract;
+
+/** Default unstructured option shape for Adapter subclasses. */
 export type DefaultAdapterOptions = Readonly<Record<string, DataValue>>;
 
+/**
+ * Base class for Toshihiko database adapter implementations.
+ *
+ * Every operation rejects asynchronously with a descriptive “not implemented”
+ * error until a subclass overrides it. The base constructor copies options and
+ * retains the parent Toshihiko instance when one is supplied.
+ *
+ * @category Extension API
+ */
 export class Adapter<
   Options extends object = DefaultAdapterOptions,
   Model = object,
@@ -38,7 +67,9 @@ export class Adapter<
   Query,
   ExecuteSpec
 > {
+  /** Parent Toshihiko instance when constructed by Toshihiko. */
   declare readonly parent: object | undefined;
+  /** Mutable copy of Adapter-specific options. */
   declare options: Options;
 
   constructor(
@@ -71,6 +102,7 @@ export class Adapter<
     });
   }
 
+  /** Finds rows for a normalized Query; subclasses must override this method. */
   async find(
     query: Query,
     options?: AdapterFindOptions,
@@ -80,11 +112,13 @@ export class Adapter<
     return this.notImplemented('find');
   }
 
+  /** Counts rows for a normalized Query; subclasses must override this method. */
   async count(query: Query): Promise<number> {
     void query;
     return this.notImplemented('count');
   }
 
+  /** Performs a bulk update; subclasses may override this optional operation. */
   async updateByQuery(
     query: Query,
   ): Promise<AdapterOperationResult> {
@@ -92,6 +126,7 @@ export class Adapter<
     return this.notImplemented('updateByQuery');
   }
 
+  /** Deletes rows for a normalized Query; subclasses must override this method. */
   async deleteByQuery(
     query: Query,
   ): Promise<AdapterOperationResult> {
@@ -99,6 +134,7 @@ export class Adapter<
     return this.notImplemented('deleteByQuery');
   }
 
+  /** Inserts one row; subclasses must override this method. */
   async insert(
     model: Model,
     connection: Connection | null,
@@ -110,6 +146,7 @@ export class Adapter<
     return this.notImplemented('insert');
   }
 
+  /** Updates one located row; subclasses must override this method. */
   async update(
     model: Model,
     connection: Connection | null,
@@ -123,6 +160,7 @@ export class Adapter<
     return this.notImplemented('update');
   }
 
+  /** Executes an Adapter-specific raw operation; subclasses may override it. */
   async execute(
     ...arguments_: ExecuteSpec['arguments']
   ): Promise<ExecuteSpec['result']> {
@@ -130,19 +168,23 @@ export class Adapter<
     return this.notImplemented('execute');
   }
 
+  /** Returns the current database name; the base implementation returns `''`. */
   getDBName(): string {
     return '';
   }
 
+  /** Begins a transaction; subclasses may override this optional operation. */
   async beginTransaction(): Promise<Connection> {
     return this.notImplemented('beginTransaction');
   }
 
+  /** Commits a transaction; subclasses may override this optional operation. */
   async commit(connection: Connection): Promise<void> {
     void connection;
     return this.notImplemented('commit');
   }
 
+  /** Rolls back a transaction; subclasses may override this optional operation. */
   async rollback(connection: Connection): Promise<void> {
     void connection;
     return this.notImplemented('rollback');
@@ -169,9 +211,3 @@ function copyOptions<Options extends object>(
 
 export { extend };
 export default Adapter;
-export type {
-  AdapterFindOptions,
-  AdapterFindResult,
-  AdapterQuery,
-  AdapterRow,
-};

@@ -6,6 +6,7 @@ import MemcachedClient from 'memcached';
 
 const memcachedCommandMaxLength = 250;
 
+/** Custom Cache-key generator bound to the MemcachedCache instance. */
 export type CustomizeKey = (
   this: MemcachedCache,
   database: string,
@@ -13,18 +14,39 @@ export type CustomizeKey = (
   key: CacheKey,
 ) => string;
 
+/** Memcached client options plus Toshihiko Cache-key customization. */
 export interface MemcachedCacheOptions extends MemcachedClient.options {
+  /** Text prepended to generated Memcached keys. */
   prefix?: string;
+  /** Replaces the default composite-key generator. */
   customizeKey?: CustomizeKey;
 }
 
+/**
+ * Memcached-backed Cache implementation.
+ *
+ * Batch reads are split to keep each Memcached `get` command within the
+ * protocol's 250-character key command limit. Batch deletion uses at most ten
+ * concurrent workers.
+ */
 export class MemcachedCache extends Cache {
   #keyGenerator: CustomizeKey;
+  /** Underlying `memcached` client. */
   readonly memcached: MemcachedClient;
+  /** Client and key-generation options supplied at construction. */
   readonly options: MemcachedCacheOptions | undefined;
+  /** Prefix prepended to generated keys. */
   readonly prefix: string;
+  /** Memcached server location passed to the client. */
   readonly servers: MemcachedClient.Location;
 
+  /**
+   * Creates a Memcached Cache.
+   *
+   * @param servers - Location accepted by the `memcached` client.
+   * @param options - Client options and Cache-key customization.
+   * @param client - Existing client, mainly for integration and tests.
+   */
   constructor(
     servers: MemcachedClient.Location,
     options?: MemcachedCacheOptions,
@@ -44,6 +66,7 @@ export class MemcachedCache extends Cache {
 
   }
 
+  /** Replaces the Cache-key generator and binds it to this instance. */
   setCustomizeKeyFunc(func: CustomizeKey): void {
     this.#keyGenerator = func.bind(this);
   }
@@ -202,6 +225,7 @@ export class MemcachedCache extends Cache {
   }
 }
 
+/** Factory used by Toshihiko's module-style Cache configuration. */
 export function create(
   servers: MemcachedClient.Location,
   options?: MemcachedCacheOptions,

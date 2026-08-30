@@ -60,6 +60,7 @@ The complete v2 guide lives in the [repository documentation](../../docs/index.m
 - [Querying](../../docs/querying.md)
 - [Yukari instances](../../docs/yukari.md)
 - [Data types](../../docs/types.md)
+- [Complete type index](https://toshihikojs.github.io/Toshihiko/typedoc/modules/toshihiko.html)
 
 ## License
 

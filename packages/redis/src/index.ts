@@ -6,7 +6,9 @@ import RedisClient, {
   type RedisOptions,
 } from 'ioredis';
 
+/** ioredis options plus the prefix added to every generated Cache key. */
 export interface RedisCacheOptions extends RedisOptions {
+  /** Text prepended to the database and table namespaces. */
   prefix?: string;
 }
 
@@ -14,10 +16,23 @@ type RedisConstructorOptions = RedisOptions & {
   replyMapping?: NonNullable<RedisOptions['replyMapping']>;
 };
 
+/**
+ * Redis-backed Cache implementation using ioredis pipelines for batch reads
+ * and invalidation.
+ */
 export class RedisCache extends Cache {
+  /** Prefix prepended to generated Redis keys. */
   readonly prefix: string;
+  /** Underlying ioredis client. */
   readonly redis: RedisClient;
 
+  /**
+   * Creates a Redis Cache.
+   *
+   * @param servers - Redis address in `host:port` form.
+   * @param options - ioredis options and optional Cache-key prefix.
+   * @param client - Existing ioredis client, mainly for integration and tests.
+   */
   constructor(
     servers: string,
     options?: RedisCacheOptions,
@@ -99,6 +114,7 @@ export class RedisCache extends Cache {
   }
 }
 
+/** Factory used by Toshihiko's module-style Cache configuration. */
 export function create(
   servers: string,
   options?: RedisCacheOptions,

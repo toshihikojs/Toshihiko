@@ -146,6 +146,7 @@ The complete v2 documentation is available in three languages:
 - [English](https://toshihikojs.github.io/Toshihiko/)
 - [简体中文](https://toshihikojs.github.io/Toshihiko/zh/)
 - [日本語](https://toshihikojs.github.io/Toshihiko/ja/)
+- [Complete type index](https://toshihikojs.github.io/Toshihiko/typedoc/)
 
 The source documentation covers the current TypeScript and Promise APIs:
 

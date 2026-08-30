@@ -8,12 +8,18 @@ on:
       - '.github/workflows/docs.yml'
       - 'common/**'
       - 'docs/**'
+      - 'packages/*/package.json'
+      - 'packages/*/src/**'
+      - 'packages/*/tsconfig*.json'
       - 'rush.json'
   pull_request:
     paths:
       - '.github/workflows/docs.yml'
       - 'common/**'
       - 'docs/**'
+      - 'packages/*/package.json'
+      - 'packages/*/src/**'
+      - 'packages/*/tsconfig*.json'
       - 'rush.json'
   workflow_dispatch:
 

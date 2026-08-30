@@ -5,6 +5,17 @@ A schema entry describes one logical property. `Model` compiles each entry into 
 ## Field definition
 
 ```typescript
+interface SchemaFieldDefinition {
+  readonly name: string;
+  column?: string;
+  type?: FieldTypeLike;
+  validators?: FieldValidator<never> | readonly FieldValidator<never>[];
+  allowNull?: boolean;
+  primaryKey?: boolean;
+  autoIncrement?: boolean;
+  defaultValue?: DataValue;
+}
+
 interface FieldDefinition<
   Name extends string = string,
   FieldTypeDefinition extends FieldTypeLike = FieldTypeLike,
@@ -20,7 +31,11 @@ interface FieldDefinition<
   autoIncrement?: boolean;
   defaultValue?: FieldTypeValue<FieldTypeDefinition>;
 }
+
+type SchemaDefinition = readonly SchemaFieldDefinition[];
 ```
+
+`SchemaFieldDefinition` is the broad shape accepted for any schema entry. `FieldDefinition` retains a specific field name and Field Type when you declare a reusable entry. Most applications can pass an array literal directly to `define()` and let TypeScript infer both.
 
 | Property | Default | Description |
 |---|---:|---|
@@ -48,7 +63,7 @@ Returning `undefined` or an empty string succeeds. A non-empty string becomes th
 ## Compiled `Field`
 
 ```typescript
-class Field<Definition extends FieldDefinitionShape = FieldDefinitionShape> {
+class Field<Definition extends SchemaFieldDefinition = SchemaFieldDefinition> {
   readonly options: Readonly<Definition>;
   readonly name: Definition['name'];
   readonly column: string;

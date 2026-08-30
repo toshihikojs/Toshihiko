@@ -31,7 +31,14 @@ const fieldOperators = Object.freeze({
 
 type FieldOperator = keyof typeof fieldOperators;
 
+/**
+ * Compiles Toshihiko query structures into MySQL statements.
+ *
+ * `compile*` methods return parameterized SQL plus placeholder values. `make*`
+ * methods format those statements into strings for compatibility and logging.
+ */
 export class MySQLSqlBuilder {
+  /** Compiles one logical field condition. */
   compileFieldWhere(
     model: MySQLModel,
     key: string,
@@ -82,6 +89,7 @@ export class MySQLSqlBuilder {
     return this.compileEquality(field, condition);
   }
 
+  /** Formats one logical field condition as SQL text. */
   makeFieldWhere(
     model: MySQLModel,
     key: string,
@@ -91,6 +99,7 @@ export class MySQLSqlBuilder {
     return formatStatement(this.compileFieldWhere(model, key, condition, logic));
   }
 
+  /** Compiles an array of condition objects joined with `AND` or `OR`. */
   compileArrayWhere(
     model: MySQLModel,
     condition: readonly DataRow[],
@@ -108,6 +117,7 @@ export class MySQLSqlBuilder {
     );
   }
 
+  /** Formats an array of condition objects as SQL text. */
   makeArrayWhere(
     model: MySQLModel,
     condition: readonly DataRow[],
@@ -116,6 +126,7 @@ export class MySQLSqlBuilder {
     return formatStatement(this.compileArrayWhere(model, condition, logic));
   }
 
+  /** Recursively compiles a complete Toshihiko condition. */
   compileWhere(
     model: MySQLModel,
     condition: DataRow | readonly DataRow[],
@@ -151,6 +162,7 @@ export class MySQLSqlBuilder {
     return groupStatements(fragments, normalizedLogic, true);
   }
 
+  /** Formats a complete Toshihiko condition as SQL text. */
   makeWhere(
     model: MySQLModel,
     condition: DataRow | readonly DataRow[],
@@ -159,6 +171,7 @@ export class MySQLSqlBuilder {
     return formatStatement(this.compileWhere(model, condition, logic));
   }
 
+  /** Formats normalized order entries with quoted storage column names. */
   makeOrder(
     model: MySQLModel,
     order: readonly Readonly<Record<string, number>>[],
@@ -175,6 +188,7 @@ export class MySQLSqlBuilder {
     return fragments.join(', ');
   }
 
+  /** Formats one or two normalized values as a MySQL limit body. */
   makeLimit(
     _model: MySQLModel,
     limit: readonly (number | string)[],
@@ -182,10 +196,12 @@ export class MySQLSqlBuilder {
     return limit.map(normalizeLimit).join(', ');
   }
 
+  /** Formats an optional quoted `FORCE INDEX` clause. */
   makeIndex(_model: MySQLModel, index?: string): string {
     return index ? `FORCE INDEX(${quoteIdentifier(index)})` : '';
   }
 
+  /** Formats logical update values as a SQL assignment list. */
   makeSet(
     model: MySQLModel,
     update: DataRow,
@@ -193,6 +209,7 @@ export class MySQLSqlBuilder {
     return formatStatement(this.compileSet(model, update));
   }
 
+  /** Compiles logical update values into parameterized assignments. */
   compileSet(
     model: MySQLModel,
     update: DataRow,
@@ -213,6 +230,7 @@ export class MySQLSqlBuilder {
     return joinStatements(assignments, ', ');
   }
 
+  /** Restores one application value and produces a placeholder statement. */
   compileValue(field: MySQLField, value: DataValue): MySQLStatement {
     if (value === null) {
       return statement('NULL');
@@ -220,10 +238,12 @@ export class MySQLSqlBuilder {
     return this.compileRestoredValue(field, value);
   }
 
+  /** Formats a complete `SELECT` statement. */
   makeFind(model: MySQLModel, options: MySQLQueryOptions = {}): string {
     return formatStatement(this.compileFind(model, options));
   }
 
+  /** Compiles a parameterized `SELECT` statement. */
   compileFind(model: MySQLModel, options: MySQLQueryOptions = {}): MySQLStatement {
     const fields = options.fields?.length ? options.fields : undefined;
     const selected = options.count
@@ -249,10 +269,12 @@ export class MySQLSqlBuilder {
     return result;
   }
 
+  /** Formats a complete `UPDATE` statement. */
   makeUpdate(model: MySQLModel, options: MySQLQueryOptions = {}): string {
     return formatStatement(this.compileUpdate(model, options));
   }
 
+  /** Compiles a parameterized `UPDATE` statement. */
   compileUpdate(model: MySQLModel, options: MySQLQueryOptions = {}): MySQLStatement {
     const set = this.compileSet(model, options.update ?? {});
     if (!set.sql) {
@@ -274,10 +296,12 @@ export class MySQLSqlBuilder {
     return result;
   }
 
+  /** Formats a complete `DELETE` statement. */
   makeDelete(model: MySQLModel, options: MySQLQueryOptions = {}): string {
     return formatStatement(this.compileDelete(model, options));
   }
 
+  /** Compiles a parameterized `DELETE` statement. */
   compileDelete(model: MySQLModel, options: MySQLQueryOptions = {}): MySQLStatement {
     let result = statement(`DELETE FROM ${quoteIdentifier(model.name)}`);
     result = appendStatement(result, this.compileWhereClause(model, options.where));
@@ -301,6 +325,7 @@ export class MySQLSqlBuilder {
     return result;
   }
 
+  /** Formats the statement selected by an operation name. */
   makeSql(
     type: SqlOperation,
     model: MySQLModel,
@@ -309,6 +334,7 @@ export class MySQLSqlBuilder {
     return formatStatement(this.compileSql(type, model, options));
   }
 
+  /** Compiles the parameterized statement selected by an operation name. */
   compileSql(
     type: SqlOperation,
     model: MySQLModel,

@@ -2,6 +2,8 @@
 
 API 参考按使用者分为两层。业务代码从应用 API 开始；只有编写数据库或缓存扩展时，才需要扩展 API。
 
+以下页面按使用场景解释公开 API，并提供参数说明和示例。需要查找全部导出符号或精确的泛型签名时，可以打开由 TypeScript 源码生成的[完整类型索引](https://toshihikojs.github.io/Toshihiko/typedoc/)。
+
 ## 应用 API
 
 ```text

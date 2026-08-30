@@ -5,6 +5,17 @@ Schema entry は 1 つの論理プロパティを表します。Model は entry 
 ## Field 定義
 
 ```typescript
+interface SchemaFieldDefinition {
+  readonly name: string;
+  column?: string;
+  type?: FieldTypeLike;
+  validators?: FieldValidator<never> | readonly FieldValidator<never>[];
+  allowNull?: boolean;
+  primaryKey?: boolean;
+  autoIncrement?: boolean;
+  defaultValue?: DataValue;
+}
+
 interface FieldDefinition<
   Name extends string = string,
   FieldTypeDefinition extends FieldTypeLike = FieldTypeLike,
@@ -21,8 +32,10 @@ interface FieldDefinition<
   defaultValue?: FieldTypeValue<FieldTypeDefinition>;
 }
 
-type SchemaDefinition = readonly FieldDefinitionShape[];
+type SchemaDefinition = readonly SchemaFieldDefinition[];
 ```
+
+`SchemaFieldDefinition` は任意の Schema entry が満たす広い構造です。再利用するフィールドで具体的な名前と Field Type を保持したい場合は `FieldDefinition` を使います。通常は配列リテラルを `define()` に直接渡し、TypeScript に推論させれば十分です。
 
 | プロパティ | 初期値 | 説明 |
 |---|---:|---|
@@ -48,7 +61,7 @@ type FieldValidator<Value> = (
 空文字列または `undefined` は成功です。空でない文字列はエラーメッセージになります。Validator の `this` は Model です。
 
 ```typescript
-class Field<Definition extends FieldDefinitionShape = FieldDefinitionShape> {
+class Field<Definition extends SchemaFieldDefinition = SchemaFieldDefinition> {
   readonly options: Readonly<Definition>;
   readonly name: Definition['name'];
   readonly column: string;

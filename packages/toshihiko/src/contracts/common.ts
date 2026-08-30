@@ -1,5 +1,7 @@
+/** Minimum object constraint used by schema-aware row helpers. */
 export type RowShape = object;
 
+/** Extracts string field names from a row object. */
 export type FieldName<Row extends RowShape> = Extract<keyof Row, string>;
 
 /** A value that can be stored in a model field or returned by an adapter. */

@@ -50,6 +50,13 @@ interface MySQLReadbackModel extends MySQLModel {
   where(condition: DataRow): MySQLReadbackQuery;
 }
 
+/**
+ * mysql2-backed Toshihiko Adapter.
+ *
+ * Queries are compiled as parameterized SQL. Reads can use a configured Cache;
+ * writes invalidate related cached rows before execution. Transaction methods
+ * acquire and release mysql2 Pool connections.
+ */
 export class MySQLAdapter extends Adapter<
   MySQLAdapterOptions,
   MySQLModel,
@@ -63,14 +70,19 @@ export class MySQLAdapter extends Adapter<
     QueryResult
   >
 > {
+  /** @internal */
   declare readonly [adapterExecuteSpec]: AdapterExecuteSpec<
     MySQLExecuteArguments,
     MySQLQueryExecuteArguments,
     QueryResult
   >;
+  /** Configured database name. */
   readonly database: string;
+  /** Underlying mysql2 connection Pool. */
   declare readonly mysql: Pool;
+  /** Driver package name retained for compatibility. */
   readonly package = 'mysql2';
+  /** Configured MySQL username. */
   readonly username: string;
 
   declare private readonly builder: MySQLSqlBuilder;
@@ -108,10 +120,12 @@ export class MySQLAdapter extends Adapter<
     });
   }
 
+  /** Returns the configured database name. */
   override getDBName(): string {
     return this.database;
   }
 
+  /** Finds rows directly or through the Model Cache. */
   override async find(
     query: MySQLQuery,
     options: AdapterFindOptions = defaultFindOptions,
@@ -122,6 +136,7 @@ export class MySQLAdapter extends Adapter<
       : this.findWithCache(query.cache, query.model, normalized);
   }
 
+  /** Compiles and executes `COUNT(0)` for a normalized Query. */
   override async count(query: MySQLQuery): Promise<number> {
     const options = this.queryToOptions(query);
     const compiled = this.builder.compileSql('count', query.model, options);
@@ -135,6 +150,7 @@ export class MySQLAdapter extends Adapter<
     return first!['COUNT(0)'] as number;
   }
 
+  /** Invalidates related Cache entries and performs a bulk `UPDATE`. */
   override async updateByQuery(query: MySQLQuery): Promise<ResultSetHeader> {
     const options = this.queryToOptions(query);
     const compiled = this.builder.compileSql('update', query.model, options);
@@ -146,6 +162,7 @@ export class MySQLAdapter extends Adapter<
     ) as ResultSetHeader;
   }
 
+  /** Invalidates related Cache entries and performs a bulk `DELETE`. */
   override async deleteByQuery(query: MySQLQuery): Promise<ResultSetHeader> {
     const options = this.queryToOptions(query);
     const compiled = this.builder.compileSql('delete', query.model, options);
@@ -157,6 +174,9 @@ export class MySQLAdapter extends Adapter<
     ) as ResultSetHeader;
   }
 
+  /**
+   * Inserts one row, then reads it back using generated or supplied key values.
+   */
   override async insert(
     model: MySQLModel,
     connection: PoolConnection | null,
@@ -193,6 +213,11 @@ export class MySQLAdapter extends Adapter<
     return row as AdapterRow;
   }
 
+  /**
+   * Updates one row using its original locator and invalidates cached copies.
+   *
+   * @throws When the locator or update data is empty, or no row was affected.
+   */
   override async update(
     model: MySQLModel,
     connection: PoolConnection | null,
@@ -242,6 +267,12 @@ export class MySQLAdapter extends Adapter<
     return mutation;
   }
 
+  /**
+   * Executes parameterized SQL through a selected connection or the Pool.
+   *
+   * SQL and values are passed separately unless mysql2 formatting requires
+   * `query()`, such as named placeholders or identifier placeholders.
+   */
   override async execute(
     ...arguments_: MySQLExecuteArguments
   ): Promise<QueryResult> {
@@ -266,6 +297,7 @@ export class MySQLAdapter extends Adapter<
     return result;
   }
 
+  /** Acquires a Pool connection and begins a transaction on it. */
   override async beginTransaction(): Promise<PoolConnection> {
     const connection = await this.mysql.getConnection();
     try {
@@ -277,18 +309,22 @@ export class MySQLAdapter extends Adapter<
     }
   }
 
+  /** Commits and releases a transaction connection. */
   override async commit(connection: PoolConnection): Promise<void> {
     await connection.commit();
     connection.release();
   }
 
+  /** Rolls back and releases a transaction connection. */
   override async rollback(connection: PoolConnection): Promise<void> {
     await connection.rollback();
     connection.release();
   }
 
+  /** mysql2 SQL formatter bound to the underlying Pool. */
   declare readonly format: (sql: string, values?: MySQLValues) => string;
 
+  /** Executes a compiled read without consulting or populating a Cache. */
   async findWithNoCache(
     model: MySQLModel,
     options: MySQLQueryOptions = {},
@@ -302,6 +338,10 @@ export class MySQLAdapter extends Adapter<
     return options.single ? rows[0] ?? null : rows;
   }
 
+  /**
+   * Reads primary keys, resolves cached rows, fetches misses with at most ten
+   * concurrent workers, and preserves the requested field projection.
+   */
   async findWithCache(
     cache: NonNullable<MySQLModel['cache']>,
     model: MySQLModel,
@@ -407,6 +447,11 @@ export class MySQLAdapter extends Adapter<
     }
   }
 
+  /**
+   * Copies normalized Query state into SQL-builder options.
+   *
+   * `single: true` also rewrites the limit so at most one row is requested.
+   */
   queryToOptions(
     query: MySQLQuery,
     overrides: Partial<MySQLQueryOptions> = {},
@@ -435,6 +480,7 @@ export class MySQLAdapter extends Adapter<
     return { ...options, limit };
   }
 
+  /** Formats one logical field condition as SQL. */
   makeFieldWhere(
     model: MySQLModel,
     key: string,
@@ -444,6 +490,7 @@ export class MySQLAdapter extends Adapter<
     return this.builder.makeFieldWhere(model, key, condition, logic);
   }
 
+  /** Formats an array of condition objects joined by the requested logic. */
   makeArrayWhere(
     model: MySQLModel,
     condition: readonly DataRow[],
@@ -452,6 +499,7 @@ export class MySQLAdapter extends Adapter<
     return this.builder.makeArrayWhere(model, condition, logic);
   }
 
+  /** Formats a complete Toshihiko condition as SQL. */
   makeWhere(
     model: MySQLModel,
     condition: DataRow | readonly DataRow[],
@@ -460,6 +508,7 @@ export class MySQLAdapter extends Adapter<
     return this.builder.makeWhere(model, condition, logic);
   }
 
+  /** Formats normalized sort entries as an `ORDER BY` fragment body. */
   makeOrder(
     model: MySQLModel,
     order: readonly Readonly<Record<string, number>>[],
@@ -467,6 +516,7 @@ export class MySQLAdapter extends Adapter<
     return this.builder.makeOrder(model, order);
   }
 
+  /** Formats normalized limits as a MySQL `LIMIT` fragment body. */
   makeLimit(
     model: MySQLModel,
     limit: readonly (number | string)[],
@@ -474,26 +524,32 @@ export class MySQLAdapter extends Adapter<
     return this.builder.makeLimit(model, limit);
   }
 
+  /** Formats an optional `FORCE INDEX` clause. */
   makeIndex(model: MySQLModel, index?: string): string {
     return this.builder.makeIndex(model, index);
   }
 
+  /** Formats logical update values as a SQL `SET` fragment body. */
   makeSet(model: MySQLModel, update: DataRow): string {
     return this.builder.makeSet(model, update);
   }
 
+  /** Formats a complete `SELECT` statement. */
   makeFind(model: MySQLModel, options?: MySQLQueryOptions): string {
     return this.builder.makeFind(model, options);
   }
 
+  /** Formats a complete `UPDATE` statement. */
   makeUpdate(model: MySQLModel, options?: MySQLQueryOptions): string {
     return this.builder.makeUpdate(model, options);
   }
 
+  /** Formats a complete `DELETE` statement. */
   makeDelete(model: MySQLModel, options?: MySQLQueryOptions): string {
     return this.builder.makeDelete(model, options);
   }
 
+  /** Selects the matching SQL formatter for `find`, `count`, `update`, or `delete`. */
   makeSql(
     type: string,
     model: MySQLModel,

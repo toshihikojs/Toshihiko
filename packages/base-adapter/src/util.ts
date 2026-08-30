@@ -35,6 +35,7 @@ type RequiredMergeKeys<Defaults extends object, Options extends object> = Extrac
   MergeKeys<Defaults, Options>
 >;
 
+/** Result type produced by {@link extend}, retaining required and optional keys. */
 export type Merge<Defaults extends object, Options extends object> = {
   [Key in RequiredMergeKeys<Defaults, Options>]-?: MergeProperty<Defaults, Options, Key>;
 } & {
@@ -42,7 +43,17 @@ export type Merge<Defaults extends object, Options extends object> = {
     MergeProperty<Defaults, Options, Key>;
 };
 
-/** Preserve the original Adapter merge order, including its recursive quirks. */
+/**
+ * Deeply copies Adapter options and fills missing properties from defaults.
+ *
+ * This intentionally preserves the v1 recursive merge order: at nested levels,
+ * the existing option object becomes the recursive defaults argument. Code
+ * which needs conventional deep-merge semantics should use a dedicated merge
+ * utility instead.
+ *
+ * @param defaultOptions - Values used when the corresponding option is absent.
+ * @param options - User-supplied values copied into the result.
+ */
 export function extend<
   Defaults extends object = object,
   Options extends object = object,

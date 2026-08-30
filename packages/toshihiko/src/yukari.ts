@@ -35,6 +35,7 @@ type YukariOriginalData<Schema extends SchemaDefinition> = Partial<{
   };
 }>;
 
+/** One compiled Field and application value sent to an Adapter write. */
 export type YukariFieldData<Definition extends SchemaDefinition[number]> =
   Definition extends SchemaDefinition[number]
     ? {
@@ -58,6 +59,7 @@ interface RuntimeOriginalEntry {
 
 type RuntimeOriginalData = Record<string, RuntimeOriginalEntry | undefined>;
 
+/** Yukari created locally by {@link Model.build}, with input-sensitive fields. */
 export type BuiltYukari<
   Name extends string,
   Schema extends SchemaDefinition,
@@ -66,6 +68,7 @@ export type BuiltYukari<
 > = Yukari<Name, Schema, AdapterInstance>
   & Omit<BuiltRowFromSchema<Schema, Input>, keyof Yukari<Name, Schema, AdapterInstance>>;
 
+/** Yukari loaded from storage, with fields optional after projection. */
 export type QueriedYukari<
   Name extends string,
   Schema extends SchemaDefinition,
@@ -73,6 +76,18 @@ export type QueriedYukari<
 > = Yukari<Name, Schema, AdapterInstance>
   & Omit<Partial<RowFromSchema<Schema>>, keyof Yukari<Name, Schema, AdapterInstance>>;
 
+/**
+ * One mutable row belonging to a Model.
+ *
+ * Schema fields are exposed as enumerable properties on the instance. Use
+ * {@link Model.build} to create a new row, or obtain a queried row from
+ * {@link Query.find}, {@link Query.findOne}, or {@link Query.findById}.
+ *
+ * A built row can be inserted. A queried row can be updated or deleted. The
+ * original values used to locate and compare a queried row are kept privately.
+ *
+ * @category Application API
+ */
 export class Yukari<
   Name extends string,
   Schema extends SchemaDefinition,
@@ -173,6 +188,17 @@ export class Yukari<
     return this.#schema.findIndex((field) => field.name === name);
   }
 
+  /**
+   * Runs the validators for one schema field.
+   *
+   * Nullable fields accept `null` without running custom validators. Each
+   * validator runs with `this` bound to the row's Model.
+   *
+   * @param name - Logical field name from the Model schema.
+   * @param value - Application value to validate.
+   * @throws When the field does not exist, a non-nullable field receives
+   * `null`, or a validator returns a non-empty error message.
+   */
   async validateOne<Field extends FieldName<RowFromSchema<Schema>>>(
     name: Field,
     value: RowFromSchema<Schema>[Field],
@@ -180,6 +206,15 @@ export class Yukari<
     await this.#validateField(name, value);
   }
 
+  /**
+   * Validates every enumerable property mapped to a schema field.
+   *
+   * Functions, compatibility properties whose names start with `$`, and
+   * properties absent from the schema are ignored. At most ten fields are
+   * validated concurrently.
+   *
+   * @throws The first validation error produced by {@link validateOne}.
+   */
   async validateAll(): Promise<void> {
     const values = this as Readonly<Record<string, unknown>>;
     const names = Object.keys(this).filter((name) => (
@@ -200,6 +235,17 @@ export class Yukari<
     await Promise.all(workers);
   }
 
+  /**
+   * Validates and inserts a row created by {@link Model.build}.
+   *
+   * Values returned by the Adapter, such as an auto-incremented primary key,
+   * are copied onto this same Yukari instance.
+   *
+   * @param connection - Optional Adapter transaction connection.
+   * @returns This Yukari instance after the write completes.
+   * @throws When called on a row loaded from the database, or validation or
+   * Adapter execution fails.
+   */
   async insert(
     connection: AdapterConnection<AdapterInstance> | null = null,
   ): Promise<this> {
@@ -238,6 +284,19 @@ export class Yukari<
     return this;
   }
 
+  /**
+   * Updates a row loaded from the database.
+   *
+   * Changed fields are detected against the private original-value snapshot.
+   * The original primary-key values locate the row, so changing a primary-key
+   * property does not lose the original locator. When no value changed, the
+   * complete mapped row is sent for v1-compatible behavior.
+   *
+   * @param connection - Optional Adapter transaction connection.
+   * @returns This Yukari instance with its original snapshot refreshed.
+   * @throws When called on a newly built row, or validation or Adapter
+   * execution fails.
+   */
   async update(
     connection: AdapterConnection<AdapterInstance> | null = null,
   ): Promise<this> {
@@ -279,6 +338,18 @@ export class Yukari<
     return this;
   }
 
+  /**
+   * Deletes a row loaded from the database.
+   *
+   * The delete condition uses original primary-key values. If the Model has no
+   * primary key, all original fields form the locator. At most one row is
+   * requested from the Adapter.
+   *
+   * @param connection - Optional Adapter transaction connection.
+   * @returns `true` after the Adapter reports a successful deletion.
+   * @throws When called on a newly built row or when the Adapter returns a
+   * falsy result.
+   */
   async delete(
     connection: AdapterConnection<AdapterInstance> | null = null,
   ): Promise<true> {
@@ -300,6 +371,12 @@ export class Yukari<
     return true;
   }
 
+  /**
+   * Inserts a newly built row or updates a row loaded from the database.
+   *
+   * @param connection - Optional Adapter transaction connection.
+   * @returns This Yukari instance after the selected write completes.
+   */
   async save(
     connection: AdapterConnection<AdapterInstance> | null = null,
   ): Promise<this> {
@@ -309,6 +386,19 @@ export class Yukari<
     return this.update(connection);
   }
 
+  /**
+   * Serializes mapped fields with each Field Type's `toJSON()` implementation.
+   *
+   * @param useOriginalData - Serialize the original database snapshot instead
+   * of the current enumerable properties.
+   * @returns A plain object keyed by logical schema field names.
+   *
+   * @example
+   * ```ts
+   * const current = user.toJSON();
+   * const beforeChanges = user.toJSON(true);
+   * ```
+   */
   toJSON(useOriginalData = false): Partial<JsonRowFromSchema<Schema>> {
     const result: Record<string, unknown> = {};
     const values = this as Readonly<Record<string, unknown>>;

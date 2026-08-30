@@ -1,0 +1,168 @@
+:root {
+  --light-color-background: #fffdf9;
+  --light-color-background-secondary: #fff8f0;
+  --light-color-background-active: rgba(201, 71, 54, 0.1);
+  --light-color-accent: rgba(23, 35, 56, 0.16);
+  --light-color-active-menu-item: rgba(201, 71, 54, 0.1);
+  --light-color-text: #172338;
+  --light-color-contrast-text: #172338;
+  --light-color-text-aside: #536174;
+  --light-color-icon-background: #fff8f0;
+  --light-color-link: #c94736;
+  --light-color-focus-outline: #287da3;
+  --light-color-comment-tag: rgba(237, 112, 65, 0.1);
+
+  --dark-color-background: #101a29;
+  --dark-color-background-secondary: #142235;
+  --dark-color-background-active: rgba(240, 138, 97, 0.14);
+  --dark-color-accent: rgba(197, 214, 232, 0.18);
+  --dark-color-active-menu-item: rgba(240, 138, 97, 0.14);
+  --dark-color-text: #f5f0e9;
+  --dark-color-contrast-text: #f5f0e9;
+  --dark-color-text-aside: #c6d0dc;
+  --dark-color-icon-background: #17263a;
+  --dark-color-link: #f08a61;
+  --dark-color-focus-outline: #53a4c8;
+  --dark-color-comment-tag: rgba(240, 138, 97, 0.12);
+
+  --dim-toolbar-contents-height: 4.25rem;
+}
+
+body {
+  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", "Noto Sans", "Noto Sans SC", "Noto Sans JP", sans-serif;
+  letter-spacing: -0.006em;
+}
+
+::selection {
+  color: #fff;
+  background: #c94736;
+}
+
+.tsd-page-toolbar {
+  background: color-mix(in srgb, var(--color-background) 94%, transparent);
+  border-bottom-color: var(--color-accent);
+  backdrop-filter: blur(12px);
+}
+
+.tsd-toolbar-contents > .title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  font-size: 1.08rem;
+  font-weight: 780;
+  letter-spacing: -0.025em;
+}
+
+.tsd-toolbar-contents > .title::before {
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 auto;
+  content: "";
+  background: url("../../logo.png") center / contain no-repeat;
+}
+
+#tsd-toolbar-links a {
+  font-weight: 650;
+}
+
+.container {
+  max-width: 1480px;
+}
+
+.col-sidebar {
+  border-color: var(--color-accent);
+}
+
+.tsd-navigation a,
+.tsd-navigation summary > span,
+.tsd-page-navigation a {
+  border-radius: 6px;
+}
+
+.tsd-navigation a.current,
+.tsd-page-navigation a.current {
+  box-shadow: inset 2px 0 #c94736;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  color: var(--color-text);
+  letter-spacing: -0.025em;
+  overflow-wrap: break-word;
+}
+
+h1 {
+  font-weight: 820;
+}
+
+h2,
+h3 {
+  font-weight: 740;
+}
+
+.tsd-panel,
+.tsd-panel-group {
+  border-color: var(--color-accent);
+}
+
+.tsd-signature,
+pre {
+  overflow: auto;
+  border: 1px solid var(--color-accent);
+  border-radius: 10px;
+  box-shadow: none;
+}
+
+code,
+pre {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+}
+
+:not(pre) > code {
+  color: #a83a2e;
+  background: rgba(237, 112, 65, 0.08);
+  border: 1px solid rgba(201, 71, 54, 0.14);
+  border-radius: 5px;
+}
+
+:root[data-theme="dark"] :not(pre) > code {
+  color: #ffad86;
+  background: rgba(240, 138, 97, 0.1);
+  border-color: rgba(240, 138, 97, 0.2);
+}
+
+.tsd-typography table {
+  overflow: hidden;
+  border: 1px solid var(--color-accent);
+  border-radius: 8px;
+}
+
+footer {
+  border-top-color: var(--color-accent);
+}
+
+@media (max-width: 768px) {
+  :root {
+    --dim-toolbar-contents-height: 3.75rem;
+  }
+
+  .container {
+    padding-right: 1rem;
+    padding-left: 1rem;
+  }
+
+  h1 {
+    font-size: 1.55rem;
+    line-height: 1.16;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    scroll-behavior: auto !important;
+    transition: none !important;
+  }
+}

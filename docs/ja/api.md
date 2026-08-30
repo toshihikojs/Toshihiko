@@ -2,6 +2,8 @@
 
 API リファレンスは利用者別に分かれています。アプリケーションコードは Application API から読み始め、データベースやキャッシュの拡張を作る場合だけ Extension API を参照してください。
 
+以下のページでは、公開 API を利用場面ごとに例とともに説明します。すべての export や正確なジェネリックシグネチャを確認する場合は、TypeScript ソースから生成された[完全な型インデックス](https://toshihikojs.github.io/Toshihiko/typedoc/)を参照してください。
+
 ## アプリケーション API
 
 ```text

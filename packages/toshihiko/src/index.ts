@@ -21,8 +21,14 @@ export {
 } from './field-types';
 export { Toshihiko, type ToshihikoOptions } from './toshihiko';
 
+/** SQL string and `LIKE` pattern escaping helpers. */
 export const Escaper = { escape, escapeLike };
 
+/**
+ * Built-in adapter constructors.
+ *
+ * @category Extension API
+ */
 export const Adapter = {
   get base(): AdapterConstructor {
     return loadAdapter('base');
@@ -32,6 +38,11 @@ export const Adapter = {
   },
 };
 
+/**
+ * Contract implemented by a Toshihiko database adapter.
+ *
+ * @category Extension API
+ */
 export type Adapter<
   Model = object,
   Connection = object,
@@ -115,6 +126,7 @@ export type {
   PrimaryKeyNames,
   RowFromSchema,
   SchemaDefinition,
+  SchemaFieldDefinition,
   ValidatedSchema,
   ValidatedFieldType,
 } from './contracts/field';

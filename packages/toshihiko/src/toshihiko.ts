@@ -38,6 +38,7 @@ import {
   type CacheSource,
 } from './contracts/cache';
 
+/** Default option constraint used when an Adapter does not declare its own. */
 export type ToshihikoOptions = object;
 
 const adapterInstances = new WeakMap<object, AdapterLike>();
@@ -106,13 +107,27 @@ type IsValidDefinition<
   ? IsAdapterCompatible<Name, NoInfer<Schema>, AdapterInstance>
   : false;
 
+/**
+ * The database entry point used to define models and execute Adapter-level
+ * operations.
+ *
+ * Construct it with an Adapter name, constructor, or instance. The selected
+ * Adapter determines the option, connection, and execution-result types carried
+ * into Models and Queries.
+ *
+ * @category Application API
+ */
 export class Toshihiko<
   AdapterInstance extends AdapterLike = Adapter,
   Options extends object = ToshihikoOptions,
 > extends EventEmitter2 {
+  /** Cache created from `options.cache`, when configured. */
   declare readonly cache: Cache | null | undefined;
+  /** Adapter name or constructor name used for this instance. */
   readonly dialect: string | null;
+  /** Adapter-specific options supplied to the constructor. */
   readonly options: Options;
+  /** MySQL connection pool when exposed by the selected Adapter. */
   declare readonly pool: AdapterInstance extends { readonly mysql: infer Pool }
     ? Pool
     : undefined;
@@ -168,14 +183,31 @@ export class Toshihiko<
     }
   }
 
+  /**
+   * Creates a Cache from an existing Cache instance or module-style options.
+   *
+   * @param source - Cache instance or `{ module, options }` configuration.
+   * @returns The existing or newly created Cache, or `null` when the source is
+   * not a recognized Cache configuration.
+   */
   static createCache(source: CacheSource): Cache | null {
     return createCache(source);
   }
 
+  /** The database name reported by the selected Adapter. */
   get database(): string {
     return getAdapterInstance(this).getDBName();
   }
 
+  /**
+   * Executes a raw Adapter operation without creating a Model or Query.
+   *
+   * The accepted arguments and resolved value come from the selected Adapter's
+   * execute specification.
+   *
+   * @param arguments_ - Adapter-defined execute arguments.
+   * @returns The Adapter-defined execution result.
+   */
   async execute(
     ...arguments_: AdapterExecuteArguments<AdapterInstance>
   ): Promise<AdapterExecuteResult<AdapterInstance>> {
@@ -185,6 +217,35 @@ export class Toshihiko<
     return await adapter.execute(...arguments_);
   }
 
+  /**
+   * Defines a typed Model for one table or collection.
+   *
+   * Field names and values are inferred from the schema array. Functions in
+   * `options.methods` are copied onto the returned Model and receive a
+   * contextually typed `this` containing both the Model API and the other
+   * custom methods.
+   *
+   * @param collectionName - Adapter-facing table or collection name.
+   * @param schema - Field definitions used for runtime conversion and static
+   * row inference.
+   * @param options - Model options, including Cache configuration and custom
+   * Model methods.
+   * @returns A Model extended with the inferred custom methods.
+   *
+   * @example
+   * ```ts
+   * const User = database.define('users', [
+   *   { name: 'id', type: Type.Integer, primaryKey: true },
+   *   { name: 'email', type: Type.String },
+   * ], {
+   *   methods: {
+   *     findByEmail(email: string) {
+   *       return this.where({ email }).findOne();
+   *     },
+   *   },
+   * });
+   * ```
+   */
   define<
     const Name extends string,
     const Schema extends SchemaDefinition,
