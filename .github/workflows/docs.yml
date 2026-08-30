@@ -61,6 +61,14 @@ jobs:
           ROLLUP_VERSION="$(node -p "require('./node_modules/rollup/package.json').version")"
           npm install --no-save --package-lock=false "@rollup/rollup-linux-x64-gnu@${ROLLUP_VERSION}"
 
+      - name: Build API packages
+        run: >-
+          rush build
+          --to @toshihiko/mysql-adapter
+          --to @toshihiko/redis-cache
+          --to @toshihiko/memcached-cache
+          --verbose
+
       - name: Build documentation
         run: rush build --to @toshihiko/docs --verbose
 
