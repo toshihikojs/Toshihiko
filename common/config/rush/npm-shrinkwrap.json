@@ -454,9 +454,10 @@
     },
     "@rush-temp/docs": {
       "version": "file:projects/docs.tgz",
-      "integrity": "sha512-xeF/1meZE3lv+49ARUr8s67uxVGQOa1/1NlCncS3r0udMibQ4DxNPRsnqCxwynH0jx1bpqAqzRxmoa2w1KDOlQ==",
+      "integrity": "sha512-vIClaYjWb0G1Aa/RdiZ9usU3PxDSLWQsz4ne3ZjVf1dCB9qA6cQkA5fw8N+etGC9/3pl+OCBxEGpAsJHjXG4kg==",
       "requires": {
         "@types/node": "^22.0.0",
+        "typedoc": "0.28.20",
         "typescript": "^5.9.3",
         "vitepress": "1.6.4"
       }
