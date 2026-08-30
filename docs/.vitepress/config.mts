@@ -5,6 +5,7 @@ const repository = 'https://github.com/toshihikojs/Toshihiko';
 interface LocaleText {
   readonly applicationApi: string;
   readonly api: string;
+  readonly apiGuide: string;
   readonly apiAdapter: string;
   readonly apiCache: string;
   readonly apiFieldTypes: string;
@@ -30,6 +31,7 @@ interface LocaleText {
   readonly rawSql: string;
   readonly start: string;
   readonly transactions: string;
+  readonly typeReference: string;
   readonly types: string;
   readonly yukari: string;
 }
@@ -37,6 +39,7 @@ interface LocaleText {
 const english: LocaleText = {
   applicationApi: 'Application API',
   api: 'API reference',
+  apiGuide: 'Guides and examples',
   apiAdapter: 'Adapter',
   apiCache: 'Cache',
   apiFieldTypes: 'Field and Type',
@@ -62,6 +65,7 @@ const english: LocaleText = {
   rawSql: 'Raw SQL',
   start: 'Getting started',
   transactions: 'Transactions',
+  typeReference: 'Type definitions',
   types: 'Field types',
   yukari: 'Yukari rows',
 };
@@ -69,6 +73,7 @@ const english: LocaleText = {
 const chinese: LocaleText = {
   applicationApi: '应用 API',
   api: 'API 参考',
+  apiGuide: '说明与示例',
   apiAdapter: 'Adapter',
   apiCache: 'Cache',
   apiFieldTypes: 'Field 与 Type',
@@ -94,6 +99,7 @@ const chinese: LocaleText = {
   rawSql: '原始 SQL',
   start: '快速开始',
   transactions: '事务',
+  typeReference: '类型定义',
   types: '字段类型',
   yukari: 'Yukari 数据行',
 };
@@ -101,6 +107,7 @@ const chinese: LocaleText = {
 const japanese: LocaleText = {
   applicationApi: 'アプリケーション API',
   api: 'API リファレンス',
+  apiGuide: '説明と使用例',
   apiAdapter: 'Adapter',
   apiCache: 'Cache',
   apiFieldTypes: 'Field と Type',
@@ -126,6 +133,7 @@ const japanese: LocaleText = {
   rawSql: 'Raw SQL',
   start: 'はじめに',
   transactions: 'トランザクション',
+  typeReference: '型定義',
   types: 'フィールド型',
   yukari: 'Yukari 行',
 };
@@ -151,7 +159,14 @@ function theme(prefix: string, text: LocaleText): DefaultTheme.Config {
     },
     nav: [
       { text: text.guide, link: withPrefix(prefix, '/getting-started') },
-      { text: text.api, link: withPrefix(prefix, '/api') },
+      {
+        text: text.api,
+        activeMatch: '^/(?:zh/|ja/)?api(?:/|$)|^/typedoc/',
+        items: [
+          { text: text.apiGuide, link: withPrefix(prefix, '/api') },
+          { text: text.typeReference, link: '/typedoc/' },
+        ],
+      },
       { text: 'GitHub', link: repository },
     ],
     outline: { level: [2, 3] },
@@ -194,6 +209,7 @@ function theme(prefix: string, text: LocaleText): DefaultTheme.Config {
           { text: text.apiQuery, link: withPrefix(prefix, '/api/query') },
           { text: text.apiYukari, link: withPrefix(prefix, '/api/yukari') },
           { text: text.apiFieldTypes, link: withPrefix(prefix, '/api/field-types') },
+          { text: text.typeReference, link: '/typedoc/' },
         ],
       },
       {
@@ -222,6 +238,7 @@ export default defineConfig({
   cleanUrls: true,
   description: 'Yet another simple ORM for Node.js.',
   head: [['link', { href: '/Toshihiko/logo.png', rel: 'icon', type: 'image/png' }]],
+  ignoreDeadLinks: [/^\/typedoc(?:\/|$)/],
   lastUpdated: true,
   locales: {
     root: {

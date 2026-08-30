@@ -10,6 +10,7 @@
     "types": ["node"]
   },
   "include": [
+    ".vitepress/**/*.d.ts",
     ".vitepress/**/*.mts",
     ".vitepress/**/*.ts"
   ]

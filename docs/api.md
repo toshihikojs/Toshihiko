@@ -2,7 +2,7 @@
 
 The API reference describes the public runtime objects, call signatures, return types, and extension contracts. Use the [guides](getting-started) for task-oriented explanations.
 
-The pages below explain the public API with examples and usage guidance. When you need every exported symbol or an exact generic signature, use the [complete type index](https://toshihikojs.github.io/Toshihiko/typedoc/), which is generated from the TypeScript source.
+The pages below explain the public API with examples and usage guidance. When you need every exported symbol or an exact generic signature, use the [complete type index](/typedoc/), which is generated from the TypeScript source.
 
 ## Runtime object map
 

@@ -1,6 +1,6 @@
 {
   "$schema": "https://typedoc.org/schema.json",
-  "name": "Toshihiko API",
+  "name": "Toshihiko",
   "entryPoints": [
     "../packages/toshihiko",
     "../packages/base-adapter",
@@ -35,11 +35,15 @@
   },
   "out": ".vitepress/dist/typedoc",
   "customCss": ".typedoc/theme.css",
+  "customJs": ".typedoc/navigation.js",
   "favicon": "public/logo.png",
-  "titleLink": "https://toshihikojs.github.io/Toshihiko/",
+  "titleLink": "/Toshihiko/",
   "navigationLinks": {
-    "Guides": "https://toshihikojs.github.io/Toshihiko/",
-    "GitHub": "https://github.com/toshihikojs/Toshihiko"
+    "Guide": "/Toshihiko/getting-started",
+    "API guide": "/Toshihiko/api",
+    "中文": "/Toshihiko/zh/api",
+    "日本語": "/Toshihiko/ja/api",
+    "GitHub ↗": "https://github.com/toshihikojs/Toshihiko"
   },
   "hostedBaseUrl": "https://toshihikojs.github.io/Toshihiko/typedoc/",
   "includeVersion": true,

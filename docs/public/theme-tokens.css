@@ -1,0 +1,17 @@
+:root {
+  --th-ink: #172338;
+  --th-ink-soft: #536174;
+  --th-red: #c94736;
+  --th-red-dark: #a9362b;
+  --th-orange: #ed7041;
+  --th-blue: #287da3;
+  --th-paper: #fffdf9;
+  --th-surface: #fff8f0;
+  --th-nav-height: 64px;
+  --th-layout-max-width: 1480px;
+  --th-sidebar-width: 272px;
+  --th-font-sans: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", "Noto Sans", "Noto Sans SC", "Noto Sans JP", sans-serif;
+  --th-font-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo,
+    monospace;
+}
