@@ -164,7 +164,7 @@ function theme(prefix: string, text: LocaleText): DefaultTheme.Config {
         activeMatch: '^/(?:zh/|ja/)?api(?:/|$)|^/typedoc/',
         items: [
           { text: text.apiGuide, link: withPrefix(prefix, '/api') },
-          { text: text.typeReference, link: '/typedoc/' },
+          { text: text.typeReference, link: '/typedoc/', target: '_self' },
         ],
       },
       { text: 'GitHub', link: repository },
@@ -209,7 +209,7 @@ function theme(prefix: string, text: LocaleText): DefaultTheme.Config {
           { text: text.apiQuery, link: withPrefix(prefix, '/api/query') },
           { text: text.apiYukari, link: withPrefix(prefix, '/api/yukari') },
           { text: text.apiFieldTypes, link: withPrefix(prefix, '/api/field-types') },
-          { text: text.typeReference, link: '/typedoc/' },
+          { text: text.typeReference, link: '/typedoc/', target: '_self' },
         ],
       },
       {

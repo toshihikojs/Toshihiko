@@ -76,7 +76,12 @@ const text = computed(() => copy[locale.value]);
       <span>{{ text.open }}</span>
     </span>
     <span class="api-reference-bridge__links">
-      <a v-for="link in links" :key="link.href" :href="withBase(link.href)">
+      <a
+        v-for="link in links"
+        :key="link.href"
+        :href="withBase(link.href)"
+        target="_self"
+      >
         {{ link.label }}<span aria-hidden="true"> →</span>
       </a>
     </span>
