@@ -37,6 +37,23 @@ for (const output of outputs) {
   }
 }
 
+const chineseModelPath = join(
+  outputRoot,
+  'zh',
+  'typedoc',
+  'interfaces',
+  'toshihiko.Model.html',
+);
+if (existsSync(chineseModelPath)) {
+  const chineseModel = readFileSync(chineseModelPath, 'utf8');
+  if (!chineseModel.includes('Model 会编译传入的 schema')) {
+    failures.push('zh: Model source documentation was not localized');
+  }
+  if (chineseModel.includes('The table-level API returned by')) {
+    failures.push('zh: Model still contains its English source documentation');
+  }
+}
+
 if (failures.length > 0) {
   console.error('Built documentation checks failed:');
   for (const failure of failures) console.error(`- ${failure}`);

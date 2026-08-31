@@ -11,6 +11,7 @@
     "../packages/sql-utils"
   ],
   "entryPointStrategy": "packages",
+  "plugin": ["./.typedoc/localize.mjs"],
   "packageOptions": {
     "entryPoints": ["src/index.ts"],
     "categorizeByGroup": false,
