@@ -49,8 +49,31 @@ if (existsSync(chineseModelPath)) {
   if (!chineseModel.includes('Model 会编译传入的 schema')) {
     failures.push('zh: Model source documentation was not localized');
   }
+  if (!chineseModel.includes('主键值或复合主键对象')) {
+    failures.push('zh: Model parameter documentation was not localized');
+  }
   if (chineseModel.includes('The table-level API returned by')) {
     failures.push('zh: Model still contains its English source documentation');
+  }
+}
+
+const japaneseModelPath = join(
+  outputRoot,
+  'ja',
+  'typedoc',
+  'interfaces',
+  'toshihiko.Model.html',
+);
+if (existsSync(japaneseModelPath)) {
+  const japaneseModel = readFileSync(japaneseModelPath, 'utf8');
+  if (!japaneseModel.includes('Model は指定された schema をコンパイル')) {
+    failures.push('ja: Model source documentation was not localized');
+  }
+  if (!japaneseModel.includes('主キー値、または複合主キーオブジェクトです')) {
+    failures.push('ja: Model parameter documentation was not localized');
+  }
+  if (japaneseModel.includes('The table-level API returned by')) {
+    failures.push('ja: Model still contains its English source documentation');
   }
 }
 

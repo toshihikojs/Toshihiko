@@ -12,10 +12,30 @@
   ],
   "entryPointStrategy": "packages",
   "plugin": ["./.typedoc/localize.mjs"],
+  "blockTags": [
+    "@author", "@augments", "@callback", "@category", "@categoryDescription",
+    "@default", "@deprecated", "@document", "@example", "@expandType",
+    "@extends", "@group", "@groupDescription", "@import", "@inheritDoc",
+    "@inlineType", "@ja", "@jsx", "@license", "@mergeModuleWith", "@module",
+    "@param", "@preventExpand", "@preventInline", "@privateRemarks", "@prop",
+    "@property", "@remarks", "@return", "@returns", "@satisfies", "@see",
+    "@since", "@sortStrategy", "@summary", "@template", "@this", "@throws",
+    "@type", "@typedef", "@typeParam", "@yields", "@zh"
+  ],
   "packageOptions": {
     "entryPoints": ["src/index.ts"],
     "categorizeByGroup": false,
     "defaultCategory": "Advanced types",
+    "blockTags": [
+      "@author", "@augments", "@callback", "@category", "@categoryDescription",
+      "@default", "@deprecated", "@document", "@example", "@expandType",
+      "@extends", "@group", "@groupDescription", "@import", "@inheritDoc",
+      "@inlineType", "@ja", "@jsx", "@license", "@mergeModuleWith", "@module",
+      "@param", "@preventExpand", "@preventInline", "@privateRemarks", "@prop",
+      "@property", "@remarks", "@return", "@returns", "@satisfies", "@see",
+      "@since", "@sortStrategy", "@summary", "@template", "@this", "@throws",
+      "@type", "@typedef", "@typeParam", "@yields", "@zh"
+    ],
     "categoryOrder": [
       "Application API",
       "Schema and fields",

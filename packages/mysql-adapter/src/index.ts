@@ -56,6 +56,12 @@ interface MySQLReadbackModel extends MySQLModel {
  * Queries are compiled as parameterized SQL. Reads can use a configured Cache;
  * writes invalidate related cached rows before execution. Transaction methods
  * acquire and release mysql2 Pool connections.
+ * @zh 基于 mysql2 的 Toshihiko Adapter。
+ *
+ * 查询会编译为参数化 SQL。读取可以使用配置的 Cache；写入会在执行前使相关缓存数据行失效。事务方法会获取并释放 mysql2 Pool 连接。
+ * @ja mysql2 をバックエンドに使用する Toshihiko Adapter です。
+ *
+ * クエリはパラメーター化された SQL にコンパイルされます。読み取りには設定済みの Cache を使用できます。書き込みでは実行前に関連するキャッシュ済みデータ行を無効化します。トランザクションメソッドは mysql2 の Pool 接続を取得し、処理後に解放します。
  */
 export class MySQLAdapter extends Adapter<
   MySQLAdapterOptions,
@@ -76,13 +82,29 @@ export class MySQLAdapter extends Adapter<
     MySQLQueryExecuteArguments,
     QueryResult
   >;
-  /** Configured database name. */
+  /**
+   * Configured database name.
+   * @zh 配置的数据库名。
+   * @ja 設定済みのデータベース名です。
+   */
   readonly database: string;
-  /** Underlying mysql2 connection Pool. */
+  /**
+   * Underlying mysql2 connection Pool.
+   * @zh 底层 mysql2 连接池。
+   * @ja 基盤となる mysql2 の接続 Pool です。
+   */
   declare readonly mysql: Pool;
-  /** Driver package name retained for compatibility. */
+  /**
+   * Driver package name retained for compatibility.
+   * @zh 为兼容性保留的驱动软件包名。
+   * @ja 互換性のために保持するドライバーパッケージ名です。
+   */
   readonly package = 'mysql2';
-  /** Configured MySQL username. */
+  /**
+   * Configured MySQL username.
+   * @zh 配置的 MySQL 用户名。
+   * @ja 設定済みの MySQL ユーザー名です。
+   */
   readonly username: string;
 
   declare private readonly builder: MySQLSqlBuilder;
@@ -120,12 +142,20 @@ export class MySQLAdapter extends Adapter<
     });
   }
 
-  /** Returns the configured database name. */
+  /**
+   * Returns the configured database name.
+   * @zh 返回配置的数据库名。
+   * @ja 設定済みのデータベース名を返します。
+   */
   override getDBName(): string {
     return this.database;
   }
 
-  /** Finds rows directly or through the Model Cache. */
+  /**
+   * Finds rows directly or through the Model Cache.
+   * @zh 直接查找数据行，或通过 Model Cache 查找。
+   * @ja データ行を直接、または Model の Cache を介して検索します。
+   */
   override async find(
     query: MySQLQuery,
     options: AdapterFindOptions = defaultFindOptions,
@@ -136,7 +166,11 @@ export class MySQLAdapter extends Adapter<
       : this.findWithCache(query.cache, query.model, normalized);
   }
 
-  /** Compiles and executes `COUNT(0)` for a normalized Query. */
+  /**
+   * Compiles and executes `COUNT(0)` for a normalized Query.
+   * @zh 编译并执行 `COUNT(0)`，用于规范化后的 Query。
+   * @ja 正規化済みの Query に対して `COUNT(0)` をコンパイルして実行します。
+   */
   override async count(query: MySQLQuery): Promise<number> {
     const options = this.queryToOptions(query);
     const compiled = this.builder.compileSql('count', query.model, options);
@@ -150,7 +184,11 @@ export class MySQLAdapter extends Adapter<
     return first!['COUNT(0)'] as number;
   }
 
-  /** Invalidates related Cache entries and performs a bulk `UPDATE`. */
+  /**
+   * Invalidates related Cache entries and performs a bulk `UPDATE`.
+   * @zh 使相关 Cache 条目失效，并执行批量 `UPDATE`。
+   * @ja 関連する Cache エントリーを無効化し、一括 `UPDATE` を実行します。
+   */
   override async updateByQuery(query: MySQLQuery): Promise<ResultSetHeader> {
     const options = this.queryToOptions(query);
     const compiled = this.builder.compileSql('update', query.model, options);
@@ -162,7 +200,11 @@ export class MySQLAdapter extends Adapter<
     ) as ResultSetHeader;
   }
 
-  /** Invalidates related Cache entries and performs a bulk `DELETE`. */
+  /**
+   * Invalidates related Cache entries and performs a bulk `DELETE`.
+   * @zh 使相关 Cache 条目失效，并执行批量 `DELETE`。
+   * @ja 関連する Cache エントリーを無効化し、一括 `DELETE` を実行します。
+   */
   override async deleteByQuery(query: MySQLQuery): Promise<ResultSetHeader> {
     const options = this.queryToOptions(query);
     const compiled = this.builder.compileSql('delete', query.model, options);
@@ -176,6 +218,8 @@ export class MySQLAdapter extends Adapter<
 
   /**
    * Inserts one row, then reads it back using generated or supplied key values.
+   * @zh 插入一行数据，然后用生成或提供的 key 值重新读取。
+   * @ja 1 行を挿入し、生成または指定されたキー値を使用して読み戻します。
    */
   override async insert(
     model: MySQLModel,
@@ -215,8 +259,11 @@ export class MySQLAdapter extends Adapter<
 
   /**
    * Updates one row using its original locator and invalidates cached copies.
-   *
+   * @zh 使用原始定位条件更新一行数据，并使缓存副本失效。
+   * @ja 元の特定条件を使用して 1 行を更新し、キャッシュ済みのコピーを無効化します。
    * @throws When the locator or update data is empty, or no row was affected.
+   * @zh 定位条件或更新数据为空，或没有数据行受影响时。
+   * @ja 特定条件または更新データが空の場合、あるいは更新された行がない場合です。
    */
   override async update(
     model: MySQLModel,
@@ -272,6 +319,12 @@ export class MySQLAdapter extends Adapter<
    *
    * SQL and values are passed separately unless mysql2 formatting requires
    * `query()`, such as named placeholders or identifier placeholders.
+   * @zh 通过所选连接或 Pool 执行参数化 SQL。
+   *
+   * SQL 与值会分开传递，除非 mysql2 格式化需要 `query()`，例如命名占位符或标识符占位符。
+   * @ja 選択された接続または Pool を介して、パラメーター化された SQL を実行します。
+   *
+   * 名前付きプレースホルダーや識別子プレースホルダーなど、mysql2 のフォーマットに `query()` が必要な場合を除き、SQL と値は別々に渡されます。
    */
   override async execute(
     ...arguments_: MySQLExecuteArguments
@@ -297,7 +350,11 @@ export class MySQLAdapter extends Adapter<
     return result;
   }
 
-  /** Acquires a Pool connection and begins a transaction on it. */
+  /**
+   * Acquires a Pool connection and begins a transaction on it.
+   * @zh 获取一个 Pool 连接并在其上开始事务。
+   * @ja Pool 接続を取得し、その接続上でトランザクションを開始します。
+   */
   override async beginTransaction(): Promise<PoolConnection> {
     const connection = await this.mysql.getConnection();
     try {
@@ -309,22 +366,38 @@ export class MySQLAdapter extends Adapter<
     }
   }
 
-  /** Commits and releases a transaction connection. */
+  /**
+   * Commits and releases a transaction connection.
+   * @zh 提交并释放事务连接。
+   * @ja トランザクション接続をコミットして解放します。
+   */
   override async commit(connection: PoolConnection): Promise<void> {
     await connection.commit();
     connection.release();
   }
 
-  /** Rolls back and releases a transaction connection. */
+  /**
+   * Rolls back and releases a transaction connection.
+   * @zh 回滚并释放事务连接。
+   * @ja トランザクション接続をロールバックして解放します。
+   */
   override async rollback(connection: PoolConnection): Promise<void> {
     await connection.rollback();
     connection.release();
   }
 
-  /** mysql2 SQL formatter bound to the underlying Pool. */
+  /**
+   * mysql2 SQL formatter bound to the underlying Pool.
+   * @zh 绑定到底层 Pool 的 mysql2 SQL 格式化器。
+   * @ja 基盤となる Pool にバインドされた mysql2 の SQL フォーマッターです。
+   */
   declare readonly format: (sql: string, values?: MySQLValues) => string;
 
-  /** Executes a compiled read without consulting or populating a Cache. */
+  /**
+   * Executes a compiled read without consulting or populating a Cache.
+   * @zh 执行编译后的读取操作，不查询也不写入 Cache。
+   * @ja Cache を参照せず、Cache にも保存せずに、コンパイル済みの読み取りを実行します。
+   */
   async findWithNoCache(
     model: MySQLModel,
     options: MySQLQueryOptions = {},
@@ -341,6 +414,8 @@ export class MySQLAdapter extends Adapter<
   /**
    * Reads primary keys, resolves cached rows, fetches misses with at most ten
    * concurrent workers, and preserves the requested field projection.
+   * @zh 读取主键、解析缓存数据行、以最多十个并发 worker 获取未命中数据，并保留请求的字段投影。
+   * @ja 主キーを読み取り、キャッシュ済みのデータ行を解決し、キャッシュミスを同時に最大 10 個のワーカーで取得します。要求された選択フィールドは維持されます。
    */
   async findWithCache(
     cache: NonNullable<MySQLModel['cache']>,
@@ -451,6 +526,12 @@ export class MySQLAdapter extends Adapter<
    * Copies normalized Query state into SQL-builder options.
    *
    * `single: true` also rewrites the limit so at most one row is requested.
+   * @zh 把规范化 Query 状态复制到 SQL builder 选项中。
+   *
+   * `single: true`，同时改写 limit，确保最多请求一行。
+   * @ja 正規化済みの Query 状態を SQL builder のオプションへコピーします。
+   *
+   * `single: true` の場合は limit も書き換え、要求するデータ行を最大 1 行にします。
    */
   queryToOptions(
     query: MySQLQuery,
@@ -480,7 +561,11 @@ export class MySQLAdapter extends Adapter<
     return { ...options, limit };
   }
 
-  /** Formats one logical field condition as SQL. */
+  /**
+   * Formats one logical field condition as SQL.
+   * @zh 把一个逻辑字段条件格式化为 SQL。
+   * @ja 1 個の論理フィールド条件を SQL としてフォーマットします。
+   */
   makeFieldWhere(
     model: MySQLModel,
     key: string,
@@ -490,7 +575,11 @@ export class MySQLAdapter extends Adapter<
     return this.builder.makeFieldWhere(model, key, condition, logic);
   }
 
-  /** Formats an array of condition objects joined by the requested logic. */
+  /**
+   * Formats an array of condition objects joined by the requested logic.
+   * @zh 按指定逻辑连接条件对象数组并格式化。
+   * @ja 指定された論理演算で結合した条件オブジェクトの配列をフォーマットします。
+   */
   makeArrayWhere(
     model: MySQLModel,
     condition: readonly DataRow[],
@@ -499,7 +588,11 @@ export class MySQLAdapter extends Adapter<
     return this.builder.makeArrayWhere(model, condition, logic);
   }
 
-  /** Formats a complete Toshihiko condition as SQL. */
+  /**
+   * Formats a complete Toshihiko condition as SQL.
+   * @zh 把完整 Toshihiko 条件格式化为 SQL。
+   * @ja 完全な Toshihiko 条件を SQL としてフォーマットします。
+   */
   makeWhere(
     model: MySQLModel,
     condition: DataRow | readonly DataRow[],
@@ -508,7 +601,11 @@ export class MySQLAdapter extends Adapter<
     return this.builder.makeWhere(model, condition, logic);
   }
 
-  /** Formats normalized sort entries as an `ORDER BY` fragment body. */
+  /**
+   * Formats normalized sort entries as an `ORDER BY` fragment body.
+   * @zh 把规范化排序条目格式化为 `ORDER BY` 片段主体。
+   * @ja 正規化済みのソート項目を `ORDER BY` フラグメントの本体としてフォーマットします。
+   */
   makeOrder(
     model: MySQLModel,
     order: readonly Readonly<Record<string, number>>[],
@@ -516,7 +613,11 @@ export class MySQLAdapter extends Adapter<
     return this.builder.makeOrder(model, order);
   }
 
-  /** Formats normalized limits as a MySQL `LIMIT` fragment body. */
+  /**
+   * Formats normalized limits as a MySQL `LIMIT` fragment body.
+   * @zh 把规范化 limit 格式化为 MySQL `LIMIT` 片段主体。
+   * @ja 正規化済みの limit を MySQL の `LIMIT` フラグメントの本体としてフォーマットします。
+   */
   makeLimit(
     model: MySQLModel,
     limit: readonly (number | string)[],
@@ -524,32 +625,56 @@ export class MySQLAdapter extends Adapter<
     return this.builder.makeLimit(model, limit);
   }
 
-  /** Formats an optional `FORCE INDEX` clause. */
+  /**
+   * Formats an optional `FORCE INDEX` clause.
+   * @zh 格式化可选的 `FORCE INDEX` 子句。
+   * @ja 任意の `FORCE INDEX` 句をフォーマットします。
+   */
   makeIndex(model: MySQLModel, index?: string): string {
     return this.builder.makeIndex(model, index);
   }
 
-  /** Formats logical update values as a SQL `SET` fragment body. */
+  /**
+   * Formats logical update values as a SQL `SET` fragment body.
+   * @zh 把逻辑更新值格式化为 SQL `SET` 片段主体。
+   * @ja 論理的な更新値を SQL の `SET` フラグメントの本体としてフォーマットします。
+   */
   makeSet(model: MySQLModel, update: DataRow): string {
     return this.builder.makeSet(model, update);
   }
 
-  /** Formats a complete `SELECT` statement. */
+  /**
+   * Formats a complete `SELECT` statement.
+   * @zh 格式化完整的 `SELECT` 语句。
+   * @ja 完全な `SELECT` 文をフォーマットします。
+   */
   makeFind(model: MySQLModel, options?: MySQLQueryOptions): string {
     return this.builder.makeFind(model, options);
   }
 
-  /** Formats a complete `UPDATE` statement. */
+  /**
+   * Formats a complete `UPDATE` statement.
+   * @zh 格式化完整的 `UPDATE` 语句。
+   * @ja 完全な `UPDATE` 文をフォーマットします。
+   */
   makeUpdate(model: MySQLModel, options?: MySQLQueryOptions): string {
     return this.builder.makeUpdate(model, options);
   }
 
-  /** Formats a complete `DELETE` statement. */
+  /**
+   * Formats a complete `DELETE` statement.
+   * @zh 格式化完整的 `DELETE` 语句。
+   * @ja 完全な `DELETE` 文をフォーマットします。
+   */
   makeDelete(model: MySQLModel, options?: MySQLQueryOptions): string {
     return this.builder.makeDelete(model, options);
   }
 
-  /** Selects the matching SQL formatter for `find`, `count`, `update`, or `delete`. */
+  /**
+   * Selects the matching SQL formatter for `find`, `count`, `update`, or `delete`.
+   * @zh 为以下操作选择对应的 SQL 格式化器：`find`、`count`、`update`，或 `delete`。
+   * @ja `find`、`count`、`update`、`delete` の各操作に対応する SQL フォーマッターを選択します。
+   */
   makeSql(
     type: string,
     model: MySQLModel,

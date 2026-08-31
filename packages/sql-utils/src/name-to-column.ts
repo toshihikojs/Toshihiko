@@ -2,9 +2,17 @@ import keywords from './keywords';
 
 /**
  * Finds the closing quote in the SQL query string.
- * @param {string} sql The SQL query string.
- * @param {number} startIdx The starting index of the quote.
- * @return {number} The index of the closing quote.
+ * @zh 在 SQL 查询字符串中查找右引号。
+ * @ja SQL クエリ文字列内で閉じ引用符を検索します。
+ * @param sql - The SQL query string.
+ * @zh sql - SQL 查询字符串。
+ * @ja sql - SQL クエリ文字列です。
+ * @param startIdx - The opening quote's index.
+ * @zh startIdx - 左引号的索引。
+ * @ja startIdx - 開き引用符の位置です。
+ * @returns The closing quote's index.
+ * @zh 右引号的索引。
+ * @ja 閉じ引用符の位置です。
  */
 function findClosingQuote(sql: string, startIdx: number): number {
   const start = sql[startIdx];
@@ -24,10 +32,20 @@ function findClosingQuote(sql: string, startIdx: number): number {
 
 /**
  * Transforms a fragment of the SQL query.
- * @param {string} fragment The fragment string.
- * @param {Record<string, string>} fragmentMap The mapping object.
- * @param {boolean} [forceChange=false] Whether to forcefully change the fragment.
- * @return {string} The transformed fragment string.
+ * @zh 转换 SQL 查询的一个片段。
+ * @ja SQL クエリの一部分を変換します。
+ * @param fragment - The fragment string.
+ * @zh fragment - 要转换的片段字符串。
+ * @ja fragment - 変換する部分文字列です。
+ * @param fragmentMap - The replacement map.
+ * @zh fragmentMap - 替换映射。
+ * @ja fragmentMap - 置換に使用する対応表です。
+ * @param forceChange - Whether to replace the fragment even when it is a keyword.
+ * @zh forceChange - 即使片段是关键字，是否仍强制替换。
+ * @ja forceChange - キーワードであっても置換するかどうかです。
+ * @returns The transformed fragment string.
+ * @zh 转换后的片段字符串。
+ * @ja 変換後の部分文字列です。
  */
 function transformFragment(fragment: string, fragmentMap: Record<string, string>, forceChange = false): string {
   if (forceChange) {
@@ -44,9 +62,17 @@ function transformFragment(fragment: string, fragmentMap: Record<string, string>
 
 /**
  * Parses the SQL query and maps column names using the provided map.
- * @param {string} sql The SQL query string.
- * @param {Record<string, string>} fragmentMap The mapping object.
- * @return {string} The new SQL query string with mapped column names.
+ * @zh 解析 SQL 查询，并使用提供的映射转换列名。
+ * @ja SQL クエリを解析し、指定された対応表を使用して列名を変換します。
+ * @param sql - The SQL query string.
+ * @zh sql - SQL 查询字符串。
+ * @ja sql - SQL クエリ文字列です。
+ * @param fragmentMap - The mapping object.
+ * @zh fragmentMap - 映射对象。
+ * @ja fragmentMap - 変換に使用する対応表です。
+ * @returns The new SQL query string with mapped column names.
+ * @zh 映射列名后的新 SQL 查询字符串。
+ * @ja 列名を変換した新しい SQL クエリ文字列です。
  */
 export function sqlNameToColumn(sql: string, fragmentMap: Record<string, string>): string {
   let result = '';

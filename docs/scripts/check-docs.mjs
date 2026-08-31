@@ -3,6 +3,7 @@ import { dirname, extname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const docsRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const packagesRoot = resolve(docsRoot, '..', 'packages');
 const locales = ['zh', 'ja'];
 
 function markdownFiles(directory) {
@@ -20,6 +21,23 @@ function markdownFiles(directory) {
   });
 }
 
+function typescriptFiles(directory) {
+  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    if (
+      entry.name === 'node_modules'
+      || entry.name === 'lib'
+      || entry.name === 'dist'
+      || entry.name === 'coverage'
+    ) {
+      return [];
+    }
+
+    const path = join(directory, entry.name);
+    if (entry.isDirectory()) return typescriptFiles(path);
+    return entry.isFile() && entry.name.endsWith('.ts') ? [path] : [];
+  });
+}
+
 const allPages = markdownFiles(docsRoot);
 const rootPages = allPages
   .map((path) => relative(docsRoot, path))
@@ -28,6 +46,7 @@ const rootPages = allPages
   .sort();
 
 const failures = [];
+let trilingualComments = 0;
 
 for (const locale of locales) {
   const localizedPages = allPages
@@ -79,6 +98,25 @@ for (const page of allPages) {
   }
 }
 
+for (const path of typescriptFiles(packagesRoot)) {
+  const source = readFileSync(path, 'utf8');
+  for (const match of source.matchAll(/\/\*\*[\s\S]*?\*\//g)) {
+    const comment = match[0];
+    if (comment.includes('@internal')) continue;
+    if (!/^\s*\*\s+\S/m.test(comment)) continue;
+
+    const missing = locales.filter((locale) => !comment.includes(`@${locale}`));
+    if (missing.length > 0) {
+      const line = source.slice(0, match.index).split('\n').length;
+      failures.push(
+        `${relative(packagesRoot, path)}:${line}: missing ${missing.map((locale) => `@${locale}`).join(' and ')}`,
+      );
+    } else {
+      trilingualComments += 1;
+    }
+  }
+}
+
 if (failures.length > 0) {
   console.error('Documentation checks failed:');
   for (const failure of failures) {
@@ -86,5 +124,7 @@ if (failures.length > 0) {
   }
   process.exitCode = 1;
 } else {
-  console.log(`Checked ${rootPages.length} pages across English, Chinese, and Japanese.`);
+  console.log(
+    `Checked ${rootPages.length} pages and ${trilingualComments} source comments across English, Chinese, and Japanese.`,
+  );
 }

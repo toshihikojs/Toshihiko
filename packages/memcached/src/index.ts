@@ -6,7 +6,11 @@ import MemcachedClient from 'memcached';
 
 const memcachedCommandMaxLength = 250;
 
-/** Custom Cache-key generator bound to the MemcachedCache instance. */
+/**
+ * Custom Cache-key generator bound to the MemcachedCache instance.
+ * @zh 绑定到 MemcachedCache 实例的自定义 Cache key 生成器。
+ * @ja MemcachedCache インスタンスにバインドされた、カスタム Cache キー生成関数です。
+ */
 export type CustomizeKey = (
   this: MemcachedCache,
   database: string,
@@ -14,11 +18,23 @@ export type CustomizeKey = (
   key: CacheKey,
 ) => string;
 
-/** Memcached client options plus Toshihiko Cache-key customization. */
+/**
+ * Memcached client options plus Toshihiko Cache-key customization.
+ * @zh Memcached 客户端选项及 Toshihiko Cache key 自定义。
+ * @ja Memcached クライアントのオプションと、Toshihiko の Cache キーカスタマイズです。
+ */
 export interface MemcachedCacheOptions extends MemcachedClient.options {
-  /** Text prepended to generated Memcached keys. */
+  /**
+   * Text prepended to generated Memcached keys.
+   * @zh 添加到生成的 Memcached key 前的文本。
+   * @ja 生成する Memcached キーの先頭に付加する文字列です。
+   */
   prefix?: string;
-  /** Replaces the default composite-key generator. */
+  /**
+   * Replaces the default composite-key generator.
+   * @zh 替换默认的复合 key 生成器。
+   * @ja 既定の複合キー生成関数を置き換えます。
+   */
   customizeKey?: CustomizeKey;
 }
 
@@ -28,24 +44,53 @@ export interface MemcachedCacheOptions extends MemcachedClient.options {
  * Batch reads are split to keep each Memcached `get` command within the
  * protocol's 250-character key command limit. Batch deletion uses at most ten
  * concurrent workers.
+ * @zh 基于 Memcached 的 Cache 实现。
+ *
+ * 批量读取会拆分，以确保每条 Memcached `get` 命令，且不超过协议规定的 250 字符 key 命令上限。批量删除最多使用十个并发 worker。
+ * @ja Memcached をバックエンドに使用する Cache 実装です。
+ *
+ * 一括読み取りは、各 Memcached `get` コマンドがプロトコルで定められた 250 文字のキーコマンド上限に収まるよう分割されます。一括削除では、同時に最大 10 個の worker を使用します。
  */
 export class MemcachedCache extends Cache {
   #keyGenerator: CustomizeKey;
-  /** Underlying `memcached` client. */
+  /**
+   * Underlying `memcached` client.
+   * @zh 底层 `memcached` 客户端。
+   * @ja 基盤となる `memcached` クライアントです。
+   */
   readonly memcached: MemcachedClient;
-  /** Client and key-generation options supplied at construction. */
+  /**
+   * Client and key-generation options supplied at construction.
+   * @zh 构造时传入的客户端和 key 生成选项。
+   * @ja 構築時に渡されたクライアントおよびキー生成のオプションです。
+   */
   readonly options: MemcachedCacheOptions | undefined;
-  /** Prefix prepended to generated keys. */
+  /**
+   * Prefix prepended to generated keys.
+   * @zh 添加到生成 key 前的前缀。
+   * @ja 生成するキーの先頭に付加するプレフィックスです。
+   */
   readonly prefix: string;
-  /** Memcached server location passed to the client. */
+  /**
+   * Memcached server location passed to the client.
+   * @zh 传给客户端的 Memcached 服务地址。
+   * @ja クライアントへ渡す Memcached サーバーの接続先です。
+   */
   readonly servers: MemcachedClient.Location;
 
   /**
    * Creates a Memcached Cache.
-   *
+   * @zh 创建 Memcached Cache。
+   * @ja Memcached Cache を作成します。
    * @param servers - Location accepted by the `memcached` client.
+   * @zh servers - 以下客户端接受的位置：`memcached` 客户端。
+   * @ja servers - `memcached` クライアントが受け付ける接続先です。
    * @param options - Client options and Cache-key customization.
+   * @zh options - 客户端选项和 Cache key 自定义。
+   * @ja options - クライアントのオプションと Cache キーのカスタマイズです。
    * @param client - Existing client, mainly for integration and tests.
+   * @zh client - 现有客户端，主要用于集成和测试。
+   * @ja client - 既存のクライアントです。主にインテグレーションとテストで使用します。
    */
   constructor(
     servers: MemcachedClient.Location,
@@ -66,7 +111,11 @@ export class MemcachedCache extends Cache {
 
   }
 
-  /** Replaces the Cache-key generator and binds it to this instance. */
+  /**
+   * Replaces the Cache-key generator and binds it to this instance.
+   * @zh 替换 Cache key 生成器，并把它绑定到当前实例。
+   * @ja Cache キー生成関数を置き換え、このインスタンスにバインドします。
+   */
   setCustomizeKeyFunc(func: CustomizeKey): void {
     this.#keyGenerator = func.bind(this);
   }
@@ -225,7 +274,11 @@ export class MemcachedCache extends Cache {
   }
 }
 
-/** Factory used by Toshihiko's module-style Cache configuration. */
+/**
+ * Factory used by Toshihiko's module-style Cache configuration.
+ * @zh Toshihiko 模块式 Cache 配置使用的工厂函数。
+ * @ja Toshihiko のモジュール形式の Cache 設定で使用するファクトリーです。
+ */
 export function create(
   servers: MemcachedClient.Location,
   options?: MemcachedCacheOptions,

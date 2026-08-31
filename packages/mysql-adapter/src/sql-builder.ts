@@ -36,9 +36,20 @@ type FieldOperator = keyof typeof fieldOperators;
  *
  * `compile*` methods return parameterized SQL plus placeholder values. `make*`
  * methods format those statements into strings for compatibility and logging.
+ * @zh 把 Toshihiko 查询结构编译为 MySQL 语句。
+ *
+ * `compile*` 方法会返回参数化 SQL 和占位符值。`make*`
+ * 方法会把这些语句格式化为字符串，以便兼容和记录日志。
+ * @ja Toshihiko のクエリ構造を MySQL 文へコンパイルします。
+ *
+ * `compile*` メソッドは、パラメーター化された SQL とプレースホルダー値を返します。`make*` メソッドは、互換性とログ出力のために、それらの文を文字列へフォーマットします。
  */
 export class MySQLSqlBuilder {
-  /** Compiles one logical field condition. */
+  /**
+   * Compiles one logical field condition.
+   * @zh 编译一个逻辑字段条件。
+   * @ja 1 個の論理フィールド条件をコンパイルします。
+   */
   compileFieldWhere(
     model: MySQLModel,
     key: string,
@@ -89,7 +100,11 @@ export class MySQLSqlBuilder {
     return this.compileEquality(field, condition);
   }
 
-  /** Formats one logical field condition as SQL text. */
+  /**
+   * Formats one logical field condition as SQL text.
+   * @zh 把一个逻辑字段条件格式化为 SQL 文本。
+   * @ja 1 個の論理フィールド条件を SQL テキストとしてフォーマットします。
+   */
   makeFieldWhere(
     model: MySQLModel,
     key: string,
@@ -99,7 +114,11 @@ export class MySQLSqlBuilder {
     return formatStatement(this.compileFieldWhere(model, key, condition, logic));
   }
 
-  /** Compiles an array of condition objects joined with `AND` or `OR`. */
+  /**
+   * Compiles an array of condition objects joined with `AND` or `OR`.
+   * @zh 编译由以下逻辑连接的条件对象数组：`AND` 或 `OR`。
+   * @ja `AND` または `OR` で結合された条件オブジェクトの配列をコンパイルします。
+   */
   compileArrayWhere(
     model: MySQLModel,
     condition: readonly DataRow[],
@@ -117,7 +136,11 @@ export class MySQLSqlBuilder {
     );
   }
 
-  /** Formats an array of condition objects as SQL text. */
+  /**
+   * Formats an array of condition objects as SQL text.
+   * @zh 把条件对象数组格式化为 SQL 文本。
+   * @ja 条件オブジェクトの配列を SQL テキストとしてフォーマットします。
+   */
   makeArrayWhere(
     model: MySQLModel,
     condition: readonly DataRow[],
@@ -126,7 +149,11 @@ export class MySQLSqlBuilder {
     return formatStatement(this.compileArrayWhere(model, condition, logic));
   }
 
-  /** Recursively compiles a complete Toshihiko condition. */
+  /**
+   * Recursively compiles a complete Toshihiko condition.
+   * @zh 递归编译一个完整 Toshihiko 条件。
+   * @ja 完全な Toshihiko 条件を再帰的にコンパイルします。
+   */
   compileWhere(
     model: MySQLModel,
     condition: DataRow | readonly DataRow[],
@@ -162,7 +189,11 @@ export class MySQLSqlBuilder {
     return groupStatements(fragments, normalizedLogic, true);
   }
 
-  /** Formats a complete Toshihiko condition as SQL text. */
+  /**
+   * Formats a complete Toshihiko condition as SQL text.
+   * @zh 把完整 Toshihiko 条件格式化为 SQL 文本。
+   * @ja 完全な Toshihiko 条件を SQL テキストとしてフォーマットします。
+   */
   makeWhere(
     model: MySQLModel,
     condition: DataRow | readonly DataRow[],
@@ -171,7 +202,11 @@ export class MySQLSqlBuilder {
     return formatStatement(this.compileWhere(model, condition, logic));
   }
 
-  /** Formats normalized order entries with quoted storage column names. */
+  /**
+   * Formats normalized order entries with quoted storage column names.
+   * @zh 使用带引号的存储列名格式化规范化 order 条目。
+   * @ja 引用符で囲んだストレージ列名を使用して、正規化済みの order 項目をフォーマットします。
+   */
   makeOrder(
     model: MySQLModel,
     order: readonly Readonly<Record<string, number>>[],
@@ -188,7 +223,11 @@ export class MySQLSqlBuilder {
     return fragments.join(', ');
   }
 
-  /** Formats one or two normalized values as a MySQL limit body. */
+  /**
+   * Formats one or two normalized values as a MySQL limit body.
+   * @zh 把一个或两个规范化值格式化为 MySQL limit 主体。
+   * @ja 正規化済みの 1 個または 2 個の値を MySQL の limit 本体としてフォーマットします。
+   */
   makeLimit(
     _model: MySQLModel,
     limit: readonly (number | string)[],
@@ -196,12 +235,20 @@ export class MySQLSqlBuilder {
     return limit.map(normalizeLimit).join(', ');
   }
 
-  /** Formats an optional quoted `FORCE INDEX` clause. */
+  /**
+   * Formats an optional quoted `FORCE INDEX` clause.
+   * @zh 格式化可选且带引号的 `FORCE INDEX` 子句。
+   * @ja 引用符付きの任意の `FORCE INDEX` 句をフォーマットします。
+   */
   makeIndex(_model: MySQLModel, index?: string): string {
     return index ? `FORCE INDEX(${quoteIdentifier(index)})` : '';
   }
 
-  /** Formats logical update values as a SQL assignment list. */
+  /**
+   * Formats logical update values as a SQL assignment list.
+   * @zh 把逻辑更新值格式化为 SQL 赋值列表。
+   * @ja 論理的な更新値を SQL の代入リストとしてフォーマットします。
+   */
   makeSet(
     model: MySQLModel,
     update: DataRow,
@@ -209,7 +256,11 @@ export class MySQLSqlBuilder {
     return formatStatement(this.compileSet(model, update));
   }
 
-  /** Compiles logical update values into parameterized assignments. */
+  /**
+   * Compiles logical update values into parameterized assignments.
+   * @zh 把逻辑更新值编译为参数化赋值。
+   * @ja 論理的な更新値をパラメーター化された代入へコンパイルします。
+   */
   compileSet(
     model: MySQLModel,
     update: DataRow,
@@ -230,7 +281,11 @@ export class MySQLSqlBuilder {
     return joinStatements(assignments, ', ');
   }
 
-  /** Restores one application value and produces a placeholder statement. */
+  /**
+   * Restores one application value and produces a placeholder statement.
+   * @zh 还原一个应用层值并生成占位符语句。
+   * @ja 1 個のアプリケーション値をストレージ表現へ戻し、プレースホルダー式を生成します。
+   */
   compileValue(field: MySQLField, value: DataValue): MySQLStatement {
     if (value === null) {
       return statement('NULL');
@@ -238,12 +293,20 @@ export class MySQLSqlBuilder {
     return this.compileRestoredValue(field, value);
   }
 
-  /** Formats a complete `SELECT` statement. */
+  /**
+   * Formats a complete `SELECT` statement.
+   * @zh 格式化完整的 `SELECT` 语句。
+   * @ja 完全な `SELECT` 文をフォーマットします。
+   */
   makeFind(model: MySQLModel, options: MySQLQueryOptions = {}): string {
     return formatStatement(this.compileFind(model, options));
   }
 
-  /** Compiles a parameterized `SELECT` statement. */
+  /**
+   * Compiles a parameterized `SELECT` statement.
+   * @zh 编译参数化的 `SELECT` 语句。
+   * @ja パラメーター化された `SELECT` 文をコンパイルします。
+   */
   compileFind(model: MySQLModel, options: MySQLQueryOptions = {}): MySQLStatement {
     const fields = options.fields?.length ? options.fields : undefined;
     const selected = options.count
@@ -269,12 +332,20 @@ export class MySQLSqlBuilder {
     return result;
   }
 
-  /** Formats a complete `UPDATE` statement. */
+  /**
+   * Formats a complete `UPDATE` statement.
+   * @zh 格式化完整的 `UPDATE` 语句。
+   * @ja 完全な `UPDATE` 文をフォーマットします。
+   */
   makeUpdate(model: MySQLModel, options: MySQLQueryOptions = {}): string {
     return formatStatement(this.compileUpdate(model, options));
   }
 
-  /** Compiles a parameterized `UPDATE` statement. */
+  /**
+   * Compiles a parameterized `UPDATE` statement.
+   * @zh 编译参数化的 `UPDATE` 语句。
+   * @ja パラメーター化された `UPDATE` 文をコンパイルします。
+   */
   compileUpdate(model: MySQLModel, options: MySQLQueryOptions = {}): MySQLStatement {
     const set = this.compileSet(model, options.update ?? {});
     if (!set.sql) {
@@ -296,12 +367,20 @@ export class MySQLSqlBuilder {
     return result;
   }
 
-  /** Formats a complete `DELETE` statement. */
+  /**
+   * Formats a complete `DELETE` statement.
+   * @zh 格式化完整的 `DELETE` 语句。
+   * @ja 完全な `DELETE` 文をフォーマットします。
+   */
   makeDelete(model: MySQLModel, options: MySQLQueryOptions = {}): string {
     return formatStatement(this.compileDelete(model, options));
   }
 
-  /** Compiles a parameterized `DELETE` statement. */
+  /**
+   * Compiles a parameterized `DELETE` statement.
+   * @zh 编译参数化的 `DELETE` 语句。
+   * @ja パラメーター化された `DELETE` 文をコンパイルします。
+   */
   compileDelete(model: MySQLModel, options: MySQLQueryOptions = {}): MySQLStatement {
     let result = statement(`DELETE FROM ${quoteIdentifier(model.name)}`);
     result = appendStatement(result, this.compileWhereClause(model, options.where));
@@ -325,7 +404,11 @@ export class MySQLSqlBuilder {
     return result;
   }
 
-  /** Formats the statement selected by an operation name. */
+  /**
+   * Formats the statement selected by an operation name.
+   * @zh 格式化操作名选中的语句。
+   * @ja 操作名に対応する文をフォーマットします。
+   */
   makeSql(
     type: SqlOperation,
     model: MySQLModel,
@@ -334,7 +417,11 @@ export class MySQLSqlBuilder {
     return formatStatement(this.compileSql(type, model, options));
   }
 
-  /** Compiles the parameterized statement selected by an operation name. */
+  /**
+   * Compiles the parameterized statement selected by an operation name.
+   * @zh 编译由操作名选中的参数化语句。
+   * @ja 操作名に対応するパラメーター化された文をコンパイルします。
+   */
   compileSql(
     type: SqlOperation,
     model: MySQLModel,

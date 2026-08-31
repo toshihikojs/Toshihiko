@@ -21,13 +21,20 @@ export {
 } from './field-types';
 export { Toshihiko, type ToshihikoOptions } from './toshihiko';
 
-/** SQL string and `LIKE` pattern escaping helpers. */
+/**
+ * SQL string and `LIKE` pattern escaping helpers.
+ * @zh SQL 字符串和 `LIKE` 模式转义辅助函数。
+ * @ja SQL 文字列と `LIKE` パターンをエスケープするヘルパーです。
+ */
 export const Escaper = { escape, escapeLike };
 
 /**
  * Built-in adapter constructors.
- *
+ * @zh 内置 Adapter 构造函数。
+ * @ja 組み込み Adapter のコンストラクターです。
  * @category Extension API
+ * @zh 扩展 API
+ * @ja 拡張 API
  */
 export const Adapter = {
   get base(): AdapterConstructor {
@@ -40,8 +47,11 @@ export const Adapter = {
 
 /**
  * Contract implemented by a Toshihiko database adapter.
- *
+ * @zh Toshihiko 数据库 Adapter 需要实现的契约。
+ * @ja Toshihiko のデータベース Adapter が実装する契約です。
  * @category Extension API
+ * @zh 扩展 API
+ * @ja 拡張 API
  */
 export type Adapter<
   Model = object,

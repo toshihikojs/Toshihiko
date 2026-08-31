@@ -35,7 +35,11 @@ type RequiredMergeKeys<Defaults extends object, Options extends object> = Extrac
   MergeKeys<Defaults, Options>
 >;
 
-/** Result type produced by {@link extend}, retaining required and optional keys. */
+/**
+ * Result type produced by {@link extend}, retaining required and optional keys.
+ * @zh {@link extend} 生成的结果类型，会保留必填键和可选键。
+ * @ja {@link extend} が生成する結果型です。必須キーと任意キーを維持します。
+ */
 export type Merge<Defaults extends object, Options extends object> = {
   [Key in RequiredMergeKeys<Defaults, Options>]-?: MergeProperty<Defaults, Options, Key>;
 } & {
@@ -50,9 +54,18 @@ export type Merge<Defaults extends object, Options extends object> = {
  * the existing option object becomes the recursive defaults argument. Code
  * which needs conventional deep-merge semantics should use a dedicated merge
  * utility instead.
+ * @zh 深拷贝 Adapter 选项，并用默认值补齐缺失属性。
  *
+ * 这里有意保留 v1 的递归合并顺序：在嵌套层级中，已有选项对象会成为递归调用的 defaults 参数。需要常规深合并语义的代码应使用专门的合并工具。
+ * @ja Adapter のオプションをディープコピーし、欠けているプロパティを既定値で補います。
+ *
+ * ここでは v1 の再帰的なマージ順序を意図的に維持しています。ネストした階層では、既存のオプションオブジェクトが再帰呼び出しの defaults 引数になります。一般的なディープマージの挙動が必要なコードでは、専用のマージユーティリティを使用してください。
  * @param defaultOptions - Values used when the corresponding option is absent.
+ * @zh defaultOptions - 对应选项缺失时使用的值。
+ * @ja defaultOptions - 対応するオプションが指定されていない場合に使用する値です。
  * @param options - User-supplied values copied into the result.
+ * @zh options - 复制到结果中的用户输入值。
+ * @ja options - 結果へコピーするユーザー指定の値です。
  */
 export function extend<
   Defaults extends object = object,

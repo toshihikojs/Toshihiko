@@ -6,9 +6,17 @@ import RedisClient, {
   type RedisOptions,
 } from 'ioredis';
 
-/** ioredis options plus the prefix added to every generated Cache key. */
+/**
+ * ioredis options plus the prefix added to every generated Cache key.
+ * @zh ioredis 选项，以及添加到每个生成 Cache key 前的前缀。
+ * @ja ioredis のオプションと、生成するすべての Cache キーに付加するプレフィックスです。
+ */
 export interface RedisCacheOptions extends RedisOptions {
-  /** Text prepended to the database and table namespaces. */
+  /**
+   * Text prepended to the database and table namespaces.
+   * @zh 添加到数据库和表命名空间前的文本。
+   * @ja データベースおよびテーブルの名前空間の先頭に付加する文字列です。
+   */
   prefix?: string;
 }
 
@@ -19,19 +27,36 @@ type RedisConstructorOptions = RedisOptions & {
 /**
  * Redis-backed Cache implementation using ioredis pipelines for batch reads
  * and invalidation.
+ * @zh 基于 Redis 的 Cache 实现，使用 ioredis pipeline 批量读取和失效缓存。
+ * @ja Redis をバックエンドに使用する Cache 実装です。一括読み取りと無効化には ioredis の `pipeline` を使用します。
  */
 export class RedisCache extends Cache {
-  /** Prefix prepended to generated Redis keys. */
+  /**
+   * Prefix prepended to generated Redis keys.
+   * @zh 添加到生成的 Redis key 前的前缀。
+   * @ja 生成する Redis キーの先頭に付加するプレフィックスです。
+   */
   readonly prefix: string;
-  /** Underlying ioredis client. */
+  /**
+   * Underlying ioredis client.
+   * @zh 底层 ioredis 客户端。
+   * @ja 基盤となる ioredis クライアントです。
+   */
   readonly redis: RedisClient;
 
   /**
    * Creates a Redis Cache.
-   *
+   * @zh 创建 Redis Cache。
+   * @ja Redis Cache を作成します。
    * @param servers - Redis address in `host:port` form.
+   * @zh servers - 以下格式的 Redis 地址：`host:port` 形式。
+   * @ja servers - `host:port` 形式の Redis アドレスです。
    * @param options - ioredis options and optional Cache-key prefix.
+   * @zh options - ioredis 选项和可选 Cache key 前缀。
+   * @ja options - ioredis のオプションと、任意の Cache キープレフィックスです。
    * @param client - Existing ioredis client, mainly for integration and tests.
+   * @zh client - 现有 ioredis 客户端，主要用于集成和测试。
+   * @ja client - 既存の ioredis クライアントです。主にインテグレーションとテストで使用します。
    */
   constructor(
     servers: string,
@@ -114,7 +139,11 @@ export class RedisCache extends Cache {
   }
 }
 
-/** Factory used by Toshihiko's module-style Cache configuration. */
+/**
+ * Factory used by Toshihiko's module-style Cache configuration.
+ * @zh Toshihiko 模块式 Cache 配置使用的工厂函数。
+ * @ja Toshihiko のモジュール形式の Cache 設定で使用するファクトリーです。
+ */
 export function create(
   servers: string,
   options?: RedisCacheOptions,
