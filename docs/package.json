@@ -4,13 +4,14 @@
   "private": true,
   "scripts": {
     "build": "npm run check && vitepress build . 2>&1 && npm run build:typedoc && npm run check:build",
-    "build:typedoc": "npm run build:typedoc:en && npm run build:typedoc:zh && npm run build:typedoc:ja",
+    "build:typedoc": "npm run build:typedoc:en && npm run build:typedoc:zh && npm run build:typedoc:ja && npm run finalize:typedoc",
     "build:typedoc:en": "typedoc --options typedoc.json",
     "build:typedoc:ja": "typedoc --options typedoc.ja.json",
     "build:typedoc:zh": "typedoc --options typedoc.zh.json",
     "check": "node scripts/check-docs.mjs",
     "check:build": "node scripts/check-built-docs.mjs",
     "dev": "vitepress dev .",
+    "finalize:typedoc": "node scripts/finalize-typedoc.mjs",
     "preview": "vitepress preview .",
     "test": "npm run check",
     "typecheck": "tsc --noEmit -p tsconfig.json"

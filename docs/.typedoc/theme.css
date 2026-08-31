@@ -50,6 +50,7 @@ body {
 /* Match the VitePress site header. */
 
 .tsd-page-toolbar {
+  z-index: 20;
   border-bottom: 1px solid var(--color-accent);
   background: color-mix(in srgb, var(--color-background) 94%, transparent);
   backdrop-filter: blur(12px);
@@ -97,10 +98,187 @@ body {
   color: var(--color-link);
 }
 
+body.typedoc-nav-enhanced #tsd-toolbar-links {
+  display: none;
+}
+
+.typedoc-site-nav {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  margin-left: auto;
+  font-size: 14px;
+  font-weight: 620;
+  line-height: 1;
+}
+
+.typedoc-site-nav a,
+.typedoc-site-nav summary {
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.typedoc-site-nav__link,
+.typedoc-site-nav summary,
+.typedoc-site-nav__github-icon {
+  transition: color 0.15s ease;
+}
+
+.typedoc-site-nav__link:hover,
+.typedoc-site-nav summary:hover,
+.typedoc-site-nav__github-icon:hover {
+  color: var(--color-link);
+}
+
+.typedoc-site-nav__menu--current > summary {
+  color: var(--color-link);
+}
+
+.typedoc-site-nav__menu {
+  position: relative;
+}
+
+.typedoc-site-nav__menu > summary {
+  display: flex;
+  height: var(--th-nav-height);
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.typedoc-site-nav__menu > summary::-webkit-details-marker {
+  display: none;
+}
+
+.typedoc-site-nav__caret {
+  width: 6px;
+  height: 6px;
+  border-right: 1.5px solid currentcolor;
+  border-bottom: 1.5px solid currentcolor;
+  transform: translateY(-2px) rotate(45deg);
+}
+
+.typedoc-site-nav__menu[open] .typedoc-site-nav__caret {
+  transform: translateY(2px) rotate(225deg);
+}
+
+.typedoc-site-nav__popover {
+  position: absolute;
+  top: calc(100% - 8px);
+  right: -14px;
+  display: flex;
+  min-width: 170px;
+  box-sizing: border-box;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px;
+  border: 1px solid var(--color-accent);
+  border-radius: 10px;
+  background: var(--color-background);
+  box-shadow: 0 12px 32px rgba(23, 35, 56, 0.12);
+}
+
+.typedoc-site-nav__popover a {
+  padding: 9px 11px;
+  border-radius: 6px;
+  color: var(--color-text-aside);
+  white-space: nowrap;
+}
+
+.typedoc-site-nav__popover a:hover,
+.typedoc-site-nav__popover a[aria-current="page"] {
+  color: var(--color-link);
+  background: var(--color-active-menu-item);
+}
+
+.typedoc-site-nav__language > summary {
+  gap: 5px;
+}
+
+.typedoc-site-nav__language > summary svg,
+.typedoc-site-nav__github-icon svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.typedoc-site-nav__language-menu {
+  min-width: 130px;
+}
+
+.typedoc-theme-switch {
+  position: relative;
+  width: 48px;
+  height: 24px;
+  padding: 2px;
+  border: 1px solid var(--color-accent);
+  border-radius: 12px;
+  color: var(--color-text-aside);
+  background: var(--color-background-secondary);
+  cursor: pointer;
+}
+
+.typedoc-theme-switch span {
+  display: flex;
+  width: 18px;
+  height: 18px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--color-background);
+  box-shadow: 0 1px 4px rgba(23, 35, 56, 0.16);
+  transition: transform 0.2s ease;
+}
+
+.typedoc-theme-switch[aria-checked="true"] span {
+  transform: translateX(23px);
+}
+
+.typedoc-theme-switch svg {
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+}
+
+.typedoc-site-nav__github-icon {
+  display: flex;
+  align-items: center;
+}
+
+.typedoc-site-nav__github-icon svg {
+  fill: currentcolor;
+  stroke: none;
+}
+
 #tsd-search-trigger {
+  flex: 0 0 auto;
+  margin-left: 18px;
   border: 1px solid var(--color-accent);
   border-radius: 8px;
   background: var(--color-background-secondary);
+}
+
+.typedoc-nav-enhanced #tsd-search-trigger {
+  width: 40px;
+  height: 40px;
+}
+
+@media (max-width: 1040px) {
+  .typedoc-site-nav {
+    gap: 16px;
+  }
+
+  .typedoc-site-nav__github-text {
+    display: none;
+  }
 }
 
 /* Three-column reference layout. */
@@ -369,6 +547,14 @@ footer {
 @media (max-width: 768px) {
   :root {
     --dim-toolbar-contents-height: 60px;
+  }
+
+  .typedoc-site-nav {
+    display: none;
+  }
+
+  .typedoc-nav-enhanced #tsd-search-trigger {
+    margin-left: auto;
   }
 
   .tsd-toolbar-contents,

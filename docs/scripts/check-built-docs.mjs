@@ -29,6 +29,12 @@ for (const output of outputs) {
   if (!index.includes(`lang="${output.locale}"`)) {
     failures.push(`${output.locale}: incorrect HTML language`);
   }
+  if (!index.includes('assets/custom.css?v=')) {
+    failures.push(`${output.locale}: theme CSS is missing a content fingerprint`);
+  }
+  if (!index.includes('assets/custom.js?v=')) {
+    failures.push(`${output.locale}: theme script is missing a content fingerprint`);
+  }
 }
 
 if (failures.length > 0) {
