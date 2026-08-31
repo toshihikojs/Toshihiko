@@ -142,6 +142,10 @@ function withPrefix(prefix: string, path: string): string {
   return prefix === '' ? path : `${prefix}${path}`;
 }
 
+function typeReference(prefix: string): string {
+  return withPrefix(prefix, '/typedoc/');
+}
+
 function theme(prefix: string, text: LocaleText): DefaultTheme.Config {
   return {
     logo: '/logo.png',
@@ -161,10 +165,10 @@ function theme(prefix: string, text: LocaleText): DefaultTheme.Config {
       { text: text.guide, link: withPrefix(prefix, '/getting-started') },
       {
         text: text.api,
-        activeMatch: '^/(?:zh/|ja/)?api(?:/|$)|^/typedoc/',
+        activeMatch: '^/(?:zh/|ja/)?(?:api|typedoc)(?:/|$)',
         items: [
           { text: text.apiGuide, link: withPrefix(prefix, '/api') },
-          { text: text.typeReference, link: '/typedoc/', target: '_self' },
+          { text: text.typeReference, link: typeReference(prefix), target: '_self' },
         ],
       },
       { text: 'GitHub', link: repository },
@@ -209,7 +213,7 @@ function theme(prefix: string, text: LocaleText): DefaultTheme.Config {
           { text: text.apiQuery, link: withPrefix(prefix, '/api/query') },
           { text: text.apiYukari, link: withPrefix(prefix, '/api/yukari') },
           { text: text.apiFieldTypes, link: withPrefix(prefix, '/api/field-types') },
-          { text: text.typeReference, link: '/typedoc/', target: '_self' },
+          { text: text.typeReference, link: typeReference(prefix), target: '_self' },
         ],
       },
       {

@@ -1,4 +1,4 @@
-@import url("../../theme-tokens.css");
+@import url("/Toshihiko/theme-tokens.css");
 
 :root {
   --light-color-background: var(--th-paper);
@@ -78,7 +78,7 @@ body {
   height: 32px;
   flex: 0 0 auto;
   content: "";
-  background: url("../../logo.png") center / contain no-repeat;
+  background: url("./favicon.png") center / contain no-repeat;
 }
 
 #tsd-toolbar-links {

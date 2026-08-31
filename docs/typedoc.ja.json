@@ -1,0 +1,15 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "extends": "./typedoc.json",
+  "lang": "ja",
+  "out": ".vitepress/dist/ja/typedoc",
+  "titleLink": "/Toshihiko/ja/",
+  "navigationLinks": {
+    "ガイド": "/Toshihiko/ja/getting-started",
+    "API の説明": "/Toshihiko/ja/api",
+    "English": "/Toshihiko/typedoc/",
+    "中文": "/Toshihiko/zh/typedoc/",
+    "GitHub ↗": "https://github.com/toshihikojs/Toshihiko"
+  },
+  "hostedBaseUrl": "https://toshihikojs.github.io/Toshihiko/ja/typedoc/"
+}

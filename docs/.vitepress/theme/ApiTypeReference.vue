@@ -4,20 +4,37 @@ import { useData, withBase } from 'vitepress';
 
 interface ReferenceLink {
   readonly href: string;
-  readonly label: string;
+  readonly label: string | Readonly<Record<Locale, string>>;
 }
+
+type Locale = 'en' | 'ja' | 'zh';
 
 const references: Readonly<Record<string, readonly ReferenceLink[]>> = {
   'api.md': [
-    { href: '/typedoc/', label: 'All exports' },
+    {
+      href: '/typedoc/',
+      label: { en: 'All exports', ja: 'すべての export', zh: '全部导出' },
+    },
   ],
   'api/adapter.md': [
-    { href: '/typedoc/types/toshihiko.Adapter.html', label: 'Adapter contract' },
-    { href: '/typedoc/classes/_toshihiko_base-adapter.Adapter.html', label: 'Base Adapter' },
+    {
+      href: '/typedoc/types/toshihiko.Adapter.html',
+      label: { en: 'Adapter contract', ja: 'Adapter コントラクト', zh: 'Adapter 契约' },
+    },
+    {
+      href: '/typedoc/classes/_toshihiko_base-adapter.Adapter.html',
+      label: { en: 'Base Adapter', ja: 'Adapter 基底クラス', zh: 'Adapter 基类' },
+    },
   ],
   'api/cache.md': [
-    { href: '/typedoc/interfaces/toshihiko.Cache.html', label: 'Cache contract' },
-    { href: '/typedoc/classes/_toshihiko_base-cache.Cache.html', label: 'Base Cache' },
+    {
+      href: '/typedoc/interfaces/toshihiko.Cache.html',
+      label: { en: 'Cache contract', ja: 'Cache コントラクト', zh: 'Cache 契约' },
+    },
+    {
+      href: '/typedoc/classes/_toshihiko_base-cache.Cache.html',
+      label: { en: 'Base Cache', ja: 'Cache 基底クラス', zh: 'Cache 基类' },
+    },
     { href: '/typedoc/classes/_toshihiko_redis-cache.RedisCache.html', label: 'RedisCache' },
     { href: '/typedoc/classes/_toshihiko_memcached-cache.MemcachedCache.html', label: 'MemcachedCache' },
   ],
@@ -54,7 +71,7 @@ const copy = {
 
 const { page } = useData();
 
-const locale = computed<keyof typeof copy>(() => {
+const locale = computed<Locale>(() => {
   if (page.value.relativePath.startsWith('zh/')) return 'zh';
   if (page.value.relativePath.startsWith('ja/')) return 'ja';
   return 'en';
@@ -63,6 +80,17 @@ const locale = computed<keyof typeof copy>(() => {
 const pageKey = computed(() => page.value.relativePath.replace(/^(?:zh|ja)\//, ''));
 const links = computed(() => references[pageKey.value] ?? []);
 const text = computed(() => copy[locale.value]);
+const typeReferencePrefix = computed(() => (
+  locale.value === 'en' ? '/typedoc' : `/${locale.value}/typedoc`
+));
+
+function hrefFor(link: ReferenceLink): string {
+  return withBase(link.href.replace('/typedoc', typeReferencePrefix.value));
+}
+
+function labelFor(link: ReferenceLink): string {
+  return typeof link.label === 'string' ? link.label : link.label[locale.value];
+}
 </script>
 
 <template>
@@ -79,10 +107,10 @@ const text = computed(() => copy[locale.value]);
       <a
         v-for="link in links"
         :key="link.href"
-        :href="withBase(link.href)"
+        :href="hrefFor(link)"
         target="_self"
       >
-        {{ link.label }}<span aria-hidden="true"> →</span>
+        {{ labelFor(link) }}<span aria-hidden="true"> →</span>
       </a>
     </span>
   </nav>

@@ -34,6 +34,7 @@
     }
   },
   "out": ".vitepress/dist/typedoc",
+  "lang": "en",
   "customCss": ".typedoc/theme.css",
   "customJs": ".typedoc/navigation.js",
   "favicon": "public/logo.png",
@@ -41,8 +42,8 @@
   "navigationLinks": {
     "Guide": "/Toshihiko/getting-started",
     "API guide": "/Toshihiko/api",
-    "中文": "/Toshihiko/zh/api",
-    "日本語": "/Toshihiko/ja/api",
+    "中文": "/Toshihiko/zh/typedoc/",
+    "日本語": "/Toshihiko/ja/typedoc/",
     "GitHub ↗": "https://github.com/toshihikojs/Toshihiko"
   },
   "hostedBaseUrl": "https://toshihikojs.github.io/Toshihiko/typedoc/",

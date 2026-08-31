@@ -22,19 +22,61 @@
   const markerIndex = window.location.pathname.indexOf(marker);
   if (markerIndex < 0) return;
 
+  const typeReferenceBase = window.location.pathname.slice(0, markerIndex + 1);
+  const locale = typeReferenceBase.endsWith('/zh/')
+    ? 'zh'
+    : typeReferenceBase.endsWith('/ja/')
+      ? 'ja'
+      : 'en';
+  const siteBase = locale === 'en'
+    ? typeReferenceBase
+    : typeReferenceBase.slice(0, -3);
   const page = window.location.pathname.slice(markerIndex + marker.length) || 'index.html';
+  const pageSuffix = page === 'index.html' ? '' : page;
+  const typeReferenceByLocale = {
+    en: `${siteBase}typedoc/${pageSuffix}`,
+    zh: `${siteBase}zh/typedoc/${pageSuffix}`,
+    ja: `${siteBase}ja/typedoc/${pageSuffix}`,
+  };
+  const localeByLabel = {
+    English: 'en',
+    中文: 'zh',
+    日本語: 'ja',
+  };
+
+  document.querySelectorAll('#tsd-toolbar-links a, #tsd-sidebar-links a').forEach((link) => {
+    const targetLocale = localeByLabel[link.textContent?.trim()];
+    if (targetLocale) link.href = typeReferenceByLocale[targetLocale];
+  });
+
   const guide = guideByPage[page];
   const heading = document.querySelector('.col-content h1');
   if (!guide || !heading) return;
 
-  const siteBase = window.location.pathname.slice(0, markerIndex + 1);
+  const copy = {
+    en: {
+      label: 'Usage guides',
+      title: 'Usage guide',
+      description: 'Examples, behavior, and practical notes',
+    },
+    ja: {
+      label: '利用ガイド',
+      title: '利用ガイド',
+      description: '使用例、動作、実践上の注意',
+    },
+    zh: {
+      label: '使用指南',
+      title: '使用指南',
+      description: '示例、行为与实用说明',
+    },
+  }[locale];
   const bridge = document.createElement('nav');
   bridge.className = 'typedoc-guide-bridge';
-  bridge.setAttribute('aria-label', 'Usage guides');
+  bridge.setAttribute('aria-label', copy.label);
   bridge.innerHTML = [
     '<span class="typedoc-guide-bridge__copy">',
-    '<strong>Usage guide</strong>',
-    '<span>Examples, behavior, and practical notes</span>',
+    `<strong>${copy.title}</strong>`,
+    `<span>${copy.description}</span>`,
     '</span>',
     '<span class="typedoc-guide-bridge__links">',
     `<a href="${siteBase}${guide}">English →</a>`,
