@@ -1,0 +1,108 @@
+name: Publish packages
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: Type "publish" to release the package versions committed on master
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: npm-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Confirm release
+        env:
+          CONFIRM: ${{ inputs.confirm }}
+        run: test "$CONFIRM" = "publish"
+
+      - name: Checkout master
+        uses: actions/checkout@v7
+        with:
+          ref: master
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+
+      - name: Install release tools
+        run: |
+          npm install --global npm@11.19.1
+          npm install --global @microsoft/rush@5.172.1
+
+      - name: Install dependencies
+        run: rush install
+
+      - name: Validate packages
+        run: |
+          rush check
+          rush build --verbose
+          rush typecheck --verbose
+          rush test --verbose
+
+      - name: Verify that every version is new
+        shell: bash
+        run: |
+          set -euo pipefail
+          package_dirs=(
+            packages/sql-utils
+            packages/toshihiko
+            packages/base-adapter
+            packages/base-cache
+            packages/mysql-adapter
+            packages/redis
+            packages/memcached
+          )
+
+          for package_dir in "${package_dirs[@]}"; do
+            package_name="$(node -p "require('./${package_dir}/package.json').name")"
+            package_version="$(node -p "require('./${package_dir}/package.json').version")"
+
+            if output="$(npm view "${package_name}@${package_version}" version 2>&1)"; then
+              echo "::error title=Version already exists::${package_name}@${package_version} is already published."
+              exit 1
+            fi
+
+            if ! grep -q "E404" <<<"$output"; then
+              echo "$output"
+              exit 1
+            fi
+          done
+
+      - name: Publish packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          package_dirs=(
+            packages/sql-utils
+            packages/toshihiko
+            packages/base-adapter
+            packages/base-cache
+            packages/mysql-adapter
+            packages/redis
+            packages/memcached
+          )
+
+          for package_dir in "${package_dirs[@]}"; do
+            package_version="$(node -p "require('./${package_dir}/package.json').version")"
+            dist_tag="latest"
+            if [[ "$package_version" == *-* ]]; then
+              dist_tag="next"
+            fi
+
+            npm publish "./${package_dir}" --access public --tag "$dist_tag"
+          done
