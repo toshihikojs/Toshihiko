@@ -31,7 +31,7 @@
   },
   "dependencies": {
     "@toshihiko/base-adapter": "2.0.0-alpha.0",
-    "@toshihiko/sql-utils": "^1.1.1",
+    "@toshihiko/sql-utils": "^1.1.2",
     "mysql2": "^3.24.2"
   },
   "devDependencies": {

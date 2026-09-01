@@ -44,7 +44,7 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "@toshihiko/sql-utils": "^1.1.1",
+    "@toshihiko/sql-utils": "^1.1.2",
     "eventemitter2": "^6.0.0",
     "fbbk-json": "^1.1.0",
     "lodash": "4.17.21",
