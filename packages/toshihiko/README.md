@@ -1,6 +1,6 @@
 # Toshihiko
 
-[![npm](https://img.shields.io/npm/v/toshihiko.svg)](https://www.npmjs.com/package/toshihiko)
+[![npm](https://img.shields.io/npm/v/toshihiko/next.svg)](https://www.npmjs.com/package/toshihiko/v/next)
 [![CI](https://github.com/toshihikojs/Toshihiko/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/toshihikojs/Toshihiko/actions/workflows/ci.yml)
 [![Coverage](https://codecov.io/github/toshihikojs/Toshihiko/branch/master/graph/badge.svg?flag=toshihiko)](https://app.codecov.io/github/toshihikojs/Toshihiko/tree/master)
 

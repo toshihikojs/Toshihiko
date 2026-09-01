@@ -1,6 +1,6 @@
 # Toshihiko Redis Cache
 
-[![npm](https://img.shields.io/npm/v/@toshihiko/redis-cache.svg)](https://www.npmjs.com/package/@toshihiko/redis-cache)
+[![npm](https://img.shields.io/npm/v/@toshihiko/redis-cache/next.svg)](https://www.npmjs.com/package/@toshihiko/redis-cache/v/next)
 [![CI](https://github.com/toshihikojs/Toshihiko/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/toshihikojs/Toshihiko/actions/workflows/ci.yml)
 [![Coverage](https://codecov.io/github/toshihikojs/Toshihiko/branch/master/graph/badge.svg?flag=redis-cache)](https://app.codecov.io/github/toshihikojs/Toshihiko/tree/master)
 

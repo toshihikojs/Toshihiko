@@ -1,6 +1,6 @@
 # Toshihiko Base Adapter
 
-[![npm](https://img.shields.io/npm/v/@toshihiko/base-adapter.svg)](https://www.npmjs.com/package/@toshihiko/base-adapter)
+[![npm](https://img.shields.io/npm/v/@toshihiko/base-adapter/next.svg)](https://www.npmjs.com/package/@toshihiko/base-adapter/v/next)
 [![CI](https://github.com/toshihikojs/Toshihiko/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/toshihikojs/Toshihiko/actions/workflows/ci.yml)
 [![Coverage](https://codecov.io/github/toshihikojs/Toshihiko/branch/master/graph/badge.svg?flag=base-adapter)](https://app.codecov.io/github/toshihikojs/Toshihiko/tree/master)
 

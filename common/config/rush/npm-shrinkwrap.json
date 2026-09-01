@@ -475,7 +475,7 @@
     },
     "@rush-temp/mysql-adapter": {
       "version": "file:projects/mysql-adapter.tgz",
-      "integrity": "sha512-53IWDK6j7PQ/gIBqNzYnQO+LdAM228QA/5Y27YJFgpm/qCZh8WoQwaL95MuaTlcYe+QaZPwXnahJUEc9ILWMdA==",
+      "integrity": "sha512-n4AEunIIQsyq9QN0L/J4qo24GHY+9FCu8SRh9TIeTI+0N7t0qjJuJtXzfEtzzq3+KwvxKhyB9p7RxpoWq8NoiQ==",
       "requires": {
         "@types/node": "^22.0.0",
         "c8": "^12.0.0",
@@ -509,7 +509,7 @@
     },
     "@rush-temp/toshihiko": {
       "version": "file:projects/toshihiko.tgz",
-      "integrity": "sha512-4Cn2afq0qJr93tISoO9/LiAsaolP9swKpX++EeVGFLhZ9IsmU6nnYZCyGeR7FhIX93kFJyPRb4XUZkgVUWWGWA==",
+      "integrity": "sha512-n0W63bMFsfO188qCcaHG5ipudINfzDEmxqwdhakUOREZ+Qi9F+lD5VKVaKq/fcuJqJwLNhqT74opiO1I6qgY6g==",
       "requires": {
         "@types/node": "^22.0.0",
         "c8": "^12.0.0",

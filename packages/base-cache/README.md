@@ -1,6 +1,6 @@
 # Toshihiko Base Cache
 
-[![npm](https://img.shields.io/npm/v/@toshihiko/base-cache.svg)](https://www.npmjs.com/package/@toshihiko/base-cache)
+[![npm](https://img.shields.io/npm/v/@toshihiko/base-cache/next.svg)](https://www.npmjs.com/package/@toshihiko/base-cache/v/next)
 [![CI](https://github.com/toshihikojs/Toshihiko/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/toshihikojs/Toshihiko/actions/workflows/ci.yml)
 [![Coverage](https://codecov.io/github/toshihikojs/Toshihiko/branch/master/graph/badge.svg?flag=base-cache)](https://app.codecov.io/github/toshihikojs/Toshihiko/tree/master)
 
