@@ -7,7 +7,7 @@
   "projectFolderMaxDepth": 2,
   "repository": {
     "url": "https://github.com/toshihikojs/Toshihiko",
-    "defaultBranch": "v2",
+    "defaultBranch": "master",
     "defaultRemote": "origin"
   },
   "projects": [

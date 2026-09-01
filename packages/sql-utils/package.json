@@ -15,7 +15,7 @@
   "bugs": {
     "url": "https://github.com/toshihikojs/Toshihiko/issues"
   },
-  "homepage": "https://github.com/toshihikojs/Toshihiko/tree/v2/packages/sql-utils#readme",
+  "homepage": "https://github.com/toshihikojs/Toshihiko/tree/master/packages/sql-utils#readme",
   "engines": {
     "node": ">=22"
   },

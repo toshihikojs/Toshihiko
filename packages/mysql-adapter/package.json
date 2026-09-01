@@ -22,7 +22,7 @@
   "bugs": {
     "url": "https://github.com/toshihikojs/Toshihiko/issues"
   },
-  "homepage": "https://github.com/toshihikojs/Toshihiko/tree/v2/packages/mysql-adapter#readme",
+  "homepage": "https://github.com/toshihikojs/Toshihiko/tree/master/packages/mysql-adapter#readme",
   "engines": {
     "node": ">=22"
   },

@@ -2,7 +2,7 @@ site_name: Toshihiko
 site_description: Yet another simple ORM for Node.js.
 repo_name: toshihikojs/Toshihiko
 repo_url: https://github.com/toshihikojs/Toshihiko
-edit_uri: edit/v2/docs/
+edit_uri: edit/master/docs/
 
 theme:
   name: readthedocs

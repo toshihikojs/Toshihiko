@@ -150,7 +150,7 @@ function theme(prefix: string, text: LocaleText): DefaultTheme.Config {
   return {
     logo: '/logo.png',
     editLink: {
-      pattern: `${repository}/edit/v2/docs/:path`,
+      pattern: `${repository}/edit/master/docs/:path`,
       text: prefix === '/zh'
         ? '在 GitHub 上编辑此页'
         : prefix === '/ja'

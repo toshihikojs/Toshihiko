@@ -22,7 +22,7 @@
   "bugs": {
     "url": "https://github.com/toshihikojs/Toshihiko/issues"
   },
-  "homepage": "https://github.com/toshihikojs/Toshihiko/tree/v2/packages/memcached#readme",
+  "homepage": "https://github.com/toshihikojs/Toshihiko/tree/master/packages/memcached#readme",
   "engines": {
     "node": ">=22"
   },

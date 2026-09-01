@@ -11,7 +11,7 @@
   "bugs": {
     "url": "https://github.com/toshihikojs/Toshihiko/issues"
   },
-  "homepage": "https://github.com/toshihikojs/Toshihiko/tree/v2/packages/toshihiko#readme",
+  "homepage": "https://github.com/toshihikojs/Toshihiko/tree/master/packages/toshihiko#readme",
   "type": "commonjs",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

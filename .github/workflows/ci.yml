@@ -3,8 +3,7 @@ name: CI
 on:
   push:
     branches:
-      - v2
-      - monorepo/v2
+      - master
   pull_request:
   workflow_dispatch:
 

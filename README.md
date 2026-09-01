@@ -3,8 +3,8 @@
   <h1>Toshihiko</h1>
   <p>Yet another simple ORM for Node.js.</p>
   <p>
-    <a href="https://github.com/toshihikojs/Toshihiko/actions/workflows/ci.yml"><img src="https://github.com/toshihikojs/Toshihiko/actions/workflows/ci.yml/badge.svg?branch=v2" alt="CI"></a>
-    <a href="https://app.codecov.io/github/toshihikojs/Toshihiko/tree/v2"><img src="https://codecov.io/github/toshihikojs/Toshihiko/branch/v2/graph/badge.svg" alt="Coverage"></a>
+    <a href="https://github.com/toshihikojs/Toshihiko/actions/workflows/ci.yml"><img src="https://github.com/toshihikojs/Toshihiko/actions/workflows/ci.yml/badge.svg?branch=master" alt="CI"></a>
+    <a href="https://app.codecov.io/github/toshihikojs/Toshihiko/tree/master"><img src="https://codecov.io/github/toshihikojs/Toshihiko/branch/master/graph/badge.svg" alt="Coverage"></a>
     <a href="https://nodejs.org/"><img src="https://img.shields.io/badge/Node.js-22%20%7C%2024-339933?logo=node.js&amp;logoColor=white" alt="Node.js 22 and 24"></a>
     <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License"></a>
   </p>
@@ -87,13 +87,13 @@ Toshihiko is developed as a monorepo, but each package keeps an independent publ
 
 | Package | Coverage | Directory | Purpose |
 |---|---|---|---|
-| [`toshihiko`](packages/toshihiko) | [![toshihiko coverage](https://codecov.io/github/toshihikojs/Toshihiko/branch/v2/graph/badge.svg?flag=toshihiko)](https://app.codecov.io/github/toshihikojs/Toshihiko/tree/v2) | `packages/toshihiko` | ORM core, Model, Query, Yukari, and built-in field types |
-| [`@toshihiko/base-adapter`](packages/base-adapter) | [![base adapter coverage](https://codecov.io/github/toshihikojs/Toshihiko/branch/v2/graph/badge.svg?flag=base-adapter)](https://app.codecov.io/github/toshihikojs/Toshihiko/tree/v2) | `packages/base-adapter` | Typed, Promise-only foundation for adapter authors; installed transitively by concrete adapters |
-| [`@toshihiko/mysql-adapter`](packages/mysql-adapter) | [![MySQL adapter coverage](https://codecov.io/github/toshihikojs/Toshihiko/branch/v2/graph/badge.svg?flag=mysql-adapter)](https://app.codecov.io/github/toshihikojs/Toshihiko/tree/v2) | `packages/mysql-adapter` | MySQL adapter built on the `mysql2` Promise API |
-| [`@toshihiko/base-cache`](packages/base-cache) | [![base cache coverage](https://codecov.io/github/toshihikojs/Toshihiko/branch/v2/graph/badge.svg?flag=base-cache)](https://app.codecov.io/github/toshihikojs/Toshihiko/tree/v2) | `packages/base-cache` | Typed, Promise-only foundation for cache implementations |
-| [`@toshihiko/redis-cache`](packages/redis) | [![Redis cache coverage](https://codecov.io/github/toshihikojs/Toshihiko/branch/v2/graph/badge.svg?flag=redis-cache)](https://app.codecov.io/github/toshihikojs/Toshihiko/tree/v2) | `packages/redis` | Redis cache with stable key generation, batching, and positional misses |
-| [`@toshihiko/memcached-cache`](packages/memcached) | [![Memcached cache coverage](https://codecov.io/github/toshihikojs/Toshihiko/branch/v2/graph/badge.svg?flag=memcached-cache)](https://app.codecov.io/github/toshihikojs/Toshihiko/tree/v2) | `packages/memcached` | Memcached cache with batched reads and customizable keys |
-| [`@toshihiko/sql-utils`](packages/sql-utils) | [![SQL utils coverage](https://codecov.io/github/toshihikojs/Toshihiko/branch/v2/graph/badge.svg?flag=sql-utils)](https://app.codecov.io/github/toshihikojs/Toshihiko/tree/v2) | `packages/sql-utils` | SQL identifier mapping and escaping utilities |
+| [`toshihiko`](packages/toshihiko) | [![toshihiko coverage](https://codecov.io/github/toshihikojs/Toshihiko/branch/master/graph/badge.svg?flag=toshihiko)](https://app.codecov.io/github/toshihikojs/Toshihiko/tree/master) | `packages/toshihiko` | ORM core, Model, Query, Yukari, and built-in field types |
+| [`@toshihiko/base-adapter`](packages/base-adapter) | [![base adapter coverage](https://codecov.io/github/toshihikojs/Toshihiko/branch/master/graph/badge.svg?flag=base-adapter)](https://app.codecov.io/github/toshihikojs/Toshihiko/tree/master) | `packages/base-adapter` | Typed, Promise-only foundation for adapter authors; installed transitively by concrete adapters |
+| [`@toshihiko/mysql-adapter`](packages/mysql-adapter) | [![MySQL adapter coverage](https://codecov.io/github/toshihikojs/Toshihiko/branch/master/graph/badge.svg?flag=mysql-adapter)](https://app.codecov.io/github/toshihikojs/Toshihiko/tree/master) | `packages/mysql-adapter` | MySQL adapter built on the `mysql2` Promise API |
+| [`@toshihiko/base-cache`](packages/base-cache) | [![base cache coverage](https://codecov.io/github/toshihikojs/Toshihiko/branch/master/graph/badge.svg?flag=base-cache)](https://app.codecov.io/github/toshihikojs/Toshihiko/tree/master) | `packages/base-cache` | Typed, Promise-only foundation for cache implementations |
+| [`@toshihiko/redis-cache`](packages/redis) | [![Redis cache coverage](https://codecov.io/github/toshihikojs/Toshihiko/branch/master/graph/badge.svg?flag=redis-cache)](https://app.codecov.io/github/toshihikojs/Toshihiko/tree/master) | `packages/redis` | Redis cache with stable key generation, batching, and positional misses |
+| [`@toshihiko/memcached-cache`](packages/memcached) | [![Memcached cache coverage](https://codecov.io/github/toshihikojs/Toshihiko/branch/master/graph/badge.svg?flag=memcached-cache)](https://app.codecov.io/github/toshihikojs/Toshihiko/tree/master) | `packages/memcached` | Memcached cache with batched reads and customizable keys |
+| [`@toshihiko/sql-utils`](packages/sql-utils) | [![SQL utils coverage](https://codecov.io/github/toshihikojs/Toshihiko/branch/master/graph/badge.svg?flag=sql-utils)](https://app.codecov.io/github/toshihikojs/Toshihiko/tree/master) | `packages/sql-utils` | SQL identifier mapping and escaping utilities |
 
 The dependency direction is intentionally small:
 

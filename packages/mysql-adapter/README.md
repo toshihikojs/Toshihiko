@@ -1,8 +1,8 @@
 # Toshihiko MySQL Adapter
 
 [![npm](https://img.shields.io/npm/v/@toshihiko/mysql-adapter.svg)](https://www.npmjs.com/package/@toshihiko/mysql-adapter)
-[![CI](https://github.com/toshihikojs/Toshihiko/actions/workflows/ci.yml/badge.svg?branch=v2)](https://github.com/toshihikojs/Toshihiko/actions/workflows/ci.yml)
-[![Coverage](https://codecov.io/github/toshihikojs/Toshihiko/branch/v2/graph/badge.svg?flag=mysql-adapter)](https://app.codecov.io/github/toshihikojs/Toshihiko/tree/v2)
+[![CI](https://github.com/toshihikojs/Toshihiko/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/toshihikojs/Toshihiko/actions/workflows/ci.yml)
+[![Coverage](https://codecov.io/github/toshihikojs/Toshihiko/branch/master/graph/badge.svg?flag=mysql-adapter)](https://app.codecov.io/github/toshihikojs/Toshihiko/tree/master)
 
 The Promise-only MySQL Adapter for Toshihiko v2. It uses the `mysql2` Promise Pool and requires Node.js 22 or newer.
 
